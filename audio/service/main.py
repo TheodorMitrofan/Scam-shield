@@ -18,10 +18,14 @@ import tempfile
 from pathlib import Path
 from contextlib import asynccontextmanager
 
+import numpy as np
+import soundfile as sf
 from fastapi import FastAPI, File, HTTPException, Path as PathParam, Query, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
+from scipy import signal
+from scipy.io import wavfile
 
 from . import pipeline
 
@@ -33,12 +37,21 @@ ALLOWED_SUFFIXES = {".wav", ".mp3", ".m4a", ".aac", ".ogg", ".oga", ".opus", ".w
 
 
 def _to_wav(src: str, dst: str) -> None:
-    """Any audio/video → 8 kHz mono 16-bit WAV with ffmpeg (one decoder for both engines; the browser's
-    double resampling made DOPPLERGEIST miss real fly-overs)."""
-    if not shutil.which("ffmpeg"):
-        raise RuntimeError("ffmpeg missing")
-    subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", src, "-vn", "-ac", "1", "-ar", "8000",
-                    "-c:a", "pcm_s16le", dst], check=True, capture_output=True, timeout=300)
+    """Any audio/video → 8 kHz mono 16-bit WAV with ffmpeg (or soundfile fallback for wav/mp3/ogg/flac)."""
+    if shutil.which("ffmpeg"):
+        subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", src, "-vn", "-ac", "1", "-ar", "8000",
+                        "-c:a", "pcm_s16le", dst], check=True, capture_output=True, timeout=300)
+        return
+    data, sr = sf.read(src, always_2d=False)
+    if data.ndim > 1:
+        data = data.mean(axis=1)
+    if int(sr) != 8000:
+        g = np.gcd(8000, int(sr))
+        data = signal.resample_poly(data, 8000 // g, int(sr) // g)
+    peak = float(np.max(np.abs(data))) if data.size else 0.0
+    if peak > 1.0:
+        data = data / peak
+    wavfile.write(dst, 8000, np.clip(data * 32767.0, -32768, 32767).astype(np.int16))
 SCENARIO_PATTERN = "^(" + "|".join(pipeline.SCENARIOS) + ")$"
 
 _demo_cache: dict[str, dict] = {}
@@ -115,14 +128,14 @@ async def audit(
 
 
 @app.get("/api/audio/demo")
-async def demo(scenario: str = Query("ro", pattern=SCENARIO_PATTERN)) -> dict:
-    """Full localisation on a SYNTHETIC recording placed at a real area (~30 s the first time, then cached)."""
+async def demo(scenario: str = Query("uk", pattern=SCENARIO_PATTERN)) -> dict:
+    """Full localisation on a real conversation mixed with simulated fly-overs at a real area (then cached)."""
     return await _demo(scenario)
 
 
 @app.get("/api/audio/demo/{scenario}/recording.wav")
 async def demo_recording(scenario: str = PathParam(pattern=SCENARIO_PATTERN)) -> FileResponse:
-    """The simulated recording itself (24 min, 4 kHz), so it can be played or downloaded."""
+    """The conversation + fly-over recording (16 kHz mono WAV), so it can be played or downloaded."""
     await _demo(scenario)
     path = pipeline.RECORDINGS_DIR / f"{scenario}.wav"
     if not path.is_file():

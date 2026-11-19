@@ -126,9 +126,8 @@
     <header>
       <h2><i class="pi pi-map-marker" aria-hidden="true"></i> Demonstrație: cum se află locul</h2>
       <p class="sub">
-        Pe o înregistrare <strong>simulată</strong> de 24 de minute cu două avioane cu elice, comparăm sunetul
-        cu traseele a ~70 de zboruri și găsim locul microfonului. Locurile sunt reale (lângă aerodromuri),
-        zborurile și sunetul sunt simulate. Nu localizăm nicio persoană reală.
+        Pe 3 conversații reale din 3 locuri diferite, combinate cu treceri simulate a două avioane cu elice,
+        comparăm sunetul cu traseele a ~70 de zboruri și găsim locul microfonului. Nu localizăm nicio persoană reală.
       </p>
     </header>
 
@@ -153,7 +152,14 @@
     }
 
     @if (demo(); as d) {
-      <h3 class="where">{{ d.country }} · {{ d.place }} <span class="sim">simulat</span></h3>
+      <h3 class="where">
+        {{ d.country }} · {{ d.place }}
+        @if (d.conversation_label) {
+          <span class="sim">{{ d.conversation_label }} · {{ fmtDur(d.recording_s) }}</span>
+        } @else {
+          <span class="sim">simulat</span>
+        }
+      </h3>
       <div class="listen">
         <audio controls preload="none" [src]="recordingUrl(d.scenario)"></audio>
         <a [href]="recordingUrl(d.scenario)" download><i class="pi pi-download" aria-hidden="true"></i> Descarcă înregistrarea</a>

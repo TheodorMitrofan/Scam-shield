@@ -79,19 +79,19 @@ export class AudioPage implements OnDestroy {
 
   // --- demo
   protected readonly scenarios: { value: DemoScenario; flag: string; label: string }[] = [
-    { value: 'ro', flag: '🇷🇴', label: 'București' },
-    { value: 'it', flag: '🇮🇹', label: 'Milano' },
-    { value: 'fr', flag: '🇫🇷', label: 'Paris' },
+    { value: 'uk', flag: '🇬🇧', label: 'Londra' },
+    { value: 'de', flag: '🇩🇪', label: 'München' },
+    { value: 'us', flag: '🇺🇸', label: 'Seattle' },
   ];
-  protected readonly scenario = signal<DemoScenario>('ro');
+  protected readonly scenario = signal<DemoScenario>('uk');
   protected readonly demoBusy = signal(false);
   protected readonly demo = signal<DemoResult | null>(null);
   protected readonly demoError = signal<string | null>(null);
 
   constructor() {
-    // Demo link for the pitch: /?view=audio&demo=1 (or demo=it / demo=fr) runs the synthetic demo straight away.
+    // Demo link for the pitch: /?view=audio&demo=1 (or demo=de / demo=us) runs the demo straight away.
     const d = new URLSearchParams(location.search).get('demo');
-    if (d) void this.runDemo((['ro', 'it', 'fr'].includes(d) ? d : 'ro') as DemoScenario);
+    if (d) void this.runDemo((['uk', 'de', 'us'].includes(d) ? d : 'uk') as DemoScenario);
   }
 
   /** OpenStreetMap link with a marker (no API key, no tracking parameters). */
