@@ -1,9 +1,9 @@
 fastapi>=0.115
 uvicorn[standard]>=0.32
 pydantic>=2.11
+scikit-learn>=1.3
+joblib>=1.3
+numpy>=1.24
+pandas>=2.0
 httpx>=0.28        # tests only
 pytest>=8.3        # tests only
-# Optional: the fine-tuned model (rules+model ensemble). Without these the service runs rules-only.
-# torch>=2.1
-# transformers>=4.44,<5
-# sentencepiece

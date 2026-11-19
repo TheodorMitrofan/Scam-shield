@@ -1,16 +1,11 @@
-"""Official catalog: red-flag points, verdict bands, scam types, official contacts."""
+from __future__ import annotations
+
 import json
 import os
-import re
 from functools import lru_cache
 from pathlib import Path
+from typing import Dict, List, Optional
 
-from .normalize import compact, norm
-
-_PKG_CATALOG = Path(__file__).parent / "data" / "official_catalog.json"
-_KIT_CATALOG = Path(__file__).resolve().parents[2] / "Scam_Shield_Public_Kit" / "official_catalog.json"
-
-# Fixed order used everywhere (model heads, CSV output).
 FLAG_ORDER = [
     "RF_CODE_REQUEST", "RF_REMOTE_ACCESS", "RF_DATA_REQUEST", "RF_PAYMENT_REQUEST",
     "RF_SUSPICIOUS_CONTACT", "RF_NEW_NUMBER", "RF_SECRECY", "RF_TOO_GOOD",
@@ -18,58 +13,84 @@ FLAG_ORDER = [
 ]
 
 
-def digits(s: str) -> str:
-    d = re.sub(r"\D", "", s or "")
-    if d.startswith("0040"):
-        d = d[4:]
-    elif d.startswith("40") and len(d) >= 11:
-        d = d[2:]
-    return d.lstrip("0")
-
-
 class Catalog:
-    def __init__(self, data: dict):
-        self.points: dict = data["red_flag_points"]
-        self.bands: dict = data["verdict_bands"]
-        self.scam_types: list = data["scam_types"]
-        self.contacts: list = data["official_contacts"]
-        self.official_domains = {c["website"].lower() for c in self.contacts if c.get("website")}
-        self.official_phones = {digits(c["phone"]) for c in self.contacts if c.get("phone")}
-        # org key ("bancadunarea") -> contact record
-        self.orgs = {compact(c["organisation"]): c for c in self.contacts}
+    def __init__(self, catalog_path: Optional[str] = None):
+        if catalog_path is None:
+            pkg_dir = Path(__file__).resolve().parent
+            repo_root = pkg_dir.parents[1]
+            candidates = [
+                pkg_dir / "data" / "official_catalog.json",
+                repo_root / "Scam_Shield_Public_Kit" / "official_catalog.json",
+                Path("Scam_Shield_Public_Kit/official_catalog.json"),
+                Path("official_catalog.json"),
+            ]
+            for c in candidates:
+                if c.is_file():
+                    catalog_path = str(c)
+                    break
 
-    def score(self, flags) -> int:
-        return min(100, sum(self.points.get(f, 0) for f in set(flags)))
+        if catalog_path and os.path.exists(catalog_path):
+            with open(catalog_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        else:
+            data = {
+                "red_flag_points": {
+                    "RF_CODE_REQUEST": 35, "RF_REMOTE_ACCESS": 35, "RF_DATA_REQUEST": 30,
+                    "RF_PAYMENT_REQUEST": 25, "RF_SUSPICIOUS_CONTACT": 25, "RF_NEW_NUMBER": 20,
+                    "RF_SECRECY": 20, "RF_TOO_GOOD": 20, "RF_IMPERSONATION": 15,
+                    "RF_URGENCY": 15, "RF_THREAT": 15, "RF_EMOTIONAL_PRESSURE": 10, "RF_CHANNEL_SWITCH": 10,
+                },
+                "verdict_bands": {"SAFE": [0, 24], "SUSPICIOUS": [25, 49], "SCAM": [50, 100]},
+                "scam_types": [
+                    "BANK_IMPERSONATION", "COURIER_FEE", "AUTHORITY_IMPERSONATION", "FAMILY_EMERGENCY",
+                    "TECH_SUPPORT", "MARKETPLACE", "ACCOUNT_TAKEOVER", "INVESTMENT",
+                    "ROMANCE", "JOB_OFFER", "PRIZE_LOTTERY", "OTHER", "NONE",
+                ],
+                "official_contacts": [
+                    {"organisation": "Banca Dunărea", "website": "bancadunarea.ro", "phone": "0800 100 200"},
+                    {"organisation": "CurierExpres", "website": "curierexpres.ro", "phone": "0800 300 400"},
+                    {"organisation": "PiațaMea", "website": "piatamea.ro", "phone": None},
+                    {"organisation": "MegaShop", "website": "megashop.ro", "phone": "0800 500 600"},
+                    {"organisation": "ANAF", "website": "anaf.ro", "phone": "031 403 91 60"},
+                ],
+            }
 
-    def verdict(self, score: int) -> str:
-        for name, (lo, hi) in self.bands.items():
-            if lo <= score <= hi:
-                return name
-        return "SCAM" if score > 100 else "SAFE"
+        self.red_flag_points: Dict[str, int] = data["red_flag_points"]
+        self.verdict_bands: Dict[str, List[int]] = data["verdict_bands"]
+        self.scam_types: List[str] = data["scam_types"]
+        self.official_contacts: List[Dict[str, Optional[str]]] = data["official_contacts"]
+        # Compatibility aliases for model_detector / cli / evaluate
+        self.points = self.red_flag_points
+        self.bands = self.verdict_bands
 
-    def is_official_domain(self, domain: str) -> bool:
-        d = norm(domain).lower().strip(".")
-        if d.startswith("www."):
-            d = d[4:]
-        return any(d == o or d.endswith("." + o) for o in self.official_domains)
+    def get_verdict(self, score: int) -> str:
+        score = max(0, min(100, score))
+        for verdict, (low, high) in self.verdict_bands.items():
+            if low <= score <= high:
+                return verdict
+        return "SCAM" if score >= 50 else ("SUSPICIOUS" if score >= 25 else "SAFE")
+
+    def is_official_website(self, domain: str) -> bool:
+        domain = domain.lower().strip()
+        for c in self.official_contacts:
+            official_site = c.get("website")
+            if official_site:
+                official_site = official_site.lower().strip()
+                if domain == official_site or domain.endswith("." + official_site):
+                    return True
+        return False
 
     def is_official_phone(self, phone: str) -> bool:
-        return digits(phone) in self.official_phones
-
-    def org_for_domain(self, domain: str):
-        d = norm(domain).lower()
-        for c in self.contacts:
-            w = (c.get("website") or "").lower()
-            if w and (d == w or d.endswith("." + w)):
-                return c
-        return None
+        cleaned_phone = "".join(ch for ch in phone if ch.isdigit())
+        for c in self.official_contacts:
+            official_phone = c.get("phone")
+            if official_phone:
+                cleaned_official = "".join(ch for ch in official_phone if ch.isdigit())
+                if cleaned_phone and (cleaned_phone == cleaned_official or cleaned_phone.endswith(cleaned_official)):
+                    return True
+        return False
 
 
 @lru_cache(maxsize=1)
 def get_catalog() -> Catalog:
-    path = os.environ.get("SCAM_CATALOG")
-    for p in [path, _KIT_CATALOG, _PKG_CATALOG]:
-        if p and Path(p).is_file():
-            with open(p, encoding="utf-8") as f:
-                return Catalog(json.load(f))
-    raise FileNotFoundError("official_catalog.json not found")
+    return Catalog(os.environ.get("SCAM_CATALOG"))

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Shape a raw `scam_detector.analyze()` result into the AnalysisResult contract (CLAUDE.md §4.2),
 exactly as `backend/app/schemas/analysis.py` validates it.
 
