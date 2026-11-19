@@ -103,10 +103,10 @@
               alt="Spectrograma mesajului: curba avionului care trece"
             />
             <p class="tech">
-              Avion la secunda {{ c.event.t_cpa_s.toFixed(0) }} · scor de potrivire
+              {{ 'Avion la secunda' | ui }} {{ c.event.t_cpa_s.toFixed(0) }} · {{ 'scor de potrivire' | ui }}
               {{ c.claimed.label | ui }}: {{ (c.claimed.best_score ?? 0).toFixed(2) }} ·
               {{ c.actual.label }}: {{ (c.actual.best_score ?? 0).toFixed(2) }}
-              · ora mesajului cunoscută (±30 s). Mesaj, voce și zboruri simulate.
+              · {{ 'ora mesajului cunoscută (±30 s). Mesaj, voce și zboruri simulate.' | ui }}
             </p>
           }
         }

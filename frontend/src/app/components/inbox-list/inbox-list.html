@@ -75,7 +75,7 @@
 @if (store.apiError(); as err) {
   <div class="errors api" role="alert">
     <div>
-      <i class="pi pi-wifi" aria-hidden="true"></i> {{ err }}
+      <i class="pi pi-wifi" aria-hidden="true"></i> {{ err | ui }}
       <p-button [label]="'Reîncearcă' | ui" size="small" [text]="true" (onClick)="store.reanalyzeAll()" />
     </div>
   </div>
@@ -84,7 +84,7 @@
 @if (store.errors().length) {
   <div class="errors" role="alert">
     @for (e of store.errors(); track e) {
-      <div><i class="pi pi-exclamation-triangle" aria-hidden="true"></i> {{ e }}</div>
+      <div><i class="pi pi-exclamation-triangle" aria-hidden="true"></i> {{ e | ui }}</div>
     }
   </div>
 }
@@ -128,7 +128,7 @@
             }
             {{ senderOf(s) }}
           </div>
-          <div class="preview">{{ preview(s) }}</div>
+          <div class="preview">{{ preview(s) | ui }}</div>
         </div>
       </li>
     }

@@ -1,6 +1,6 @@
 <section class="mail" aria-label="E-mail">
   <header class="toolbar"><span aria-hidden="true">✉</span> {{ 'Căsuța de e-mail' | ui }}</header>
-  <h2 class="subject">{{ subject() }}</h2>
+  <h2 class="subject">{{ subject() | ui }}</h2>
 
   @for (m of scenario().messages; track m.n) {
     <article
