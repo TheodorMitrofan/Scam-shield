@@ -94,7 +94,7 @@ def audit(wav_path: str) -> dict:
     x, fs, _ = audio.load_audio(wav_path, fs=FS)
     dur = len(x) / fs
     if dur < 1.0:
-        return {"duration_s": dur, "risk": "undetermined", "flyovers": 0, "events": [], "rejected": 0,
+        return {"engine": "standard", "duration_s": dur, "risk": "undetermined", "flyovers": 0, "events": [], "rejected": 0,
                 "status": "insufficient", "limited": True, "reasons": ["Înregistrarea e mai scurtă de o secundă."],
                 "spectrogram": None}
     spec = audio.compute_spectrogram(x, fs, 1.0, 0.2, 20, 600, 120)
@@ -122,6 +122,7 @@ def audit(wav_path: str) -> dict:
     events = [{"t0": float(e["t0"]), "t1": float(e["t1"]), "fmin": float(e["fmin"]), "fmax": float(e["fmax"]),
                "speed_kmh": e["fit"]["v_ms"] * 3.6, "distance_m": e["fit"]["d_m"]} for e in confirmed]
     return {
+        "engine": "standard",
         "duration_s": dur,
         "risk": risk,
         "flyovers": n,
@@ -133,6 +134,61 @@ def audit(wav_path: str) -> dict:
         "spectrogram": _spectrogram_png(
             spec, confirmed, [e["fit"]["trace"] for e in confirmed], rejected=rejected,
             title="Căutăm curbe care coboară (avioane care trec)"),
+    }
+
+
+def audit_dopplergeist(wav_path: str) -> dict:
+    """Same question, answered by DOPPLERGEIST's automatic discovery (`dopplergeist discover`, installed as a
+    dependency — PolyForm Noncommercial, not vendored). Its proposals are acoustic candidates, not confirmed
+    aircraft, and are reported as-is so the two engines can be compared honestly."""
+    import json
+    import subprocess
+
+    exe = Path(sys.executable).with_name("dopplergeist")
+    x, fs, _ = audio.load_audio(wav_path, fs=FS)
+    dur = len(x) / fs
+    with tempfile.TemporaryDirectory(prefix="dg_audit_") as work:
+        out = os.path.join(work, "out")
+        proc = subprocess.run([str(exe), "discover", wav_path, "--output", out],
+                              capture_output=True, text=True, timeout=600)
+        if proc.returncode != 0:
+            raise RuntimeError("dopplergeist discover failed")
+        disc = json.loads(Path(out, "discovery", "discovery.json").read_text())
+    groups = disc.get("proposals", [])
+    ridges = {}
+    for e in disc.get("events", []):
+        g = e.get("harmonic_group_id")
+        pts = [(r["time_s"], r["frequency_hz"]) for r in e.get("ridge", [])]
+        if g and pts:
+            ridges.setdefault(g, []).extend(pts)
+
+    n = len(groups)
+    if dur < 12.0:
+        risk = "undetermined"
+    else:
+        risk = "high" if n >= 2 else "medium" if n == 1 else "low"
+    boxes = [{"t0": float(g["start_s"]), "t1": float(g["end_s"]),
+              "fmin": float(min(g["band_hz"])), "fmax": float(max(g["band_hz"]))} for g in groups]
+    traces = []
+    for g in groups:
+        pts = sorted(ridges.get(g["event_id"], []))
+        if pts:
+            traces.append((np.array([p[0] for p in pts]), np.array([p[1] for p in pts])))
+    spec_png = None
+    if dur >= 1.0:
+        spec = audio.compute_spectrogram(x, fs, 1.0, 0.2, 20, 600, 120)
+        spec_png = _spectrogram_png(spec, boxes, traces, title="DOPPLERGEIST: candidați găsiți automat")
+    return {
+        "engine": "dopplergeist",
+        "duration_s": dur,
+        "risk": risk,
+        "flyovers": n,
+        "events": [dict(b, speed_kmh=None, distance_m=None) for b in boxes],
+        "rejected": 0,
+        "status": "ok" if dur >= 120 else ("insufficient" if dur < 12 else "limited"),
+        "limited": dur < 120,
+        "reasons": [],
+        "spectrogram": spec_png,
     }
 
 

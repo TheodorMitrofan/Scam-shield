@@ -2,13 +2,15 @@ import { Injectable } from '@angular/core';
 import { AUDIO_API_BASE } from '../api.config';
 
 export type AuditRisk = 'high' | 'medium' | 'low' | 'undetermined';
+export type AuditEngine = 'standard' | 'dopplergeist';
 
 export interface AuditResult {
+  engine: AuditEngine;
   duration_s: number;
   risk: AuditRisk;
   flyovers: number;
   /** Only candidates that passed the Doppler physics check (real aircraft). */
-  events: { t0: number; t1: number; fmin: number; fmax: number; speed_kmh: number; distance_m: number }[];
+  events: { t0: number; t1: number; fmin: number; fmax: number; speed_kmh: number | null; distance_m: number | null }[];
   /** Candidates that looked tonal but failed the physics check (speech, music, hum). */
   rejected: number;
   status: string;
@@ -57,10 +59,11 @@ export class AudioApiService {
     }
   }
 
-  async audit(wav: Blob, name = 'recording.wav'): Promise<AuditResult> {
+  /** Uploads the ORIGINAL file; the service decodes it with ffmpeg (same decoder for both engines). */
+  async audit(file: Blob, name = 'recording', engine: AuditEngine = 'standard'): Promise<AuditResult> {
     const fd = new FormData();
-    fd.append('file', wav, name.replace(/\.[^.]+$/, '') + '.wav');
-    return this.send(fetch(`${AUDIO_API_BASE}/audit`, { method: 'POST', body: fd }));
+    fd.append('file', file, name);
+    return this.send(fetch(`${AUDIO_API_BASE}/audit?engine=${engine}`, { method: 'POST', body: fd }));
   }
 
   demo(seed?: number): Promise<DemoResult> {

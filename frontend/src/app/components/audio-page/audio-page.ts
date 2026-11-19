@@ -1,8 +1,15 @@
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { TagModule } from 'primeng/tag';
-import { AudioApiService, AuditResult, AuditRisk, DemoResult } from '../../services/audio-api.service';
-import { toWav } from '../../services/wav';
+import {
+  AudioApiService,
+  AuditEngine,
+  AuditResult,
+  AuditRisk,
+  DemoResult,
+} from '../../services/audio-api.service';
 import { FlightMap } from './flight-map';
 
 const RISK: Record<AuditRisk, { title: string; text: string; icon: string; cls: string }> = {
@@ -39,7 +46,7 @@ const RISK: Record<AuditRisk, { title: string; text: string; icon: string; cls: 
  */
 @Component({
   selector: 'app-audio-page',
-  imports: [ButtonModule, TagModule, FlightMap],
+  imports: [FormsModule, ButtonModule, SelectButtonModule, TagModule, FlightMap],
   templateUrl: './audio-page.html',
   styleUrl: './audio-page.scss',
 })
@@ -47,6 +54,13 @@ export class AudioPage implements OnDestroy {
   private readonly api = inject(AudioApiService);
 
   // --- audit
+  /** Detector engine; switching re-runs the last recording so the two can be compared. */
+  protected readonly engine = signal<AuditEngine>('standard');
+  protected readonly engines = [
+    { label: 'Standard', value: 'standard' },
+    { label: 'DOPPLERGEIST', value: 'dopplergeist' },
+  ];
+  private lastFile: { blob: Blob; name: string } | null = null;
   protected readonly fileName = signal<string | null>(null);
   protected readonly auditBusy = signal(false);
   protected readonly audit = signal<AuditResult | null>(null);
@@ -119,7 +133,9 @@ export class AudioPage implements OnDestroy {
       stream.getTracks().forEach((t) => t.stop());
       this.stopTimer();
       this.recording.set(false);
-      void this.check(new Blob(chunks, { type: this.recorder?.mimeType }), 'microfon');
+      const type = this.recorder?.mimeType || 'audio/webm';
+      const ext = type.includes('mp4') ? 'm4a' : type.includes('ogg') ? 'ogg' : 'webm';
+      void this.check(new Blob(chunks, { type }), `microfon.${ext}`);
     };
     this.recorder.start();
     this.recording.set(true);
@@ -133,13 +149,23 @@ export class AudioPage implements OnDestroy {
     this.auditError.set(null);
     this.auditBusy.set(true);
     try {
-      let wav: Blob;
-      try {
-        wav = await toWav(blob);
-      } catch {
-        throw new Error('Nu pot citi acest fișier audio. Încercați mp3, m4a, wav sau ogg.');
-      }
-      this.audit.set(await this.api.audit(wav, name));
+      this.lastFile = { blob, name };
+      this.audit.set(await this.api.audit(blob, name, this.engine()));
+    } catch (e) {
+      this.auditError.set(e instanceof Error ? e.message : 'Verificarea nu a reușit.');
+    } finally {
+      this.auditBusy.set(false);
+    }
+  }
+
+  protected async setEngine(engine: AuditEngine): Promise<void> {
+    this.engine.set(engine);
+    if (!this.lastFile || this.auditBusy()) return;
+    this.audit.set(null);
+    this.auditError.set(null);
+    this.auditBusy.set(true);
+    try {
+      this.audit.set(await this.api.audit(this.lastFile.blob, this.lastFile.name, engine));
     } catch (e) {
       this.auditError.set(e instanceof Error ? e.message : 'Verificarea nu a reușit.');
     } finally {

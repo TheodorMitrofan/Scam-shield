@@ -101,6 +101,7 @@ Backend ↔ detector boundary is ONLY `scam_detector.load()` and `scam_detector.
 Local ports: frontend `4200`, backend `8000`, model_detector `8001`, audio side feature `8002`, postgres `5544` (host; container uses 5432).
 
 Audio side feature: install `uv venv --python 3.12 audio/.venv && uv pip install --python audio/.venv/bin/python -r audio/requirements.txt` · run `cd audio && .venv/bin/uvicorn service.main:app --port 8002` (warms the demo in ~40 s at startup) · UI: `/?view=audio` (`&demo=1` auto-runs the demo).
+Audio side feature: needs `ffmpeg` (`brew install ffmpeg`); install `uv venv --python 3.12 audio/.venv && uv pip install --python audio/.venv/bin/python -r audio/requirements.txt` · run `cd audio && .venv/bin/uvicorn service.main:app --port 8002` (warms the demo in ~40 s at startup) · UI: `/?view=audio` (`&demo=1` auto-runs the demo).
 
 ---
 
@@ -151,10 +152,11 @@ DTO source of truth (Pydantic): `backend/app/schemas/` · DB tables: `backend/ap
 | Method | Path | Request | Response |
 |---|---|---|---|
 | GET | `/api/audio/health` | – | `{ status, demo_ready }` |
-| POST | `/api/audio/audit` | multipart `file` = **WAV** (the browser converts mp3/m4a/webm to 8 kHz mono WAV first; no ffmpeg on the server) | `{ duration_s, risk: high\|medium\|low\|undetermined, flyovers, events[], status, reasons[], spectrogram: dataURL }` |
+| POST | `/api/audio/audit?engine=standard\|dopplergeist` | multipart `file` = original audio/video (mp3, m4a, webm, ogg, wav…); the server decodes it with ffmpeg to 8 kHz mono WAV for both engines | `{ engine, duration_s, risk: high\|medium\|low\|undetermined, flyovers, events[{t0,t1,fmin,fmax,speed_kmh?,distance_m?}], rejected, status, limited, reasons[], spectrogram: dataURL }` |
 | GET | `/api/audio/demo?seed=23` | – | synthetic localisation: `{ ok, truth, estimate, error_m, region_radius_m, bbox, flights[], events[], matched_flights[], spectrogram, heatmap }` (cached per seed) |
 
-Uploads are written to a temp file and deleted right after; nothing is stored or logged.
+Uploads are written to a temp dir and deleted right after; nothing is stored or logged.
+Engines: `standard` = vendored afg detector + Doppler physics check (default; best on our tests, no false alarms on speech, robust to MP3) · `dopplergeist` = DOPPLERGEIST `discover` (PyPI 0.1.3, PolyForm Noncommercial, installed not vendored), raw acoustic proposals for comparison — it flagged speech and missed fly-overs in MP3s in our tests.
 
 ### 4.2 Data models
 ```ts

@@ -16,6 +16,10 @@
   .sub { margin: 6px 0 0; color: var(--app-muted); font-size: 16px; line-height: 1.45; }
 }
 
+.engine {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;
+  .engine-label { font-size: 15px; font-weight: 600; color: var(--app-muted); }
+}
 .drop {
   display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 18px; border-radius: 12px;
   border: 2px dashed var(--app-border); background: var(--app-hover);
