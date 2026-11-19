@@ -2,9 +2,10 @@ import { AnalysisResult, CHANNEL_LABEL, Scenario, Verdict } from '../models/scen
 
 export type TagSeverity = 'success' | 'warn' | 'danger' | 'info' | 'secondary';
 
+/** Exact UI labels required by the brief („Scoring system” → verdict bands). Do not reword. */
 export const VERDICT_LABEL: Record<Verdict, string> = {
-  SCAM: 'Pare un scam',
-  SUSPICIOUS: 'Atenție',
+  SCAM: 'Pare o țeapă! Nu răspundeți',
+  SUSPICIOUS: 'Atenție, verificați înainte să răspundeți',
   SAFE: 'Pare în regulă',
 };
 

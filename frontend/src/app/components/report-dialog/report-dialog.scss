@@ -196,3 +196,15 @@ h4 {
     max-height: none;
   }
 }
+
+/* Phone: recipient line on its own row above the two buttons instead of being cut off. */
+:host ::ng-deep .p-dialog-footer {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+@media (max-width: 600px) {
+  .to {
+    flex-basis: 100%;
+    overflow-wrap: anywhere;
+  }
+}
