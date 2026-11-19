@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # Fraud-report e-mail (demo). Password = Gmail App Password, ONLY in backend/.env (never committed).
     smtp_host: str = "smtp.gmail.com"
     smtp_port: int = 587
-    smtp_user: str = "palrobertogiulio@gmail.com"
+    smtp_user: str = "palgiulii7@gmail.com"  # team demo account
     smtp_password: str = ""
 
     @property

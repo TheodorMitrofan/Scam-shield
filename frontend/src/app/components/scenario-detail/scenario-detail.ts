@@ -1,7 +1,8 @@
-import { Component, computed, inject, output } from '@angular/core';
+import { Component, computed, inject, output, signal } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
+import { REPORT_MIN_SCORE } from '../../models/report';
 import { CHANNEL_LABEL } from '../../models/scenario';
 import {
   VERDICT_LABEL,
@@ -12,11 +13,12 @@ import {
 } from '../../services/result-utils';
 import { ScenarioStore } from '../../services/scenario-store';
 import { Conversation } from '../conversation/conversation';
+import { ReportDialog } from '../report-dialog/report-dialog';
 
 /** Right panel: header with position + actions, then the scenario rendered like its original app. */
 @Component({
   selector: 'app-scenario-detail',
-  imports: [ButtonModule, TagModule, TooltipModule, Conversation],
+  imports: [ButtonModule, TagModule, TooltipModule, Conversation, ReportDialog],
   templateUrl: './scenario-detail.html',
   styleUrl: './scenario-detail.scss',
 })
@@ -29,6 +31,9 @@ export class ScenarioDetail {
   protected readonly verdictLabel = VERDICT_LABEL;
   protected readonly flagLabel = flagLabel;
   protected readonly scamTypeLabel = scamTypeLabel;
+  protected readonly reportMinScore = REPORT_MIN_SCORE;
+  /** „Raportează frauda” dialog (only offered when risk ≥ 50). */
+  protected readonly reportOpen = signal(false);
   protected readonly tag = computed(() => {
     const s = this.store.selected();
     return s ? tagOf(s, this.store.selectedResult()) : null;

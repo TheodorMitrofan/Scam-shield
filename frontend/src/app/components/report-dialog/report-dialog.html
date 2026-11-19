@@ -1,0 +1,143 @@
+<p-dialog
+  header="Raportează frauda"
+  [modal]="true"
+  [(visible)]="visible"
+  [style]="{ width: 'min(980px, 96vw)' }"
+  [dismissableMask]="false"
+  [draggable]="false"
+>
+  @if (loading()) {
+    <div class="state" role="status">
+      <i class="pi pi-spin pi-spinner" aria-hidden="true"></i> Se pregătește raportul…
+    </div>
+  } @else if (sentTo(); as to) {
+    <div class="done" role="status">
+      <i class="pi pi-check-circle" aria-hidden="true"></i>
+      <h3>Raportul a fost trimis</h3>
+      <p>
+        L-am trimis pe e-mail către <strong>{{ to }}</strong>, cu sesizarea în format PDF atașată.
+      </p>
+      <p class="muted">Demo: raportul nu ajunge la Poliție sau la DNSC.</p>
+      <p-button label="Închide" (onClick)="visible.set(false)" />
+    </div>
+  } @else if (draft(); as d) {
+    <p class="intro">
+      Nu ați greșit cu nimic. Am pregătit raportul despre ce s-a întâmplat; completați doar datele
+      dumneavoastră și apăsați <strong>Trimite e-mail</strong>.
+    </p>
+
+    <div class="grid">
+      <section class="form" aria-labelledby="pd-title">
+        <h3 id="pd-title">Datele dumneavoastră</h3>
+        @for (f of d.personal_fields; track f.key) {
+          @switch (f.type) {
+            @case ('checkbox') {
+              <label class="check">
+                <p-checkbox
+                  [binary]="true"
+                  [ngModel]="value(f)"
+                  (ngModelChange)="set(f, $event)"
+                  [inputId]="'pd-' + f.key"
+                />
+                {{ f.label }}
+              </label>
+            }
+            @case ('textarea') {
+              <label class="field">
+                <span class="lbl">{{ f.label }}</span>
+                <textarea
+                  pTextarea
+                  rows="3"
+                  [ngModel]="value(f)"
+                  (ngModelChange)="set(f, $event)"
+                ></textarea>
+              </label>
+            }
+            @default {
+              <label class="field">
+                <span class="lbl"
+                  >{{ f.label }}
+                  @if (f.required) {
+                    <span class="req" aria-label="obligatoriu"> *</span>
+                  }
+                </span>
+                <input
+                  pInputText
+                  [type]="f.type"
+                  [required]="f.required"
+                  [ngModel]="value(f)"
+                  (ngModelChange)="set(f, $event)"
+                  [attr.inputmode]="f.key === 'cnp' ? 'numeric' : null"
+                />
+                @if (f.hint) {
+                  <small class="hint">{{ f.hint }}</small>
+                }
+              </label>
+            }
+          }
+        }
+      </section>
+
+      <section class="incident" aria-labelledby="inc-title">
+        <h3 id="inc-title">Ce s-a întâmplat <span class="auto">completat automat</span></h3>
+        <p class="badge">
+          {{ d.incident.scam_type_label }} · {{ d.incident.channel_label }} · risc
+          {{ d.incident.risk_score }}/100
+        </p>
+        <p class="summary">{{ d.incident.summary_ro }}</p>
+
+        @if (d.incident.indicators.length) {
+          <h4>Ce a folosit expeditorul</h4>
+          <ul class="ind">
+            @for (i of d.incident.indicators; track i.kind + i.value) {
+              <li>
+                <span>{{ kindLabel[i.kind] }}</span
+                ><code>{{ i.display }}</code>
+              </li>
+            }
+          </ul>
+          <p class="muted small">
+            Adresele sunt scrise „dezactivat” ([.] în loc de punct), ca să nu fie accesate.
+          </p>
+        }
+
+        <h4>Conversația</h4>
+        <ol class="timeline">
+          @for (t of d.incident.timeline; track t.n) {
+            <li [class.alert]="t.is_first_alert">
+              <span class="n">{{ t.n }}</span><b>{{ t.author_label }}:</b> {{ t.text }}
+            </li>
+          }
+        </ol>
+      </section>
+    </div>
+  }
+
+  @if (error(); as e) {
+    <p-message severity="error" [text]="e" styleClass="err" />
+  }
+
+  <ng-template #footer>
+    @if (draft() && !sentTo()) {
+      <span class="to"
+        >Se trimite la: <strong>{{ draft()!.recipient }}</strong> (demo)</span
+      >
+      <p-button
+        label="Descarcă PDF"
+        icon="pi pi-file-pdf"
+        severity="secondary"
+        [loading]="busy() === 'pdf'"
+        [disabled]="busy() !== null"
+        (onClick)="downloadPdf()"
+      />
+      <p-button
+        label="Trimite e-mail"
+        icon="pi pi-send"
+        severity="danger"
+        [loading]="busy() === 'send'"
+        [disabled]="busy() !== null"
+        (onClick)="send()"
+      />
+    }
+  </ng-template>
+</p-dialog>

@@ -254,7 +254,7 @@ Rules: one row per task; only edit your own rows; when you pick a task set `doin
 | 10 | Audio upload + transcription + storage (stage 4/5) | backend | Giulio | todo | | after MVP |
 | 11 | Voice note view (stage 4) | frontend | Theodor | todo | | after MVP |
 | 13 | Fraud report: `/report/draft` + `/report/send` (Gmail SMTP → demo inbox) | backend | Giulio | review | giulio/fraud-report | |
-| 14 | „Generează raport de fraudă” button (risk ≥ 50) + dialog: personal-data form from `personal_fields`, read-only incident, „Descarcă PDF” (`/report/pdf`), „Trimite e-mail” | frontend | Theodor | todo | | contract §4.1 |
+| 14 | „Raportează frauda” button (risk ≥ 50) + dialog: personal-data form from `personal_fields`, read-only incident, „Descarcă PDF”, „Trimite e-mail” | frontend | Giulio (for Theodor) | review | giulio/report-button | `components/report-dialog/`, `models/report.ts`, small additions in `scenario-detail` + `api.service` |
 | 12 | Backend DTOs + DB (hybrid EAV) + analyze/history controllers with consent flag + docker-compose | backend | Giulio | review | giulio/backoffice | covers #3, #4, #9 (stub detector); ownership confirmed: Giulio = backend |
 | 13 | PrimeNG inbox redesign (top bar, search/filters, cards, detail panel, paste dialog) + FE↔BE wiring | frontend | Theodor | review | theodor/frontend-ui | FE calls `/scenarios/validation` + `/analyze/batch?save=`; history UI not built yet |
 

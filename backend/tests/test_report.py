@@ -35,6 +35,8 @@ class FakeSMTP:
         self.calls.append("starttls")
 
     def login(self, user, pw):
+        if FakeSMTP.fail_auth == "disconnect":
+            raise smtplib.SMTPServerDisconnected("Connection unexpectedly closed")
         if FakeSMTP.fail_auth:
             raise smtplib.SMTPAuthenticationError(535, b"bad")
         self.calls.append(("login", user))
@@ -47,6 +49,7 @@ class FakeSMTP:
 def smtp(monkeypatch):
     FakeSMTP.instances, FakeSMTP.fail_auth = [], False
     monkeypatch.setattr("app.report.mailer.smtplib.SMTP", FakeSMTP)
+    monkeypatch.setenv("SMTP_USER", "sender@test.local")  # env beats any local backend/.env
     monkeypatch.setenv("SMTP_PASSWORD", "test-app-password")
     get_settings.cache_clear()
     report_api._sent.clear()
@@ -99,9 +102,9 @@ def test_send_emails_demo_inbox(client, smtp):
     assert r.json()["sent"] and r.json()["recipient"] == "francescomartinut18@gmail.com"
     s = smtp.instances[0]
     assert (s.host, s.port) == ("smtp.gmail.com", 587)
-    assert s.calls == ["starttls", ("login", "palrobertogiulio@gmail.com")]
+    assert s.calls == ["starttls", ("login", "sender@test.local")]
     msg = s.sent[0]
-    assert msg["To"] == "francescomartinut18@gmail.com" and msg["From"] == "palrobertogiulio@gmail.com"
+    assert msg["To"] == "francescomartinut18@gmail.com" and msg["From"] == "sender@test.local"
     assert "DEMO" in msg["Subject"]
     body = msg.get_body(("plain",)).get_content()
     assert "Popescu Maria" in body and "2500101123456" in body and "bancadunarea-securitate[.]com" in body
@@ -150,7 +153,7 @@ def test_bad_password_is_502_and_can_retry(client, smtp):
     d = draft(client, "V01")
     smtp.fail_auth = True
     r = client.post("/api/report/send", json={"report": d, "personal_data": PERSON})
-    assert r.status_code == 502 and "App Password" in r.json()["detail"]
+    assert r.status_code == 502 and "parolă de aplicație" in r.json()["detail"]
     smtp.fail_auth = False
     assert client.post("/api/report/send", json={"report": d, "personal_data": PERSON}).status_code == 200
 
@@ -198,3 +201,10 @@ def test_pdf_handles_every_validation_scam(client):
         r = client.post("/api/report/draft", json={"scenario": SCENARIOS[key]})
         if r.status_code == 200:
             assert client.post("/api/report/pdf", json={"report": r.json()}).status_code == 200
+
+
+def test_gmail_closing_connection_on_login_means_bad_password(client, smtp):
+    d = draft(client, "V01")
+    smtp.fail_auth = "disconnect"
+    r = client.post("/api/report/send", json={"report": d, "personal_data": PERSON})
+    assert r.status_code == 502 and "parolă de aplicație" in r.json()["detail"]

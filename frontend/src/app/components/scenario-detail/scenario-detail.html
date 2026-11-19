@@ -69,6 +69,20 @@
       </div>
     </dl>
 
+    @if (r.risk_score >= reportMinScore) {
+      <div class="report">
+        <p-button
+          label="Raportează frauda"
+          icon="pi pi-flag"
+          severity="danger"
+          size="large"
+          (onClick)="reportOpen.set(true)"
+        />
+        <span>Pregătim noi sesizarea; dumneavoastră completați doar datele personale.</span>
+      </div>
+      <app-report-dialog [(visible)]="reportOpen" [scenario]="s" [result]="r" />
+    }
+
     @if (r.red_flags.length) {
       <div class="flags">
         <span class="flags-title">De ce:</span>
