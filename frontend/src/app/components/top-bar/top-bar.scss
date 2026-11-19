@@ -1,157 +1,57 @@
-:host {
-  display: block;
-}
+:host { display: block; }
 
 .top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
   padding: 14px 0 18px;
 }
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--p-primary-600);
-  color: #fff;
-  font-size: 20px;
+  width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--p-primary-600); color: #fff; font-size: 20px;
 }
-.name {
-  font-weight: 700;
-  font-size: 20px;
-}
-.views {
-  margin-left: 8px;
-  i {
-    margin-right: 6px;
-  }
-}
+.name { font-weight: 700; font-size: 20px; }
+.views { margin-left: 8px;
+  i { margin-right: 6px; } }
 .crumb {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--app-muted);
-  font-size: 16px;
-  padding-left: 12px;
-  border-left: 1px solid var(--app-border);
+  display: inline-flex; align-items: center; gap: 6px; color: var(--app-muted); font-size: 16px;
+  padding-left: 12px; border-left: 1px solid var(--app-border);
 }
 
-.actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
+.actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 
 .status {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0.4rem 0.75rem;
-  border-radius: 999px;
-  border: 1px solid var(--app-border);
-  background: var(--app-surface);
-  color: var(--app-text);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--app-muted);
-  }
-  &.on .dot {
-    background: var(--p-green-500);
-  }
-  &.stub .dot {
-    background: var(--p-amber-500);
-  }
-  &.off .dot {
-    background: var(--p-red-500);
-  }
+  display: inline-flex; align-items: center; gap: 8px; padding: 0.4rem 0.75rem; border-radius: 999px;
+  border: 1px solid var(--app-border); background: var(--app-surface); color: var(--app-text);
+  font: inherit; font-size: 14px; font-weight: 500; cursor: pointer;
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--app-muted); }
+  &.on .dot { background: var(--p-green-500); }
+  &.stub .dot { background: var(--p-amber-500); }
+  &.off .dot { background: var(--p-red-500); }
 }
-.consent {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 0 4px;
-}
+.consent { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500; cursor: pointer; padding: 0 4px; }
 
 /* Native file inputs styled like PrimeNG secondary outlined buttons. */
 .file-btn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  padding: 0.5rem 0.875rem;
-  border-radius: var(--p-border-radius-md, 6px);
+  position: relative; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  padding: 0.5rem 0.875rem; border-radius: var(--p-border-radius-md, 6px);
   border: 1px solid var(--p-button-outlined-secondary-border-color, var(--app-border));
-  color: var(--p-button-outlined-secondary-color, var(--app-text));
-  background: transparent;
-  font: inherit;
-  font-weight: 500;
-  line-height: 1.25;
-  &:hover {
-    background: var(--p-button-outlined-secondary-hover-background, var(--app-hover));
-  }
-  &:focus-within {
-    outline: 2px solid var(--p-primary-500);
-    outline-offset: 2px;
-  }
-  input {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    width: 1px;
-    height: 1px;
-  }
+  color: var(--p-button-outlined-secondary-color, var(--app-text)); background: transparent;
+  font: inherit; font-weight: 500; line-height: 1.25;
+  &:hover { background: var(--p-button-outlined-secondary-hover-background, var(--app-hover)); }
+  &:focus-within { outline: 2px solid var(--p-primary-500); outline-offset: 2px; }
+  input { position: absolute; inset: 0; opacity: 0; width: 1px; height: 1px; }
 }
 
 @media (max-width: 700px) {
-  .crumb {
-    display: none;
-  }
-  .views {
-    margin-left: 0;
-  }
-  .actions {
-    width: 100%;
-  }
+  .crumb { display: none; }
+  .views { margin-left: 0; }
+  .actions { width: 100%; }
 }
 
-/* Phone: the three view tabs (Mesaje / Dashboard / Audio) take the full width and share it,
-   instead of pushing the page sideways. */
+/* Phone: the three view tabs (Mesaje / Dashboard / Audio) share the full width instead of pushing the page sideways. */
 @media (max-width: 520px) {
-  .brand {
-    flex-wrap: wrap;
-    width: 100%;
-  }
-  .views {
-    width: 100%;
-    display: flex;
-  }
-  :host ::ng-deep .views .p-togglebutton {
-    flex: 1 1 0;
-    min-width: 0;
-    padding-inline: 0.5rem;
-  }
-  .views i {
-    display: none;
-  } /* text only, so „Dashboard” is not cut */
+  .brand { flex-wrap: wrap; width: 100%; }
+  .views { width: 100%; display: flex; }
+  :host ::ng-deep .views .p-togglebutton { flex: 1 1 0; min-width: 0; padding-inline: 0.5rem; }
+  .views i { display: none; } /* text only, so „Dashboard” is not cut */
 }
