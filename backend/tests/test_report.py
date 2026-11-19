@@ -106,9 +106,10 @@ def test_send_emails_demo_inbox(client, smtp):
     body = msg.get_body(("plain",)).get_content()
     assert "Popescu Maria" in body and "2500101123456" in body and "bancadunarea-securitate[.]com" in body
     assert "bancadunarea-securitate.com" not in body
-    att = next(msg.iter_attachments())
-    assert att.get_filename() == "raport.json"
-    payload = json.loads(att.get_content())
+    atts = {a.get_filename(): a for a in msg.iter_attachments()}
+    assert set(atts) == {"sesizare.pdf", "raport.json"}
+    assert atts["sesizare.pdf"].get_content().startswith(b"%PDF")
+    payload = json.loads(atts["raport.json"].get_content())
     assert payload["personal_data"]["last_name"] == "Popescu"
 
 
@@ -172,6 +173,7 @@ def test_robust_inputs(client, text):
            "red_flags": ["RF_CODE_REQUEST", "RF_URGENCY"], "warning": {"ro": "x"}}
     r = client.post("/api/report/draft", json={"scenario": sc, "result": res})
     assert r.status_code == 200
+    assert client.post("/api/report/pdf", json={"report": r.json()}).status_code == 200
 
 
 def test_defang_examples():
@@ -179,3 +181,20 @@ def test_defang_examples():
     assert defang("x@y.net") == "x[@]y[.]net"
     assert defang_text("Accesați: a-b.com/x. Scrieți la x@y.ro!") == "Accesați: a-b[.]com/x. Scrieți la x[@]y[.]ro!"
     assert defang_text("Ramburs 1.276 lei, dvs. azi") == "Ramburs 1.276 lei, dvs. azi"
+
+
+def test_pdf_download_blank_and_filled(client):
+    d = draft(client, "V04")
+    blank = client.post("/api/report/pdf", json={"report": d})
+    filled = client.post("/api/report/pdf", json={"report": d, "personal_data": PERSON})
+    for r in (blank, filled):
+        assert r.status_code == 200 and r.headers["content-type"] == "application/pdf"
+        assert r.content.startswith(b"%PDF") and len(r.content) > 5000
+    assert 'filename="sesizare-V04.pdf"' in blank.headers["content-disposition"]
+
+
+def test_pdf_handles_every_validation_scam(client):
+    for key in SCENARIOS:
+        r = client.post("/api/report/draft", json={"scenario": SCENARIOS[key]})
+        if r.status_code == 200:
+            assert client.post("/api/report/pdf", json={"report": r.json()}).status_code == 200

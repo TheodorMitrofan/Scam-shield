@@ -143,6 +143,11 @@ class FraudReportDraft(BaseModel):
     personal_fields: list[PersonalField] = Field(default_factory=lambda: list(PERSONAL_FIELDS))
 
 
+class ReportPdfRequest(BaseModel):
+    report: FraudReportDraft
+    personal_data: PersonalData = Field(default_factory=PersonalData)
+
+
 class ReportSendRequest(BaseModel):
     report: FraudReportDraft
     personal_data: PersonalData

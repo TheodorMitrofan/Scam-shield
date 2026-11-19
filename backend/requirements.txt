@@ -6,3 +6,4 @@ sqlalchemy>=2.0.40
 psycopg[binary]>=3.2.10
 pytest>=8.3
 httpx>=0.28
+fpdf2>=2.8   # fraud report PDF (font: app/report/fonts/DejaVuSans, bundled)
