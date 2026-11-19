@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scam_detector"
+version = "0.1.0"
+description = "Scam Shield local detector: rules + contact checks + fine-tuned transformer ensemble"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+model = ["torch>=2.1", "transformers>=4.44,<5", "sentencepiece"]
+dev = ["pytest"]
+
+[tool.setuptools]
+packages = ["scam_detector"]
+
+[tool.setuptools.package-data]
+scam_detector = ["data/*.json"]
