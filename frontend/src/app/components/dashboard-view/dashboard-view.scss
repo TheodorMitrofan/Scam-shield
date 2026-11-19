@@ -40,10 +40,10 @@
   border-radius: 12px;
   background: var(--app-surface);
   border: 1px solid var(--app-border);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   .num {
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
@@ -80,16 +80,16 @@
 .results {
   width: 100%;
   border-collapse: collapse;
-  font-size: 16px;
+  font-size: 18px;
   th,
   td {
-    padding: 9px 14px;
+    padding: 10px 14px;
     text-align: left;
     border-bottom: 1px solid var(--app-border);
     vertical-align: middle;
   }
   th {
-    font-size: 14px;
+    font-size: 15px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: var(--app-muted);
@@ -125,23 +125,23 @@
 
 .id-cell {
   font-weight: 700;
-  font-size: 17px;
+  font-size: 20px;
   white-space: nowrap;
 }
 
 .code-type {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
 }
 
 .score {
   display: inline-block;
-  min-width: 42px;
-  padding: 2px 10px;
+  min-width: 50px;
+  padding: 2px 12px;
   border-radius: 999px;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 20px;
   border: 1px solid currentColor;
   &.v-SCAM {
     color: var(--p-red-700);
@@ -159,23 +159,37 @@
 
 .alert-cell {
   font-weight: 700;
-  font-size: 17px;
+  font-size: 21px;
 }
 
 .flag-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 6px;
 }
 
 .rf {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 13px;
-  padding: 2px 7px;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 3px 8px;
   border-radius: 6px;
   background: var(--app-hover);
   border: 1px solid var(--app-border);
   white-space: nowrap;
+}
+
+/* Verdict tag: readable from a few metres (brief M8); PrimeNG's default tag is ~12px. */
+.verdict-cell ::ng-deep .p-tag {
+  font-size: 17px;
+  font-weight: 700;
+  padding: 4px 12px;
+  gap: 6px;
+  .p-tag-icon {
+    font-size: 17px;
+    width: auto;
+    height: auto;
+  }
 }
 
 .pending-cell,
