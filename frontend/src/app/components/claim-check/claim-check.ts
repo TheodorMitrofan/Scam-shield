@@ -87,7 +87,4 @@ export class ClaimCheck implements OnInit {
     return new Date(iso).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
   }
 
-  protected km(m: number): string {
-    return (m / 1000).toLocaleString('ro-RO', { maximumFractionDigits: 1 });
-  }
 }
