@@ -1,35 +1,32 @@
 <section class="panel claim" aria-labelledby="claim-title">
   <header>
     <h2 id="claim-title">
-      <i class="pi pi-map-marker" aria-hidden="true"></i> „Nepotul e în Spania?” — verificăm locul
-      declarat
-      <p-tag value="SIMULAT" severity="warn" />
+      <i class="pi pi-map-marker" aria-hidden="true"></i>
+      {{ '„Nepotul e în Spania?” — verificăm locul declarat' | ui }}
+      <p-tag [value]="'SIMULAT' | ui" severity="warn" />
     </h2>
-    <p class="sub">
-      Escrocul spune că e în altă țară. Din avioanele care se aud în fundalul mesajului vocal și din
-      ora mesajului verificăm dacă locul declarat se potrivește cu sunetul.
-    </p>
+    <p class="sub">{{ 'Escrocul spune că e în altă țară. Din avioanele care se aud în fundalul mesajului vocal și din ora mesajului verificăm dacă locul declarat se potrivește cu sunetul.' | ui }}</p>
   </header>
 
   @if (loading()) {
     <div class="busy" role="status">
-      <i class="pi pi-spin pi-spinner" aria-hidden="true"></i> Analizăm mesajul vocal…
+      <i class="pi pi-spin pi-spinner" aria-hidden="true"></i> {{ 'Analizăm mesajul vocal…' | ui }}
     </div>
   } @else if (error(); as e) {
     <div class="error" role="alert">
-      <i class="pi pi-exclamation-triangle" aria-hidden="true"></i> {{ e }}
-      <p-button label="Reîncearcă" size="small" [text]="true" (onClick)="load()" />
+      <i class="pi pi-exclamation-triangle" aria-hidden="true"></i> {{ e | ui }}
+      <p-button [label]="'Reîncearcă' | ui" size="small" [text]="true" (onClick)="load()" />
     </div>
   } @else if (claim(); as c) {
     <div class="grid">
       <!-- the voice message -->
       <div class="voice">
         <div class="from">
-          <i class="pi pi-whatsapp" aria-hidden="true"></i> +40 7xx xxx 451 · număr necunoscut ·
+          <i class="pi pi-whatsapp" aria-hidden="true"></i> +40 7xx xxx 451 · {{ 'număr necunoscut' | ui }} ·
           {{ time(c.message_time_utc) }}
         </div>
         <audio controls preload="metadata" [src]="recordingUrl"></audio>
-        <p class="transcript"><span class="lbl">Ce spune:</span> „{{ c.transcript }}”</p>
+        <p class="transcript"><span class="lbl">{{ 'Ce spune:' | ui }}</span> „{{ c.transcript }}”</p>
         @if (scam(); as s) {
           <div class="verdict" [class]="'verdict v-' + s.verdict">
             <i
@@ -40,8 +37,8 @@
               aria-hidden="true"
             ></i>
             <div>
-              <strong>{{ verdictLabel[s.verdict] }}</strong>
-              <p>{{ s.warning.ro }}</p>
+              <strong>{{ verdictLabel[s.verdict] | ui }}</strong>
+              <p>{{ lang.warning(s.warning) }}</p>
             </div>
           </div>
         }
@@ -53,7 +50,7 @@
           <div class="row unknown">
             <i class="pi pi-question-circle" aria-hidden="true"></i>
             <div>
-              <strong>Nu putem verifica locul</strong>
+              <strong>{{ 'Nu putem verifica locul' | ui }}</strong>
               <p>{{ c.reason }}</p>
             </div>
           </div>
@@ -66,14 +63,10 @@
               aria-hidden="true"
             ></i>
             <div>
-              <span class="lbl">Spune că este în</span>
-              <strong>{{ c.claimed.label }}</strong>
+              <span class="lbl">{{ 'Spune că este în' | ui }}</span>
+              <strong>{{ c.claimed.label | ui }}</strong>
               <p>
-                {{
-                  c.claimed.match
-                    ? 'Sunetul se potrivește cu acest loc.'
-                    : 'Sunetul NU se potrivește cu acest loc.'
-                }}
+                {{ (c.claimed.match ? 'Sunetul se potrivește cu acest loc.' : 'Sunetul NU se potrivește cu acest loc.') | ui }}
               </p>
             </div>
           </div>
@@ -85,21 +78,18 @@
               aria-hidden="true"
             ></i>
             <div>
-              <span class="lbl">Sunetul se potrivește cu</span>
-              <strong>{{ c.actual.match ? c.actual.label : 'niciun loc verificat' }}</strong>
+              <span class="lbl">{{ 'Sunetul se potrivește cu' | ui }}</span>
+              <strong>{{ (c.actual.match ? c.actual.label : 'niciun loc verificat') | ui }}</strong>
             </div>
           </div>
           <div class="advice">
-            <strong>Ce să faceți:</strong> nu trimiteți bani. Sunați-l pe nepot la numărul lui
-            vechi, pe care îl cunoașteți.
+            <strong>{{ 'Ce să faceți:' | ui }}</strong> {{ 'nu trimiteți bani. Sunați-l pe nepot la numărul lui vechi, pe care îl cunoașteți.' | ui }}
           </div>
           <p class="note">
-            <i class="pi pi-shield" aria-hidden="true"></i> Nu arătăm unde se află persoana, doar
-            dacă sunetul se potrivește cu locul pe care îl declară. Detaliile tehnice pot fi anexate
-            plângerii către poliție.
+            <i class="pi pi-shield" aria-hidden="true"></i> {{ 'Nu arătăm unde se află persoana, doar dacă sunetul se potrivește cu locul pe care îl declară. Detaliile tehnice pot fi anexate plângerii către poliție.' | ui }}
           </p>
           <p-button
-            [label]="showDetails() ? 'Ascunde detaliile tehnice' : 'Detalii tehnice'"
+            [label]="(showDetails() ? 'Ascunde detaliile tehnice' : 'Detalii tehnice') | ui"
             icon="pi pi-chart-line"
             severity="secondary"
             [text]="true"
@@ -114,7 +104,7 @@
             />
             <p class="tech">
               Avion la secunda {{ c.event.t_cpa_s.toFixed(0) }} · scor de potrivire
-              {{ c.claimed.label }}: {{ (c.claimed.best_score ?? 0).toFixed(2) }} ·
+              {{ c.claimed.label | ui }}: {{ (c.claimed.best_score ?? 0).toFixed(2) }} ·
               {{ c.actual.label }}: {{ (c.actual.best_score ?? 0).toFixed(2) }}
               · ora mesajului cunoscută (±30 s). Mesaj, voce și zboruri simulate.
             </p>

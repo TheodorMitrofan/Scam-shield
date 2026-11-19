@@ -1,4 +1,4 @@
-import { Component, inject, output } from '@angular/core';
+import { Component, computed, inject, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -12,11 +12,13 @@ import { TooltipModule } from 'primeng/tooltip';
 import { CHANNELS, CHANNEL_LABEL, Scenario } from '../../models/scenario';
 import { senderOf, tagOf } from '../../services/result-utils';
 import { ChannelFilter, ScenarioStore, VerdictFilter } from '../../services/scenario-store';
+import { EN, UiPipe } from '../../services/ui.pipe';
+import { UiLang } from '../../services/ui-lang';
 
 /** Left column: search + filters, bulk actions and the grouped scenario cards. */
 @Component({
   selector: 'app-inbox-list',
-  imports: [
+  imports: [UiPipe, 
     FormsModule,
     ButtonModule,
     CheckboxModule,
@@ -36,16 +38,18 @@ export class InboxList {
   /** Emitted when a card is opened (used on mobile to switch to the detail view). */
   readonly opened = output<string>();
 
-  protected readonly channelOptions: { label: string; value: ChannelFilter }[] = [
-    { label: 'Toate canalele', value: 'all' },
-    ...CHANNELS.map((c) => ({ label: CHANNEL_LABEL[c], value: c })),
-  ];
-  protected readonly verdictOptions: { label: string; value: VerdictFilter }[] = [
-    { label: 'Toate', value: 'all' },
-    { label: 'Scam', value: 'SCAM' },
-    { label: 'Suspect', value: 'SUSPICIOUS' },
-    { label: 'Sigur', value: 'SAFE' },
-  ];
+  private readonly uiLang = inject(UiLang);
+  private readonly tr = (ro: string) => (this.uiLang.lang() === 'en' ? (EN[ro] ?? ro) : ro);
+  protected readonly channelOptions = computed<{ label: string; value: ChannelFilter }[]>(() => [
+    { label: this.tr('Toate canalele'), value: 'all' },
+    ...CHANNELS.map((c) => ({ label: this.tr(CHANNEL_LABEL[c]), value: c as ChannelFilter })),
+  ]);
+  protected readonly verdictOptions = computed<{ label: string; value: VerdictFilter }[]>(() => [
+    { label: this.tr('Toate'), value: 'all' },
+    { label: this.tr('Scam'), value: 'SCAM' },
+    { label: this.tr('Suspect'), value: 'SUSPICIOUS' },
+    { label: this.tr('Sigur'), value: 'SAFE' },
+  ]);
 
   protected readonly senderOf = senderOf;
 

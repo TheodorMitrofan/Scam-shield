@@ -3,6 +3,7 @@ import { API_BASE } from '../../api.config';
 import { AnalysisResult, Scenario } from '../../models/scenario';
 import { evidenceSegments, flagsAt, isFirstAlert } from '../../services/result-utils';
 import { UiLang } from '../../services/ui-lang';
+import { UiPipe } from '../../services/ui.pipe';
 
 /**
  * Renders `call_transcript` scenarios as a phone call with live captions.
@@ -11,6 +12,7 @@ import { UiLang } from '../../services/ui-lang';
  */
 @Component({
   selector: 'app-call-view',
+  imports: [UiPipe],
   templateUrl: './call-view.html',
   styleUrl: './call-view.scss',
 })

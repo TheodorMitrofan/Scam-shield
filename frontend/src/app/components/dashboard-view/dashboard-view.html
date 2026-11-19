@@ -2,7 +2,7 @@
   <div class="errors api" role="alert">
     <div>
       <i class="pi pi-wifi" aria-hidden="true"></i> {{ err }}
-      <p-button label="Reîncearcă" size="small" [text]="true" (onClick)="store.reanalyzeAll()" />
+      <p-button [label]="'Reîncearcă' | ui" size="small" [text]="true" (onClick)="store.reanalyzeAll()" />
     </div>
   </div>
 }
@@ -16,11 +16,11 @@
 }
 
 @if (rows().length) {
-  <section class="summary" aria-label="Sumar rezultate">
+  <section class="summary" [attr.aria-label]="'Sumar rezultate' | ui">
     <div class="counts">
       <div class="stat total">
         <span class="num">{{ summary().total }}</span>
-        <span class="lbl">Încărcate</span>
+        <span class="lbl">{{ 'Încărcate' | ui }}</span>
       </div>
       <div class="stat scam">
         <i class="pi pi-times-circle" aria-hidden="true"></i>
@@ -41,7 +41,7 @@
         <div class="stat pending">
           <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
           <span class="num">{{ summary().pending }}</span>
-          <span class="lbl">În analiză</span>
+          <span class="lbl">{{ 'În analiză' | ui }}</span>
         </div>
       }
     </div>
@@ -59,7 +59,7 @@
   </section>
 
   <div class="table-wrap">
-    <table class="results" aria-label="Tablou rezultate">
+    <table class="results" [attr.aria-label]="'Tablou rezultate' | ui">
       <thead>
         <tr>
           <th scope="col">ID</th>
@@ -84,7 +84,7 @@
             <td class="verdict-cell">
               @if (row.analyzing) {
                 <span class="pending-cell">
-                  <i class="pi pi-spin pi-spinner" aria-hidden="true"></i> Se analizează…
+                  <i class="pi pi-spin pi-spinner" aria-hidden="true"></i> {{ 'Se analizează…' | ui }}
                 </span>
               } @else if (row.result; as r) {
                 <p-tag
@@ -139,7 +139,7 @@
 } @else {
   <div class="empty">
     <i class="pi pi-table" aria-hidden="true"></i>
-    <p>Încărcați setul de validare, un folder cu scenarii JSON sau lipiți un mesaj.</p>
-    <p class="hint">Puteți trage fișierele direct în pagină.</p>
+    <p>{{ 'Încărcați setul de validare, un folder cu scenarii JSON sau lipiți un mesaj.' | ui }}</p>
+    <p class="hint">{{ 'Puteți trage fișierele direct în pagină.' | ui }}</p>
   </div>
 }

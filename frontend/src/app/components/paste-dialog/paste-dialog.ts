@@ -11,6 +11,7 @@ import { CHANNELS, CHANNEL_LABEL, Channel, Message, Scenario } from '../../model
 import { scenarioFromConversation } from '../../services/scenario-parser';
 import { ScenarioStore } from '../../services/scenario-store';
 import { Conversation } from '../conversation/conversation';
+import { UiPipe } from '../../services/ui.pipe';
 
 type Side = Message['from'];
 interface Draft {
@@ -36,7 +37,7 @@ const other = (s: Side): Side => (s === 'sender' ? 'reader' : 'sender');
  */
 @Component({
   selector: 'app-paste-dialog',
-  imports: [
+  imports: [UiPipe, 
     FormsModule,
     DialogModule,
     ButtonModule,
