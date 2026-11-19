@@ -78,6 +78,7 @@ def analyze_core(scenario: dict, model=None) -> dict:
     dom = C.sender_email_domain(sender)
     sender_email_bad = bool(dom) and not cat.is_official_domain(dom)
 
+    prev_sender_ntext = ""
     for i, m in enumerate(msgs):
         n = m.get("n") or (i + 1)
         text = str(m.get("text") or "")
@@ -94,11 +95,12 @@ def analyze_core(scenario: dict, model=None) -> dict:
                 rec["evidence"].append({"n": n, "flag": "RF_SUSPICIOUS_CONTACT", "span": list(c["span"]), "source": "contact"})
                 any_suspicious_contact = True
         masked = _mask(nt, [c["span"] for c in found])
-        for flag, span in R.detect(masked, known_contact=known):
+        for flag, span in R.detect(masked, known_contact=known, prev_ntext=prev_sender_ntext):
             rec["flags"].add(flag)
             rec["evidence"].append({"n": n, "flag": flag, "span": list(span), "source": "rule"})
         rec["claims"] = R.org_claims(masked)
         rec["ntext"] = masked
+        prev_sender_ntext = masked
         per_msg.append(rec)
 
     if sender_email_bad:
@@ -209,7 +211,8 @@ _TYPE_KW = {
                         r"accident|spital|arestat|cautiune|\bsunt\s+eu\b",
     "MARKETPLACE": r"cumparator|vanzator|anunt|disponibil|livrare\s+sigura|sa\s+primiti\s+banii|primiti\s+banii|"
                    r"piata\s*mea|\bolx\b|produsul|il\s+iau|o\s+iau|curierul\s+va\s+ridica",
-    "ACCOUNT_TAKEOVER": r"din\s+greseala|trimis\s+(?:\w+\s+){0,3}cod|cod\s+de\s+\d+\s+cifre|mi-l\s+poti|contul\s+de\s+whatsapp",
+    "ACCOUNT_TAKEOVER": r"din\s+greseala|trimis\s+(?:\w+\s+){0,3}cod|cod\s+de\s+\d+\s+cifre|contul\s+(?:meu\s+)?de\s+whatsapp|"
+                        r"ti-a\s+venit\s+(?:\w+\s+){0,3}cod",
     "AUTHORITY_IMPERSONATION": r"\banaf\b|fisc|contribuabil|impozit|casa\s+de\s+pensii|pensi|politi|primari|ghiseul|"
                                r"minister|guvern|amenda|dosar|indexare|cnas|tribunal|instanta",
     "COURIER_FEE": r"colet|awb|livrar|curier|posta|expeditie|reprogramare|vama|depozit(?:ul)?\s+curier",

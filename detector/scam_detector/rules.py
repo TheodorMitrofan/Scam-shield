@@ -26,6 +26,7 @@ NEG_ADVICE = _c(
 CODE_NOUN = _c(r"\bcod(?:ul|uri|urile|ului)?\b", r"\botp\b", r"\bparola\s+unica\b", r"\bcifre(?:le)?\b",
                r"\bcod(?:ul)?\s+(?:de\s+)?(?:confirmare|verificare|activare|securitate|acces|autentificare)")
 CODE_REQ_STRONG = _c(
+    r"\b(?:da|dati|trimite|trimiteti|spune|spuneti|citeste|cititi)-mi-l\b",
     r"\bmi-l\s+(?:poti|puteti|cititi|citesti|citeste|spui|spuneti|dai|dati|trimiti|trimiteti|transmiti|transmiteti|"
     r"dictezi|dictati|zici|scrii|scrieti)\b",
     r"\bpe\s+care\s+(?:mi|ni)-?l\b",
@@ -43,7 +44,7 @@ REMOTE = _c(
     r"\bany\s?desk\b", r"\bteam\s?viewer\b", r"\bquick\s?support\b", r"\brust\s?desk\b", r"\bammyy\b",
     r"\bsupremo\b", r"\bultra\s?viewer\b", r"\blogmein\b", r"\bsplashtop\b", r"\bairdroid\b",
     r"\b(?:control|acces|conectare|asistenta)(?:ul)?\s+(?:\w+\s+)?(?:de\s+la\s+distanta|remote)\b",
-    r"\bde\s+la\s+distanta\b",
+    r"\b(?:de\s+)?la\s+distanta\b",
     r"\b(?:partajati|partajeaza|share)\s+(?:\w+\s+)?ecran", r"\bpartajare(?:a)?\s+(?:a\s+)?ecran",
     r"\.apk\b",
 )
@@ -64,6 +65,7 @@ DATA_STRONG = _c(
 )
 DATA_WEAK = _c(r"\biban(?:-ul|ul)?\b", r"\bbuletin(?:ul)?\b", r"\bcartea\s+de\s+identitate\b", r"\bdatele\b",
                r"\bcontul\s+(?:de\s+)?(?:banca|bancar)\b")
+DATA_DESCRIPTIVE = re.compile(r"\b(?:va\s+vad|v-au\s+furat|au\s+furat|au\s+acces|hackeri|nu\s+va\s+cer|furat)")
 DATA_VERB = _c(
     r"\b(?:completati|completeaza|introduceti|introdu|trimiteti|trimite|confirmati|confirma|furnizati|spuneti|spune|"
     r"dati|da-mi|dictati|comunicati|scrieti|scrie|actualizati|actualizeaza|verificam|verifica|validati|valideaza|"
@@ -74,7 +76,7 @@ DATA_VERB = _c(
 PAYMENT = _c(
     r"\bachitati\b", r"\bachita\b", r"\bplatiti\b", r"\bplateste\b", r"\bplatesti\b",
     r"\bsa\s+(?:imi\s+|ne\s+|mi\s+)?(?:platiti|achitati|transferati|virati|depuneti|trimiteti|alimentati|investiti)\b",
-    r"\b(?:fa|faci|faceti|face|poti\s+face|puteti\s+face)(?:-mi|-ne)?\s+(?:tu\s+|dvs\.?\s+)?(?:un\s+)?"
+    r"\b(?:fa|faci|faceti|face|poti\s+face|puteti\s+face)(?:-mi|-ne)?\s+(?:te\s+rog\s+|va\s+rog\s+)?(?:tu\s+|dvs\.?\s+)?(?:un\s+)?"
     r"(?:transfer|virament|depunere|plata)\b",
     r"\b(?:faci|faceti|fa|da|dai|dati|da-mi|poti\s+da)(?:-mi|-ne)?\s+(?:tu\s+)?(?:un\s+)?(?:transfer|virament)\b",
     r"\b(?:transferati|transfera|vireaza|virati|depuneti|depune|alimentati|alimenteaza|investiti|investeste)\b",
@@ -84,7 +86,10 @@ PAYMENT = _c(
     r"\b(?:western\s+union|moneygram|paysafe|card(?:uri)?\s+cadou|gift\s?card)\b",
     r"\bcumparati\s+(?:\w+\s+)?(?:voucher|card|cupon)",
     r"\b(?:o\s+)?(?:taxa|comision|garantie|avans|depozit|cautiune)\s+(?:\w+\s+){0,3}de\s+\d[\d.,]*\s*(?:lei|ron|euro|eur|€)",
-    r"\btrebuie\s+(?:sa\s+)?(?:\w+\s+)?(?:platit|achitat|platiti|achitati|depus|transferat)\b",
+    r"\btrebuie\s+(?:sa\s+)?(?:\w+\s+)?(?:platit|platita|achitat|achitata|platiti|achitati|depus|depuneti|transferat)\b",
+    r"\bretrage(?:ti)?\s+(?:\S+\s+){0,4}(?:cash|numerar|bani|banii|lei|euro)\b",
+    r"\bam\s+nevoie\s+de\s+(?:\d[\d.,]*\s*(?:lei|ron|euro|eur|€|dolari)|bani)\b",
+    r"\b(?:vine|trimit)\s+(?:un\s+)?(?:coleg|curier|om)\s+(?:sa\s+)?(?:-i\s+)?(?:ridice|ia|preia)\s+(?:banii)?",
 )
 PAYMENT_PAST = re.compile(r"\b(?:a\s+fost|au\s+fost|am|ati|s-a)\s+(?:deja\s+)?(?:achitat|achitata|platit|platita|"
                           r"efectuat|efectuata|transferat|depus|virat)")
@@ -120,8 +125,9 @@ TOO_GOOD = _c(
     r"\bextragere(?:a)?\b", r"\bgarantat(?:a|e)?\b", r"\bprofit(?:ul|uri)?\s+(?:garantat|sigur|zilnic|lunar|de\s+\d)",
     r"\brandament(?:ul)?\b", r"\bcastig(?:uri|ati|i)?\s+(?:\w+\s+)?(?:zilnic|lunar|pe\s+zi|pe\s+luna|sigur|garantat|de\s+pana)",
     r"\bbani\s+(?:usor|rapid|gratis)", r"\bvenit\s+pasiv\b", r"\bfara\s+(?:niciun\s+)?risc\b",
-    r"\b(?:pensia|salariul|ajutorul|alocatia|indemnizatia)\s+(?:\w+\s+){0,3}(?:va\s+)?(?:creste|cresc|majora|mari)",
-    r"\bvesti\s+bune\b", r"\b(?:bonus|cadou)\s+de\s+\d", r"\bcastigati\b", r"\bpoti\s+castiga\b", r"\bputeti\s+castiga\b",
+    r"\b(?:pensia|salariul|ajutorul|alocatia|indemnizatia)\s+(?:\S+\s+){0,3}(?:va\s+|se\s+)?(?:creste|cresc|majora|mari|mareste|majoreaza)",
+    r"\b(?:majorare|marire|crestere|bonus)\s+(?:a\s+|la\s+)?(?:pensiei|pensie|salariului)\b", r"\bdublat\s+banii\b",
+    r"\bvesti\s+bune\b", r"(?<!card\s)\b(?:bonus|cadou)\s+de\s+\d", r"\bvoucher\s+de\s+\d", r"\bcastigati\b", r"\bpoti\s+castiga\b", r"\bputeti\s+castiga\b",
     r"\bmostenire\b", r"\bdespagubire\s+de\b", r"\bde\s+\d+\s*(?:ori|x)\s+(?:mai\s+mult|banii)",
     r"\b(?:recomandat|recomandata)\s+de\s+(?:experti|specialisti)",
 )
@@ -147,16 +153,16 @@ THREAT = _c(
     r"\b(?:cont|calculator|telefon)(?:ul)?\s+(?:\S+\s+){0,3}(?:spart|compromis|hackuit|atacat)",
     r"\bactivitate\s+suspecta\b", r"\btranzacti(?:e|i)\s+(?:\w+\s+)?suspect", r"\bacces\s+neautorizat\b",
     r"\bveti\s+pierde\b", r"\bva\s+fi\s+(?:sters|anulat|inchis|blocat|suspendat)", r"\bfurat\s+bani",
-    r"\bv-au\s+furat\b", r"\bplangere\s+penala\b", r"\bin\s+instanta\b",
+    r"\bv-au\s+furat\b", r"\b(?:goleasca|golit|goli)\s+(?:\w+\s+)?contul\b", r"\bplangere\s+penala\b", r"\bin\s+instanta\b",
 )
 
 # ---------------------------------------------------------------- RF_EMOTIONAL_PRESSURE
 EMOTIONAL = _c(
     r"\baccident(?:at|ata|ul)?\b", r"\bspital(?:ul)?\b", r"\burgenta\s+medicala\b", r"\boperati(?:e|a)\b",
-    r"\bambulanta\b", r"\barestat(?:a)?\b", r"\bretinut(?:a)?\b", r"\bdisperat(?:a)?\b", r"\bajuta-ma\b",
+    r"\bambulanta\b", r"\barestat(?:a)?\b", r"\b(?:am\s+fost|sunt)\s+retinut(?:a)?\b", r"\bdisperat(?:a)?\b", r"\bajuta-ma\b",
     r"\bajutati-ma\b", r"\bsunt\s+in\s+(?:mare\s+)?(?:necaz|pericol|belea|bucluc)\b", r"\bplang\b",
     r"\be\s+(?:foarte\s+)?grav\b", r"\bgrav\s+bolnav", r"\bdoar\s+tu\s+(?:ma\s+)?(?:poti|esti)\b",
-    r"\bsingura\s+(?:mea\s+)?speranta\b", r"\bte\s+iubesc\b", r"\biubirea\s+mea\b", r"\bmi-e\s+(?:atat\s+de\s+)?dor\b",
+    r"\bsingura\s+(?:mea\s+)?speranta\b", r"\bte\s+iubesc\b", r"\biubirea\s+mea\b",
     r"\b(?:imi|mi-e)\s+(?:e\s+)?(?:frica|teama)\b", r"\bva\s+rog\s+din\s+suflet\b", r"\bte\s+implor\b",
 )
 
@@ -183,8 +189,8 @@ GENERIC_CLAIMS = [
      r"\bwindows\b|\bapple\b|\bgoogle\b", None),
     (r"\b(?:de\s+la|din\s+partea|reprezentant(?:ul)?|angajat(?:ul)?)\s+(?:\w+\s+)?(?:bancii|banca|bancii\s+dvs)\b|"
      r"\bbanca\s+(?:dvs|dumneavoastra|ta)\b|\bserviciul\s+clienti\b", None),
-    (r"\bprimari(?:a|ei)\b|\bministerul\b|\bguvern(?:ul)?\b|\bghiseul(?:\.ro)?\b|\bdgaspc\b|\bcass?\b|\bmedic(?:ul)?\s+de\s+familie\b", None),
-    (r"\bposta\s+romana\b|\bfan\s*courier\b|\bsameday\b|\bdhl\b|\bcargus\b|\bgls\b|\bdpd\b|\bvama\b|\bautoritatea\s+vamala\b", None),
+    (r"\bprimari(?:a|ei)\b|\bministerul\b|\bguvern(?:ul)?\b|\bghiseul(?:\.ro)?\b|\bdgaspc\b|\bcnas\b|\bmedic(?:ul)?\s+de\s+familie\b", None),
+    (r"\bposta(?:\s+romana)?\b|\bfirma\s+de\s+curierat\b|\bfan\s*courier\b|\bsameday\b|\bdhl\b|\bcargus\b|\bgls\b|\bdpd\b|\bvama\b|\bautoritatea\s+vamala\b", None),
     (r"\bnetflix\b|\bemag\b|\bolx\b|\brevolut\b|\bbcr\b|\bbrd\b|\bing\s+bank\b|\bbanca\s+transilvania\b|\braiffeisen\b|"
      r"\bcec\s+bank\b|\benel\b|\be-?on\b|\bdigi\b|\borange\b|\bvodafone\b", None),
 ]
@@ -204,15 +210,17 @@ def _sentence_of(text, pos):
     return text
 
 
-def detect(ntext: str, known_contact: bool = False):
-    """Return list of (flag, span) for one normalised message text."""
+def detect(ntext: str, known_contact: bool = False, prev_ntext: str = ""):
+    """Return list of (flag, span) for one normalised message text.
+
+    prev_ntext: the previous sender message (a code mentioned there can be requested here: "mi-l trimiti?")."""
     out = []
     if not ntext or not ntext.strip():
         return out
     negated = bool(NEG_ADVICE.search(ntext))
 
     # CODE_REQUEST: strong request phrasing next to a code noun; safety-advice negation vetoes weak matches.
-    if CODE_NOUN.search(ntext):
+    if CODE_NOUN.search(ntext) or CODE_NOUN.search(prev_ntext or ""):
         strong = list(CODE_REQ_STRONG.finditer(ntext))
         for m in strong:
             sent = _sentence_of(ntext, m.start())
@@ -227,6 +235,8 @@ def detect(ntext: str, known_contact: bool = False):
         sent = _sentence_of(ntext, m.start())
         if NEG_ADVICE.search(sent):
             continue
+        if DATA_DESCRIPTIVE.search(sent) and not DATA_VERB.search(sent):
+            continue  # "hackerii va vad parolele" describes a threat, it is not a request
         out.append(("RF_DATA_REQUEST", (m.start(), m.end())))
     for m in DATA_WEAK.finditer(ntext):
         sent = _sentence_of(ntext, m.start())
@@ -262,15 +272,26 @@ def detect(ntext: str, known_contact: bool = False):
             continue
         out.append(("RF_URGENCY", (m.start(), m.end())))
     out += _spans(THREAT, ntext, "RF_THREAT")
-    out += _spans(EMOTIONAL, ntext, "RF_EMOTIONAL_PRESSURE")
+    for m in EMOTIONAL.finditer(ntext):
+        sent = _sentence_of(ntext, m.start())
+        if re.search(r"\bsunt\s+bine\b|nu-?\s*ti\s+face\s+griji|nu\s+va\s+faceti\s+griji|\bmic\s+accident", sent):
+            continue
+        out.append(("RF_EMOTIONAL_PRESSURE", (m.start(), m.end())))
     out += _spans(CHANNEL_SWITCH, ntext, "RF_CHANNEL_SWITCH")
     return out
 
 
+_NOT_CLAIM_BEFORE = re.compile(r"(?:\bprin|\bpe|\bvia|\bin\s+aplicatia|\bcontul\s+de|\bde\s+pe|\bla\s+ghiseul)\s+$")
+
+
 def org_claims(ntext: str):
-    """Return list of (org_key|None, span) for organisations/authorities the text speaks for."""
+    """Return list of (org_key|None, span) for organisations/authorities the text speaks for.
+
+    "am platit prin PiataMea" / "am vazut anuntul pe PiataMea" mention a platform, they do not claim to BE it."""
     claims = []
     for rx, key in GENERIC_CLAIMS:
         for m in rx.finditer(ntext):
+            if _NOT_CLAIM_BEFORE.search(ntext[max(0, m.start() - 25):m.start()]):
+                continue
             claims.append((key, (m.start(), m.end())))
     return claims
