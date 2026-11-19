@@ -9,7 +9,7 @@ _WORD_BOUNDARY_ORG_RX = re.compile(
     r"\bbanca(?=:|\s+(?:dvs|dumneavoastra)\b)|\b(?:banc(?:a|ii)\s+dunarea|bancadunarea|curier\s*expres|anaf|megashop|mega\s*shop|"
     r"suport(?:ul)?\s+tehnic|departament(?:ul)?\s+(?:de\s+)?(?:antifraud[ae]|fraud[ae]|securitate)|"
     r"siguranta\s+financiara\s+a\s+bancii|casa\s+(?:nationala\s+)?de\s+pensii|posta\s+romana|"
-    r"banc(?:a|ii)\s+transilvania|bcr|brd|ing|raiffeisen|revolut|unicredit|"
+    r"banc(?:a|ii)\s+transilvania|bcr|brd|ing|raiffeisen|(?<!pe )(?<!in )(?<!la )revolut|unicredit|"
     r"microsoft|windows\s+defender|digi|politia\s+romana|politia|comisar(?:ul)?|"
     r"procuror(?:ul)?|diicot|execut(?:or|ant)(?:ul)?\s+judecatoresc|minister(?:ul)?\s+\w+|"
     r"enel(?:\s+energie)?|electrica|apa\s+nova|tehnician(?:ul)?|"
@@ -204,13 +204,17 @@ class RedFlagDetector:
         # currency, or by a destination account/IBAN — e.g. "trimiteti 1000 RON in contul REV1123". Past forms
         # ("v-am trimis 1000 lei", "am platit") deliberately do not match.
         asks_transfer = bool(re.search(
-            r"\b(?:trimiteti|trimite|trimiti|trimitei|trimite-mi|trimiteti-ne|trimite-ne|depuneti|virati|"
-            r"transferati|platiti|achitati|alimentati)\b"
-            r"(?:[^.!?]{0,60}?\b[1-9]\d*(?:[.,]\d+)*\s*(?:lei|ron|euro|eur)\b|[^.!?]{0,60}?[1-9]\d*\s*(?:€|\$)"
-            r"|[^.!?]{0,60}?\b(?:in|pe|catre)\s+(?:contul|iban(?:-ul)?)\b)",
+            r"\b(?:trimiteti|trimite|trimiti|trimitei|trimite-mi|trimiteti-mi|trimiteti-ne|trimite-ne|depuneti|virati|"
+            r"vireaza|transferati|transfera-mi|platiti|achitati|alimentati|baga|bagati|pune|puneti|da-mi|dati-mi|"
+            r"fa-mi\s+un\s+transfer|faceti(?:-mi)?\s+un\s+transfer)\b"
+            r"(?:[^.!?]{0,60}?\b[1-9]\d*(?:[.,]\d+)*\s*(?:de\s+)?(?:lei|ron|euro|eur)\b"
+            r"|[^.!?]{0,60}?[1-9]\d*(?:[.,]\d+)*\s*(?:€|\$)"
+            r"|[^.!?]{0,60}?\b(?:in|pe|catre|la)\s+(?:contul|contu|cont|iban(?:-ul)?|revolut)\b)",
             text_norm,
         ))
-        if asks_transfer:
+        # A saved contact (family, friend) asking for money is ordinary unless other rules see pressure or a fake
+        # identity; the specific phrase list above still covers known-contact scams.
+        if asks_transfer and not known_contact:
             asks_payment = True
         has_amount = bool(re.search(r"\b[1-9]\d*(?:[.,]\d+)?\s*(?:lei\b|ron\b|euro\b|eur\b|€|\$)", text_norm))
         has_pay_verb = bool(re.search(

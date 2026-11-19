@@ -25,3 +25,6 @@ venv/
 *.mp3
 !/audio/conversations/*.mp3
 *.m4a
+
+# generated stress-test data (tools/stress/*)
+/stress_data/
