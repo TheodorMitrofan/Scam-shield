@@ -95,11 +95,16 @@ class WarningGenerator:
 
         # SCAM verdict warnings (<= 3 short sentences, zero jargon, official action only)
         if scam_type == "BANK_IMPERSONATION":
+            ro_action = (
+                "Nu apăsați pe adresa trimisă; sunați direct la numărul de pe spatele cardului sau la Banca Dunărea: 0800 100 200."
+                if ("banca dunarea" in norm_ctx or "bancadunarea" in norm_ctx)
+                else "Nu apăsați pe adresa trimisă; sunați direct la numărul oficial de pe spatele cardului."
+            )
             return {
                 "ro": (
                     "Atenție, pare o țeapă! "
                     "Mesajul se dă drept banca dumneavoastră pentru a vă speria sau a vă cere datele ori mutarea banilor. "
-                    "Nu apăsați pe adresa trimisă; sunați direct la numărul de pe spatele cardului sau la Banca Dunărea: 0800 100 200."
+                    + ro_action
                 ),
                 "en": (
                     "Warning, this looks like a scam! "
@@ -258,17 +263,38 @@ class WarningGenerator:
                 ),
             }
 
-        if "RF_TOO_GOOD" in red_flags or "RF_THREAT" in red_flags:
+        is_health_context = any(
+            h in norm_ctx
+            for h in (
+                "tratament", "pastile", "medicament", "sanatate", "leac", "formula unica",
+                "vasele", "colesterol", "articulatii", "vindecare", "doctor", "medic",
+            )
+        )
+        if is_health_context and ("RF_TOO_GOOD" in red_flags or "RF_THREAT" in red_flags):
             return {
                 "ro": (
                     "Atenție, pare o țeapă! "
-                    "Mesajul încearcă să vă sperie sau să vă convingă să cumpărați ori să plătiți ceva urgent fără verificare. "
+                    "Mesajul încearcă să vă sperie sau să vă convingă să cumpărați un tratament miraculos fără verificare. "
                     "Nu comandați, nu plătiți și întrebați mai întâi medicul de familie sau o persoană apropiată."
                 ),
                 "en": (
                     "Warning, this looks like a scam! "
-                    "The message uses fear or miracle promises to rush you into paying or ordering something unverified. "
+                    "The message uses fear or miracle promises to rush you into ordering an unverified treatment. "
                     "Do not pay or order and consult your doctor or a trusted family member first."
+                ),
+            }
+
+        if "RF_TOO_GOOD" in red_flags or "RF_THREAT" in red_flags:
+            return {
+                "ro": (
+                    "Atenție, pare o țeapă! "
+                    "Mesajul încearcă să vă sperie sau să vă convingă să plătiți ori să acționați urgent fără verificare. "
+                    "Nu plătiți, nu accesați adrese din mesaj și cereți sfatul unei persoane apropiate."
+                ),
+                "en": (
+                    "Warning, this looks like a scam! "
+                    "The message uses fear or unrealistic promises to rush you into paying or acting without checking. "
+                    "Do not pay, avoid links in the message, and ask a trusted family member for advice."
                 ),
             }
 

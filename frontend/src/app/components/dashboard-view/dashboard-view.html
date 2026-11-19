@@ -1,0 +1,145 @@
+@if (store.apiError(); as err) {
+  <div class="errors api" role="alert">
+    <div>
+      <i class="pi pi-wifi" aria-hidden="true"></i> {{ err }}
+      <p-button label="Reîncearcă" size="small" [text]="true" (onClick)="store.reanalyzeAll()" />
+    </div>
+  </div>
+}
+
+@if (store.errors().length) {
+  <div class="errors" role="alert">
+    @for (e of store.errors(); track e) {
+      <div><i class="pi pi-exclamation-triangle" aria-hidden="true"></i> {{ e }}</div>
+    }
+  </div>
+}
+
+@if (rows().length) {
+  <section class="summary" aria-label="Sumar rezultate">
+    <div class="counts">
+      <div class="stat total">
+        <span class="num">{{ summary().total }}</span>
+        <span class="lbl">Încărcate</span>
+      </div>
+      <div class="stat scam">
+        <i class="pi pi-times-circle" aria-hidden="true"></i>
+        <span class="num">{{ summary().scam }}</span>
+        <span class="lbl">SCAM</span>
+      </div>
+      <div class="stat suspicious">
+        <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+        <span class="num">{{ summary().suspicious }}</span>
+        <span class="lbl">SUSPICIOUS</span>
+      </div>
+      <div class="stat safe">
+        <i class="pi pi-check-circle" aria-hidden="true"></i>
+        <span class="num">{{ summary().safe }}</span>
+        <span class="lbl">SAFE</span>
+      </div>
+      @if (summary().pending) {
+        <div class="stat pending">
+          <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+          <span class="num">{{ summary().pending }}</span>
+          <span class="lbl">În analiză</span>
+        </div>
+      }
+    </div>
+
+    <div class="summary-actions">
+      <p-button
+        label="Export CSV"
+        icon="pi pi-download"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="!store.hasResults()"
+        (onClick)="exportCsv()"
+      />
+    </div>
+  </section>
+
+  <div class="table-wrap">
+    <table class="results" aria-label="Tablou rezultate">
+      <thead>
+        <tr>
+          <th scope="col">ID</th>
+          <th scope="col">Verdict</th>
+          <th scope="col">Scam type</th>
+          <th scope="col" class="num-col">Risk score</th>
+          <th scope="col" class="num-col">First alert</th>
+          <th scope="col">Red flags</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.scenario.id) {
+          <tr
+            class="row"
+            [class.selected]="row.scenario.id === store.selectedId()"
+            tabindex="0"
+            (click)="open(row.scenario.id)"
+            (keydown.enter)="open(row.scenario.id)"
+            (keydown.space)="$event.preventDefault(); open(row.scenario.id)"
+          >
+            <td class="id-cell">{{ row.scenario.id }}</td>
+            <td class="verdict-cell">
+              @if (row.analyzing) {
+                <span class="pending-cell">
+                  <i class="pi pi-spin pi-spinner" aria-hidden="true"></i> Se analizează…
+                </span>
+              } @else if (row.result; as r) {
+                <p-tag
+                  [value]="r.verdict"
+                  [severity]="severityOf(r.verdict)"
+                  [icon]="iconOf(r.verdict)"
+                  [rounded]="true"
+                />
+              } @else {
+                <span class="muted">—</span>
+              }
+            </td>
+            <td class="type-cell">
+              @if (row.result; as r) {
+                <code class="code-type" [pTooltip]="scamTypeLabel(r.scam_type)" tooltipPosition="top">
+                  {{ r.scam_type }}
+                </code>
+              } @else {
+                <span class="muted">—</span>
+              }
+            </td>
+            <td class="num-col score-cell">
+              @if (row.result; as r) {
+                <span class="score" [class]="'score v-' + r.verdict">{{ r.risk_score }}</span>
+              } @else {
+                <span class="muted">—</span>
+              }
+            </td>
+            <td class="num-col alert-cell">
+              @if (row.result; as r) {
+                {{ r.verdict === 'SAFE' ? '' : (r.first_alert ?? '') }}
+              }
+            </td>
+            <td class="flags-cell">
+              @if (row.result; as r) {
+                @if (r.red_flags.length) {
+                  <div class="flag-list">
+                    @for (f of r.red_flags; track f) {
+                      <code class="rf" [pTooltip]="flagLabel(f)" tooltipPosition="top">{{ f }}</code>
+                    }
+                  </div>
+                } @else {
+                  <span class="muted">—</span>
+                }
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else {
+  <div class="empty">
+    <i class="pi pi-table" aria-hidden="true"></i>
+    <p>Încărcați setul de validare, un folder cu scenarii JSON sau lipiți un mesaj.</p>
+    <p class="hint">Puteți trage fișierele direct în pagină.</p>
+  </div>
+}

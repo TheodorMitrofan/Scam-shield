@@ -18,7 +18,7 @@
   </div>
 
   <div class="actions">
-    @if (view() === 'messages') {
+    @if (view() !== 'audio') {
     <button
       type="button"
       class="status"
@@ -47,7 +47,7 @@
       pTooltip="Schimbă tema"
       tooltipPosition="bottom"
     />
-    @if (view() === 'messages') {
+    @if (view() !== 'audio') {
     <p-button
       label="Setul de validare"
       icon="pi pi-folder-open"
