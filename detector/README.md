@@ -41,7 +41,17 @@ scores 11/11 on the validation set.
 1. `normalize`: lowercase, strip diacritics (offsets are kept, so spans stay valid).
 2. `contacts`: links, e-mails and phones are checked against the official list → `RF_SUSPICIOUS_CONTACT`.
 3. `rules`: per-flag Romanian patterns with negation guards ("nu comunicați codul nimănui" is advice, not a request).
-4. `model`: adds a flag only when the calibrated probability is ≥ 0.9 (never adds contact or identity flags).
+4. `model`: can only add *context* flags (urgency, threat, emotion, secrecy, too-good, channel switch), only with a
+   calibrated probability ≥ 0.9, and only in threads where rules already found risk. It never adds request flags
+   (code/data/payment/remote) or contact/identity flags; its type head is reported as `model_type` only.
+   Reason: in the stress test the model, trained on synthetic templates, fired CODE/DATA on "cod de reducere"
+   and changed types for the worse (see `tests/stress_test.py`).
+
+## Stress test
+```bash
+python detector/tests/stress_test.py --with-challenge -v                 # 43 traps + 15 challenge, rules vs ensemble
+python detector/tests/stress_test.py --file detector/tests/blind_set.json # 15 more
+```
 5. `fusion`:
    - `RF_IMPERSONATION` = an org/authority claim plus an unverified sender or other risk.
    - A verified official sender with only official links and no "never-official" requests counts as genuine.
