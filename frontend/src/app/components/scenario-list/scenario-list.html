@@ -1,0 +1,24 @@
+<nav aria-label="Scenarii încărcate">
+  <ul>
+    @for (s of store.scenarios(); track s.id) {
+      <li>
+        <button
+          type="button"
+          [class.active]="s.id === store.selectedId()"
+          (click)="store.select(s.id)"
+          [attr.aria-current]="s.id === store.selectedId() ? 'true' : null"
+        >
+          <span class="icon" aria-hidden="true">{{ icon[s.channel] }}</span>
+          <span class="main">
+            <span class="id">{{ s.id }}</span>
+            <span class="who">{{ who(s) }}</span>
+          </span>
+          <span class="meta"
+            >{{ label[s.channel] }} · {{ s.messages.length }}
+            {{ s.messages.length === 1 ? 'mesaj' : 'mesaje' }}</span
+          >
+        </button>
+      </li>
+    }
+  </ul>
+</nav>

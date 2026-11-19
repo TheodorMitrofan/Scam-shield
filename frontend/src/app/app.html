@@ -1,0 +1,63 @@
+<header class="top">
+  <h1><span aria-hidden="true">🛡️</span> Scam Shield</h1>
+  <p class="tag">Verificăm împreună mesajele primite.</p>
+</header>
+
+<section class="load" (dragover)="$event.preventDefault()" (drop)="onDrop($event)">
+  <button
+    type="button"
+    class="big"
+    (click)="store.loadValidationSet()"
+    [disabled]="store.loading()"
+  >
+    📂 Încarcă setul de validare
+  </button>
+  <label class="big secondary">
+    📄 Deschide fișiere JSON
+    <input type="file" accept=".json,application/json" multiple (change)="onFiles($event)" />
+  </label>
+  <label class="big secondary">
+    🗂️ Deschide un folder
+    <input type="file" webkitdirectory multiple (change)="onFiles($event)" />
+  </label>
+  <span class="hint">sau trageți fișierele aici</span>
+</section>
+
+<section class="paste">
+  <label for="paste">Lipiți un mesaj primit:</label>
+  <textarea
+    id="paste"
+    rows="3"
+    [value]="pasted()"
+    (input)="pasted.set($any($event.target).value)"
+    placeholder="Ex.: Cardul dvs. a fost blocat..."
+  ></textarea>
+  <button type="button" class="big" (click)="addPasted()" [disabled]="!pasted().trim()">
+    Afișează mesajul
+  </button>
+</section>
+
+@if (store.errors().length) {
+  <div class="errors" role="alert">
+    @for (e of store.errors(); track e) {
+      <div>⚠ {{ e }}</div>
+    }
+  </div>
+}
+
+<main class="layout">
+  @if (store.scenarios().length) {
+    <aside class="side">
+      <h2>{{ store.scenarios().length }} scenarii</h2>
+      <app-scenario-list />
+    </aside>
+    <section class="view">
+      @if (store.selected(); as s) {
+        <h2 class="view-title">{{ s.id }} · {{ label[s.channel] }}</h2>
+        <app-conversation [scenario]="s" />
+      }
+    </section>
+  } @else {
+    <p class="empty">Încărcați un fișier sau lipiți un mesaj ca să începem.</p>
+  }
+</main>

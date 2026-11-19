@@ -1,0 +1,41 @@
+<section class="mail" aria-label="E-mail">
+  <header class="toolbar"><span aria-hidden="true">✉</span> Căsuța de e-mail</header>
+  <h2 class="subject">{{ subject() }}</h2>
+
+  @for (m of scenario().messages; track m.n) {
+    <article
+      class="email"
+      [class.reply]="m.from === 'reader'"
+      [class.alert]="isFirstAlert(result(), m.n)"
+    >
+      <div class="meta">
+        <span class="n">{{ m.n }}</span>
+        @if (m.from === 'sender') {
+          <div>
+            <div class="from">{{ senderName() }}</div>
+            <div class="addr">
+              &lt;{{ scenario().sender.address ?? 'adresă necunoscută' }}&gt;
+              <span class="contact" [class.known]="scenario().sender.known_contact">
+                {{ scenario().sender.known_contact ? '✓ În agendă' : '⚠ Expeditor necunoscut' }}
+              </span>
+            </div>
+            <div class="to">către: dumneavoastră</div>
+          </div>
+        } @else {
+          <div>
+            <div class="from">Dumneavoastră</div>
+            <div class="to">către: {{ scenario().sender.address ?? senderName() }}</div>
+          </div>
+        }
+      </div>
+      <p class="body">{{ m.text || '(e-mail gol)' }}</p>
+      @if (flagsAt(result(), m.n).length) {
+        <ul class="flags">
+          @for (f of flagsAt(result(), m.n); track f) {
+            <li>{{ f }}</li>
+          }
+        </ul>
+      }
+    </article>
+  }
+</section>

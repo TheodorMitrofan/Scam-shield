@@ -85,8 +85,8 @@ Backend ↔ detector boundary is ONLY `scam_detector.load()` and `scam_detector.
 | Task | Command |
 |---|---|
 | Install | `cd frontend && npm install` · backend/detector: TODO (B/C) |
-| Run locally | `cd frontend && npm start` (http://localhost:4200) · backend: TODO (B) |
-| Run tests | TODO |
+| Run locally | `cd frontend && npm start` → http://localhost:4200 (demo shortcut: `/?load=validation&id=V04`) · backend: TODO (B) |
+| Run tests | TODO (C: `pytest detector/`) |
 | Lint / format | TODO |
 | Seed demo data | TODO |
 | Deploy | TODO |
@@ -180,7 +180,7 @@ Rules: one row per task; only edit your own rows; when you pick a task set `doin
 | # | Task | Area | Owner | Status | Branch / PR | Notes |
 |---|---|---|---|---|---|---|
 | 1 | Plan (`PLAN.md`) + fill §1–§4 | shared | Giulio | review | giulio/plan-and-viewer | all 3 confirm §4 |
-| 2 | Angular scaffold + scenario import + channel viewers (chat/email/call) | frontend | Giulio | doing | giulio/plan-and-viewer | PLAN 1.2, 2.1–2.4 |
+| 2 | Angular scaffold + scenario import + channel viewers (chat/email/call) | frontend | Giulio | review | giulio/plan-and-viewer | PLAN 1.2, 2.1–2.4 |
 | 3 | FastAPI scaffold + docker-compose Postgres + `/health` | backend | Theodor | todo | | PLAN 1.3 |
 | 4 | `/scenarios/validation`, `/analyze`, `/analyze/batch`, `/analyze/text` | backend | Theodor | todo | | PLAN 2.5, 2.6 |
 | 5 | `scam_detector` package + rules + scoring + first_alert (11/11 on validation) | detector | Francesco | todo | | PLAN 1.4, 3.1–3.3, 3.11 |
