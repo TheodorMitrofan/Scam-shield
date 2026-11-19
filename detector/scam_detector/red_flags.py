@@ -64,7 +64,7 @@ class RedFlagDetector:
         # 1. RF_NEW_NUMBER (20 pts)
         # -------------------------------------------------------------
         has_family_mention = bool(re.search(
-            r"\b(?:mami|mama|mamico|tati|taticule|tata|buni|bunico|bunicule|copilul\s+tau|nepot(?:ul)?|nepoata|fiul|fiica|unchi|matusa)\b",
+            r"\b(?:mami|mama|mamico|mamica|mamaie|maica|tati|taticule|tata|tataie|taica|buni|bunico|bunicule|bunica|bunicul|bunicuta|copilul\s+tau|nepot(?:ul|el|elul|ica)?|nepoata|fiul|fiica|fiule|fata\s+ta|baiatul\s+tau|frate(?:le)?|fratiorul|sora|surioara|var(?:ul)?|verisor(?:ul)?|verisoara|unchi(?:ul|ule)?|matusa|matusica|nasa|nasul|nasule|finul|fina|cumnat(?:ul|a)?|socru(?:l)?|soacra|ginere(?:le)?|nora|sotul|sotia|iubit(?:ul|a)?|puiule|scumpo|scumpule)\b",
             text_norm,
         ))
         new_num_tokens = [
@@ -207,7 +207,7 @@ class RedFlagDetector:
             r"\b(?:trimiteti|trimite|trimiti|trimitei|trimite-mi|trimiteti-mi|trimiteti-ne|trimite-ne|depuneti|virati|"
             r"vireaza|transferati|transfera-mi|platiti|achitati|alimentati|baga|bagati|pune|puneti|da-mi|dati-mi|"
             r"fa-mi\s+un\s+transfer|faceti(?:-mi)?\s+un\s+transfer)\b"
-            r"(?:[^.!?]{0,60}?\b[1-9]\d*(?:[.,]\d+)*\s*(?:de\s+)?(?:lei|ron|euro|eur|dolari|dolar|usd|lire|lira|gbp|franci|chf|bitcoin|btc|usdt|crypto)\b"
+            r"(?:[^.!?]{0,60}?\b[1-9]\d*(?:[.,]\d+)*\s*(?:de\s+)?(?:lei|ron|euro|eur|dolari|dolar|usd|lire|lira|gbp|franci|franc|chf|bitcoin|btc|usdt|crypto|ethereum|eth|tether|zloti|zlot|pln|forinti|forint|huf|leva|bgn|mdl|ruble|rub|grivne|uah|coroane|czk|sek|nok|dkk|yeni|yen|jpy|yuani|yuan|cny|rupii|inr|dinari|rsd|try|lire\s+turcesti|cad|aud)\b"
             r"|[^.!?]{0,60}?[1-9]\d*(?:[.,]\d+)*\s*(?:€|\$)"
             r"|[^.!?]{0,60}?\b(?:in|pe|catre|la)\s+(?:contul|contu|cont|iban(?:-ul)?|revolut)\b)",
             text_norm,
@@ -217,7 +217,7 @@ class RedFlagDetector:
         if asks_transfer and not known_contact:
             asks_payment = True
         has_amount = bool(re.search(
-            r"\b[1-9]\d*(?:[.,]\d+)?\s*(?:de\s+)?(?:lei|ron|euro|eur|dolari|dolar|usd|lire|lira|gbp|franci|chf|bitcoin|btc|usdt|crypto)\b|\b[1-9]\d*(?:[.,]\d+)?\s*(?:€|\$|£)", text_norm))
+            r"\b[1-9]\d*(?:[.,]\d+)?\s*(?:de\s+)?(?:lei|ron|euro|eur|dolari|dolar|usd|lire|lira|gbp|franci|franc|chf|bitcoin|btc|usdt|crypto|ethereum|eth|tether|zloti|zlot|pln|forinti|forint|huf|leva|bgn|mdl|ruble|rub|grivne|uah|coroane|czk|sek|nok|dkk|yeni|yen|jpy|yuani|yuan|cny|rupii|inr|dinari|rsd|try|lire\s+turcesti|cad|aud)\b|\b[1-9]\d*(?:[.,]\d+)?\s*(?:€|\$|£|¥|₽|₺|₿)", text_norm))
         has_pay_verb = bool(re.search(
             r"\b(?:platit[ae]?|platiti|platim|platesc|platesti|achitat[ae]?|achitati|achita|achitam|"
             r"transferat[ae]?|transferati|transfera|transferi|virat[ae]?|virati|vireaza|"
