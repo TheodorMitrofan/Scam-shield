@@ -33,6 +33,8 @@ from afg.geo import haversine_m  # noqa: E402
 
 FS = 4000  # the pipeline works on 4 kHz mono
 C = 343.0
+MIN_AIRCRAFT_SPEED_MS = 30.0  # ≈ 108 km/h
+MIN_AIRCRAFT_DISTANCE_M = 200.0
 
 
 def _png(fig) -> str:
@@ -81,6 +83,11 @@ def _confirm(spec, e) -> dict | None:
     except (ValueError, RuntimeError, np.linalg.LinAlgError):
         return None
     if physics.plausibility(fit):
+        return None
+    # Upstream only rejects the impossible (too fast / too far). For a phone recording we also need to reject
+    # what is too slow or too close to be an aircraft overhead: people, fans, cars on the street.
+    # Light props fly ≥ ~110 km/h and pass ≥ ~200 m above/away from a microphone outside airfields.
+    if fit["v"] < MIN_AIRCRAFT_SPEED_MS or fit["d"] < MIN_AIRCRAFT_DISTANCE_M:
         return None
     return {"v_ms": float(fit["v"]), "d_m": float(fit["d"]), "f0_hz": float(fit["f0"]), "trace": (t, f)}
 
