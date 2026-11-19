@@ -80,6 +80,16 @@ class RedFlagDetector:
                 n in text_norm for n in ["numarul nou", "numar nou", "noul numar", "mi s-a stricat telefonul", "mi-am schimbat numarul", "mi-am pierdut telefonul", "cartela unui coleg"]
             ):
                 add_flag("RF_NEW_NUMBER")
+            # Brief: "Unknown number claims to be family or a friend" — also without the words "numar nou".
+            elif re.search(
+                r"\b(?:sunt|eu\s+sunt|aici\s+e|aici\s+este|e|este)\s+"
+                r"(?:nepot(?:ul|elul|ica)?|nepoata|fiul|fiica|baiatul|fata|frate(?:le)?|fratiorul|sora|surioara|"
+                r"var(?:ul)?|verisor(?:ul)?|verisoara|unchi(?:ul)?|matusa|mama|tata|mami|tati|bunica|bunicul|"
+                r"cumnat(?:ul|a)?|finul|fina|prietenul|prietena|colegul|colega)\s+"
+                r"(?:tau|ta|tai|tale|dvs|dumneavoastra|matale)\b",
+                text_norm,
+            ):
+                add_flag("RF_NEW_NUMBER")
 
         # -------------------------------------------------------------
         # 2. RF_IMPERSONATION (15 pts)
@@ -214,7 +224,13 @@ class RedFlagDetector:
         ))
         # A saved contact (family, friend) asking for money is ordinary unless other rules see pressure or a fake
         # identity; the specific phrase list above still covers known-contact scams.
-        if asks_transfer and not known_contact:
+        asks_need = bool(re.search(
+            r"\b(?:am\s+nevoie|imi\s+trebuie|mi-ar\s+trebui|imi\s+trebuiesc|am\s+nevoie\s+urgent)\s+(?:urgent\s+)?"
+            r"(?:de|ca\s+sa\s+imi\s+dai)?\s*(?:niste\s+|ceva\s+)?(?:bani\b|[1-9]\d*(?:[.,]\d+)*\s*(?:de\s+)?"
+            r"(?:lei|ron|euro|eur|dolari|dolar|usd|lire|lira|gbp|franci|chf)\b|[1-9]\d*\s*(?:€|\$|£))",
+            text_norm,
+        ))
+        if (asks_transfer or asks_need) and not known_contact:
             asks_payment = True
         has_amount = bool(re.search(
             r"\b[1-9]\d*(?:[.,]\d+)?\s*(?:de\s+)?(?:lei|ron|euro|eur|dolari|dolar|usd|lire|lira|gbp|franci|franc|chf|bitcoin|btc|usdt|crypto|ethereum|eth|tether|zloti|zlot|pln|forinti|forint|huf|leva|bgn|mdl|ruble|rub|grivne|uah|coroane|czk|sek|nok|dkk|yeni|yen|jpy|yuani|yuan|cny|rupii|inr|dinari|rsd|try|lire\s+turcesti|cad|aud)\b|\b[1-9]\d*(?:[.,]\d+)?\s*(?:€|\$|£|¥|₽|₺|₿)", text_norm))
@@ -301,7 +317,9 @@ class RedFlagDetector:
             # General deadlines: "mai aveti 5 ore", "aveti doar 2 zile", "in urmatoarele 30 de minute"
             r"\b(?:mai\s+(?:aveti|ai|avem)|(?:aveti|ai)\s+(?:doar|numai))\s+(?:doar\s+|numai\s+)?"
             r"(?:\d+|o|un|doua|trei)\s*(?:de\s+)?(?:h|ore|ora|minute|min|zile|zi)\b|"
-            r"\bin\s+(?:urmatoarele|maxim|cel\s+mult)\s+\d+\s*(?:de\s+)?(?:h|ore|ora|minute|min|zile)\b",
+            r"\bin\s+(?:urmatoarele|maxim|cel\s+mult)\s+\d+\s*(?:de\s+)?(?:h|ore|ora|minute|min|zile)\b|"
+            r"\b(?:pleaca|expira|inchide|se\s+inchide|se\s+termina|decoleaza|ma\s+asteapta|pierd)\b[^.!?]{0,30}"
+            r"\bintr[- ]o\s+(?:ora|jumatate\s+de\s+ora)\b",
             text_norm,
         ))
         if has_action_urgency and not is_safety_or_branch_notice:
@@ -332,6 +350,8 @@ class RedFlagDetector:
             "dependenta de pastile", "situatie grava", "a lovit o femeie", "la inchisoare",
             "sa nu intre la inchisoare", "doar tu ma poti ajuta", "armata nu ma lasa",
             "sufletul meu pereche", "suflet drag", "sa ne putem revedea", "este retinut",
+            "am ramas blocat", "am ramas blocata", "am ramas fara bani", "nu am cum sa ajung", "nu pot sa ajung acasa",
+            "nu pot pleca", "am ramas pe drumuri", "m-au lasat aici",
         ]):
             add_flag("RF_EMOTIONAL_PRESSURE")
 

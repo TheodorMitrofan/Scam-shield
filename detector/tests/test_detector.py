@@ -157,3 +157,16 @@ def test_general_money_request_and_deadline():
     for text in ["V-am trimis 1000 lei in contul dvs, verificati cand puteti.",
                  "Coletul va fi livrat in 2 zile lucratoare. Ramburs: 0 lei."]:
         assert sd.analyze(_sc("OK", "sms", unknown, ("sender", text)))["verdict"] == "SAFE", text
+
+
+def test_stranded_relative_asking_for_money():
+    # unknown number + "sunt nepotul tau" + "am nevoie de bani / de 200 de euro" + "pleaca intr o ora"
+    unknown = {"name": None, "address": "+40 7xx xxx 777", "known_contact": False}
+    r = sd.analyze(_sc("NEPHEW", "whatsapp", unknown,
+                       ("sender", "Buna sunt nepotul tau"),
+                       ("sender", "Am ramas blocat pe aeroportul otopeni, am nevoie de bani sa ajung acasa inapoi in Spania"),
+                       ("sender", "Zborul pleaca intr o ora, am nevoie de 200 de euro")))
+    assert (r["verdict"], r["scam_type"], r["first_alert"]) == ("SCAM", "FAMILY_EMERGENCY", 2), r
+    # a saved relative asking for a little money stays fine
+    mum = {"name": "Mama", "address": "+40 7xx xxx 101", "known_contact": True}
+    assert sd.analyze(_sc("MUM", "whatsapp", mum, ("sender", "am nevoie de 100 de lei pentru medicamente")))["verdict"] == "SAFE"
