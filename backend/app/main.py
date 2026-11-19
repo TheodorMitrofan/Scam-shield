@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import analyze, history, system
+from app.api import analyze, history, report, system
 from app.config import get_settings
 from app.db.session import Database
 from app.detector.client import DetectorClient, DetectorUnavailable
@@ -38,7 +38,7 @@ def create_app(db: Database | None = None, detector: DetectorClient | None = Non
     async def _detector_down(_: Request, exc: DetectorUnavailable) -> JSONResponse:
         return JSONResponse(status_code=503, content={"detail": "Detectorul nu este disponibil momentan."})
 
-    for r in (system.router, analyze.router, history.router):
+    for r in (system.router, analyze.router, history.router, report.router):
         app.include_router(r, prefix="/api")
     return app
 

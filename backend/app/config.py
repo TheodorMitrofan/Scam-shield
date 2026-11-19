@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     storage_dir: str = "data"
     kit_dir: Path = REPO_ROOT / "Scam_Shield_Public_Kit"
 
+    # Fraud-report e-mail (demo). Password = Gmail App Password, ONLY in backend/.env (never committed).
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: str = "palrobertogiulio@gmail.com"
+    smtp_password: str = ""
+
     @property
     def cors_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]

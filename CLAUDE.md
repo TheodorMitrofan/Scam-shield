@@ -118,6 +118,15 @@ All under `http://localhost:8000/api`. CORS allows `http://localhost:4200`.
 | GET | `/contacts/{id}/conversations` | header `X-Client-Id` | `ConversationSummary[]` (no message text) | B | done |
 | GET | `/conversations/{id}` | header `X-Client-Id` | `ConversationDetail` (original Scenario + AnalysisResult + EAV attributes) | B | done |
 | DELETE | `/conversations/{id}` · `/contacts/{id}` · `/history` | header `X-Client-Id` | `{ deleted: number }` | B | done |
+| POST | `/report/draft` | `{ scenario: Scenario, result?: AnalysisResult }` | `FraudReportDraft` · 422 if `risk_score < 50` | B | done |
+| POST | `/report/send` | `{ report: FraudReportDraft, personal_data: PersonalData }` | `{ sent, recipient, message_id, sent_at }` · 422 missing name/contact or bad CNP/e-mail · 409 already sent · 503 SMTP not configured · 502 SMTP error | B | done |
+
+**Fraud report (demo).** Only for SCAM (`risk_score ≥ 50`). `draft` returns the generated part (`incident`: summary,
+sender, numbered timeline with the first-alert message marked, red flags explained in Romanian, indicators —
+links/e-mails/phones/IBAN/amounts — **defanged** like `bancadunarea-securitate[.]com`) plus an EMPTY `personal_data` and
+`personal_fields` (key/label/type/required — render the form from it). The user fills it and presses „Trimite e-mail”
+→ `send` e-mails the report (+ `raport.json`) from Gmail to the **hardcoded demo inbox** (`app/report/__init__.py`,
+`REPORT_RECIPIENT`). **Never** to Police/DNSC. Personal data is not stored or logged.
 
 **Consent checkbox = `save` flag.** Every analyze endpoint takes `?save=true|false` (default **false**) and
 optional `&retention_hours=24` (1–720). `save=false` → the DB is never touched (analysis works even if Postgres is down).
@@ -170,6 +179,17 @@ ConversationSummary { id: uuid; application: Channel; contact_id: uuid; external
                       updated_at: ISO; expires_at: ISO; verdict: Verdict; scam_type: string; risk_score: number;
                       first_alert: number|null; message_count: number }
 ConversationDetail  extends ConversationSummary { scenario: Scenario; result: AnalysisResult; attributes: Record<string, any> }
+
+// Fraud report — backend/app/schemas/report.py
+FraudReportDraft { report_id: uuid; generated_at: ISO; recipient: string; incident: Incident;
+                   personal_data: PersonalData /* all empty */; personal_fields: PersonalField[] }
+Incident { scenario_id; channel; channel_label; sender: { name; address; known_contact }; verdict; scam_type; scam_type_label;
+           risk_score; first_alert; red_flags: { code; label }[]; summary_ro: string;
+           timeline: { n; author; author_label; text /*defanged*/; is_first_alert; flags }[];
+           indicators: { kind: "url"|"email"|"phone"|"iban"|"amount"; value; display /*defanged*/; message_n|null }[] }
+PersonalField { key; label; type: "text"|"email"|"tel"|"date"|"number"|"checkbox"|"textarea"; required; hint? }
+PersonalData { last_name*; first_name*; phone | email (at least one)*; cnp? (13 digits); id_series_number?; address?;
+               incident_date? (YYYY-MM-DD); lost_money: bool; amount_lost?; bank?; additional_details? }
 ```
 
 ### 4.2.1 Database (PostgreSQL, hybrid relational + EAV) — `backend/app/db/models.py`
@@ -196,6 +216,8 @@ All env vars must be listed here **and** in `.env.example` (with dummy values). 
 | `STORAGE_DIR` | backend | where audio files are stored (stage 5), default `data/` |
 | `CORS_ORIGINS` | backend | default `http://localhost:4200` (comma-separated) |
 | `POSTGRES_PORT` | docker-compose | host port for Postgres, default `5544` |
+| `SMTP_USER` | backend | Gmail account that sends the fraud report (default set in `app/config.py`) |
+| `SMTP_PASSWORD` | backend | Gmail **App Password** — only in `backend/.env`, never committed. Empty → `/report/send` returns 503 |
 
 ---
 
@@ -232,6 +254,8 @@ Rules: one row per task; only edit your own rows; when you pick a task set `doin
 | 9 | Model kept in memory (lifespan) | backend | Giulio | todo | | PLAN 5.1–5.2 |
 | 10 | Audio upload + transcription + storage (stage 4/5) | backend | Giulio | todo | | after MVP |
 | 11 | Voice note view (stage 4) | frontend | Theodor | todo | | after MVP |
+| 13 | Fraud report: `/report/draft` + `/report/send` (Gmail SMTP → demo inbox) | backend | Giulio | review | giulio/fraud-report | |
+| 14 | „Generează raport de fraudă” button (risk ≥ 50) + dialog: personal-data form from `personal_fields`, read-only incident, „Trimite e-mail” | frontend | Theodor | todo | | contract §4.1 |
 | 12 | Backend DTOs + DB (hybrid EAV) + analyze/history controllers with consent flag + docker-compose | backend | Giulio | review | giulio/backoffice | covers #3, #4, #9 (stub detector); ownership confirmed: Giulio = backend |
 | 13 | PrimeNG inbox redesign (top bar, search/filters, cards, detail panel, paste dialog) + FE↔BE wiring | frontend | Theodor | review | theodor/frontend-ui | FE calls `/scenarios/validation` + `/analyze/batch?save=`; history UI not built yet |
 
@@ -253,6 +277,7 @@ Append-only. Record anything another agent would otherwise get wrong or re-decid
 | 2026-11-19 | Consent = `?save=` query flag on every analyze endpoint (default false); same `AnalyzeResponse` shape either way | UI checkbox maps 1:1; FE handles one response type | Giulio |
 | 2026-11-19 | Roles A/B swapped: Theodor owns frontend, Giulio owns backend | Team decision | Theodor |
 | 2026-11-19 | Frontend UI = PrimeNG inbox layout: search + channel/verdict filters + cards on the left, scenario detail on the right (no icon sidebar) | Cleaner, consistent UI; verdict filter enables itself once `results` arrive | Theodor |
+| 2026-11-19 | Fraud report generated only at risk ≥ 50; e-mailed to a hardcoded DEMO inbox (teammate), never Police/DNSC; personal data not stored/logged; links defanged | Demo must not contact real authorities; privacy; brief: never offer the message's links | Giulio |
 | 2026-11-19 | Audio files on disk (`STORAGE_DIR`), only metadata in Postgres; model loaded once in FastAPI lifespan, 1 uvicorn worker | Memory + privacy (deletable) | Giulio |
 
 ---
