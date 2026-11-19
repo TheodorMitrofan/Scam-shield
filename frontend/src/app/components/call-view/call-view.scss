@@ -31,3 +31,6 @@
 .text { margin: 0; font-size: 18px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
 .flags { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 4px;
   li { font-size: 12px; background: #ff5252; color: #111; border-radius: 4px; padding: 2px 6px; } }
+
+/* Dark mode: the call screen is already dark; only soften the frame against the dark page. */
+:host-context(.app-dark) .call { border-color: #2c2c2e; box-shadow: 0 10px 30px rgb(0 0 0 / 0.5); }

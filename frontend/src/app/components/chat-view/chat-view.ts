@@ -20,8 +20,9 @@ export class ChatView {
     const s = this.scenario().sender;
     return s.name && s.address && s.address !== s.name ? s.address : null;
   });
+  /** First letter of the sender's name; a generic person icon for bare numbers like "+40 7xx…". */
   protected readonly initial = computed(
-    () => this.title().match(/\p{L}/u)?.[0]?.toUpperCase() ?? '👤',
+    () => this.scenario().sender.name?.match(/\p{L}/u)?.[0]?.toUpperCase() ?? '👤',
   );
 
   protected readonly flagsAt = flagsAt;

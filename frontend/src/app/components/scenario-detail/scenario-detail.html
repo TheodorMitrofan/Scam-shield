@@ -1,0 +1,54 @@
+@if (store.selected(); as s) {
+  <header class="head">
+    <p-button
+      class="back"
+      icon="pi pi-arrow-left"
+      severity="secondary"
+      [text]="true"
+      ariaLabel="Înapoi la listă"
+      (onClick)="back.emit()"
+    />
+    <span class="pos">Scenariul {{ store.selectedIndex() }}/{{ store.scenarios().length }}</span>
+    <div class="acts">
+      <p-button label="Marchează ca necitit" severity="secondary" (onClick)="markUnread()" />
+      <p-button
+        icon="pi pi-trash"
+        severity="secondary"
+        ariaLabel="Șterge din listă"
+        pTooltip="Șterge din listă"
+        tooltipPosition="bottom"
+        (onClick)="remove()"
+      />
+    </div>
+  </header>
+
+  <div class="meta">
+    @if (tag(); as t) {
+      <p-tag [value]="t.label" [severity]="t.severity" [rounded]="true" />
+    }
+    <span class="id">{{ s.id }} · {{ channelLabel[s.channel] }}</span>
+  </div>
+  <h2 class="title">{{ sender() }}</h2>
+
+  @if (store.selectedResult(); as r) {
+    <div class="warning" [class]="'v-' + r.verdict" role="status">
+      <i
+        class="pi"
+        [class.pi-times-circle]="r.verdict === 'SCAM'"
+        [class.pi-exclamation-triangle]="r.verdict === 'SUSPICIOUS'"
+        [class.pi-check-circle]="r.verdict === 'SAFE'"
+        aria-hidden="true"
+      ></i>
+      <p>{{ r.warning.ro }}</p>
+    </div>
+  }
+
+  <div class="conv">
+    <app-conversation [scenario]="s" [result]="store.selectedResult()" />
+  </div>
+} @else {
+  <div class="empty">
+    <i class="pi pi-comments" aria-hidden="true"></i>
+    <p>Alegeți o conversație din listă ca s-o vedeți aici.</p>
+  </div>
+}

@@ -1,0 +1,133 @@
+<div class="filters">
+  <p-iconfield class="search">
+    <p-inputicon class="pi pi-search" />
+    <input
+      pInputText
+      type="search"
+      placeholder="Caută..."
+      aria-label="Caută în mesaje"
+      [ngModel]="store.search()"
+      (ngModelChange)="store.search.set($event)"
+    />
+  </p-iconfield>
+
+  <div class="right">
+    <p-select
+      [options]="channelOptions"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="store.channelFilter()"
+      (ngModelChange)="store.channelFilter.set($event)"
+      ariaLabel="Filtrează după canal"
+      class="channel"
+    >
+      <ng-template #dropdownicon><i class="pi pi-chevron-down"></i></ng-template>
+      <ng-template #selectedItem let-item>
+        <span class="sel"><i class="pi pi-filter" aria-hidden="true"></i> {{ item?.label }}</span>
+      </ng-template>
+    </p-select>
+
+    <span
+      [pTooltip]="store.hasResults() ? undefined : 'Disponibil după analiză'"
+      tooltipPosition="bottom"
+    >
+      <p-selectbutton
+        [options]="verdictOptions"
+        optionLabel="label"
+        optionValue="value"
+        [allowEmpty]="false"
+        [disabled]="!store.hasResults()"
+        [ngModel]="store.verdictFilter()"
+        (ngModelChange)="store.verdictFilter.set($event)"
+      />
+    </span>
+  </div>
+</div>
+
+<div class="bulk">
+  <label class="pill">
+    <p-checkbox
+      [binary]="true"
+      [ngModel]="store.allFilteredChecked()"
+      (ngModelChange)="store.setAllFilteredChecked($event)"
+      [disabled]="!store.filtered().length"
+      inputId="select-all"
+    />
+    <span>Selectează toate</span>
+  </label>
+  <p-button
+    label="Marchează ca citite"
+    severity="secondary"
+    [disabled]="!store.checkedIds().size"
+    (onClick)="markCheckedRead()"
+  />
+  <p-button
+    icon="pi pi-trash"
+    severity="secondary"
+    ariaLabel="Șterge selecția din listă"
+    pTooltip="Șterge din listă"
+    tooltipPosition="bottom"
+    [disabled]="!store.checkedIds().size"
+    (onClick)="removeChecked()"
+  />
+</div>
+
+@if (store.errors().length) {
+  <div class="errors" role="alert">
+    @for (e of store.errors(); track e) {
+      <div><i class="pi pi-exclamation-triangle" aria-hidden="true"></i> {{ e }}</div>
+    }
+  </div>
+}
+
+@for (g of store.groups(); track g.label) {
+  <div class="group-head">{{ g.label }} – {{ g.items.length }}</div>
+  <ul class="cards">
+    @for (s of g.items; track s.id) {
+      <li>
+        <div
+          class="card"
+          role="button"
+          tabindex="0"
+          [class.selected]="s.id === store.selectedId()"
+          [class.checked]="store.checkedIds().has(s.id)"
+          [attr.aria-current]="s.id === store.selectedId() ? 'true' : null"
+          (click)="open(s.id)"
+          (keydown.enter)="open(s.id)"
+          (keydown.space)="$event.preventDefault(); open(s.id)"
+        >
+          <div class="row1">
+            <span class="cb" (click)="$event.stopPropagation()">
+              <p-checkbox
+                [binary]="true"
+                [ngModel]="store.checkedIds().has(s.id)"
+                (ngModelChange)="store.toggleChecked(s.id, $event)"
+                [ariaLabel]="'Selectează ' + s.id"
+              />
+            </span>
+            <p-tag [value]="tag(s).label" [severity]="tag(s).severity" [rounded]="true" />
+            <span class="id">{{ s.id }}</span>
+          </div>
+          <div class="title">
+            @if (!store.isRead(s.id)) {
+              <span class="dot" aria-label="necitit"></span>
+            }
+            {{ senderOf(s) }}
+          </div>
+          <div class="preview">{{ preview(s) }}</div>
+        </div>
+      </li>
+    }
+  </ul>
+} @empty {
+  <div class="empty">
+    @if (store.scenarios().length) {
+      <i class="pi pi-search" aria-hidden="true"></i>
+      <p>Niciun scenariu nu se potrivește filtrelor.</p>
+    } @else {
+      <i class="pi pi-inbox" aria-hidden="true"></i>
+      <p>Încărcați setul de validare, fișiere JSON sau lipiți un mesaj.</p>
+      <p class="hint">Puteți trage fișierele direct în pagină.</p>
+    }
+  </div>
+}

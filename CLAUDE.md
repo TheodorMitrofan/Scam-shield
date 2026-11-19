@@ -40,7 +40,7 @@
 ### Tech stack
 | Layer | Choice | Notes |
 |---|---|---|
-| Frontend | Angular 21 (standalone components, signals) | `frontend/` |
+| Frontend | Angular 21 (standalone components, signals) + **PrimeNG 21** (Aura preset, `primeicons`) | `frontend/`; use PrimeNG components, not hand-rolled widgets |
 | Backend | FastAPI, Python 3.12 | `backend/` |
 | Database / storage | PostgreSQL 16 (docker-compose); audio files on disk, metadata in DB | opt-in history only |
 | AI / external APIs | **Local only.** Rules + fine-tuned Romanian BERT / XLM-R (`detector/`, `ml/`); faster-whisper for audio later | **NO cloud LLM APIs** |
@@ -57,8 +57,8 @@ someone else's area, (a) change the contract in §4 via a small PR and tell the 
 
 | Person | Area / role | Owns paths | Contact |
 |---|---|---|---|
-| Giulio | A — Frontend | `frontend/**` | |
-| Theodor | B — Backend / DB / infra / audio pipeline | `backend/**`, `db/**`, `docker-compose.yml` | |
+| Theodor | A — Frontend | `frontend/**` | |
+| Giulio | B — Backend / DB / infra / audio pipeline | `backend/**`, `db/**`, `docker-compose.yml` | |
 | Francesco | C — ML / detector / warnings text | `detector/**`, `ml/**`, `models/` | |
 
 _(Assignment is a proposal from `PLAN.md` — swap names here if the team decides otherwise.)_
@@ -222,16 +222,17 @@ Rules: one row per task; only edit your own rows; when you pick a task set `doin
 |---|---|---|---|---|---|---|
 | 1 | Plan (`PLAN.md`) + fill §1–§4 | shared | Giulio | review | giulio/plan-and-viewer | all 3 confirm §4 |
 | 2 | Angular scaffold + scenario import + channel viewers (chat/email/call) | frontend | Giulio | review | giulio/plan-and-viewer | PLAN 1.2, 2.1–2.4 |
-| 3 | FastAPI scaffold + docker-compose Postgres + `/health` | backend | Theodor | todo | | PLAN 1.3 |
-| 4 | `/scenarios/validation`, `/analyze`, `/analyze/batch`, `/analyze/text` | backend | Theodor | todo | | PLAN 2.5, 2.6 |
+| 3 | FastAPI scaffold + docker-compose Postgres + `/health` | backend | Giulio | todo | | PLAN 1.3 |
+| 4 | `/scenarios/validation`, `/analyze`, `/analyze/batch`, `/analyze/text` | backend | Giulio | todo | | PLAN 2.5, 2.6 |
 | 5 | `scam_detector` package + rules + scoring + first_alert (11/11 on validation) | detector | Francesco | todo | | PLAN 1.4, 3.1–3.3, 3.11 |
 | 6 | Warning templates RO/EN | detector | Francesco | todo | | PLAN 3.7 |
 | 7 | Synthetic dataset + fine-tune + ensemble | ml | Francesco | todo | | PLAN 3.4–3.6 |
-| 8 | Dashboard + scenario detail + paste screen | frontend | Giulio | todo | | PLAN 3.8–3.10 |
-| 9 | Model kept in memory (lifespan) | backend | Theodor | todo | | PLAN 5.1–5.2 |
-| 10 | Audio upload + transcription + storage (stage 4/5) | backend | Theodor | todo | | after MVP |
-| 11 | Voice note view (stage 4) | frontend | Giulio | todo | | after MVP |
-| 12 | Backend DTOs + DB (hybrid EAV) + analyze/history controllers with consent flag + docker-compose | backend | Giulio | review | giulio/backoffice | covers #3, #4, #9 (stub detector); Theodor to confirm ownership |
+| 8 | Dashboard + scenario detail + paste screen | frontend | Theodor | todo | | PLAN 3.8–3.10 |
+| 9 | Model kept in memory (lifespan) | backend | Giulio | todo | | PLAN 5.1–5.2 |
+| 10 | Audio upload + transcription + storage (stage 4/5) | backend | Giulio | todo | | after MVP |
+| 11 | Voice note view (stage 4) | frontend | Theodor | todo | | after MVP |
+| 12 | Backend DTOs + DB (hybrid EAV) + analyze/history controllers with consent flag + docker-compose | backend | Giulio | review | giulio/backoffice | covers #3, #4, #9 (stub detector); ownership confirmed: Giulio = backend |
+| 13 | PrimeNG inbox redesign (top bar, search/filters, cards, detail panel, paste dialog) + FE↔BE wiring | frontend | Theodor | doing | theodor/frontend-ui | |
 
 ---
 
@@ -248,6 +249,8 @@ Append-only. Record anything another agent would otherwise get wrong or re-decid
 | 2026-11-19 | Backend normalises detector output with the official formula instead of rejecting it; history is opt-in via `?save=true` + `X-Client-Id`, message text stored as JSONB only with consent | Demo must not 500 on a detector slip; privacy requirement | Giulio |
 | 2026-11-19 | DB = hybrid: relational applications→contacts→conversations→messages + EAV (`attribute_definitions`/`attribute_values`) only for app-specific fields | EAV for everything makes queries unreadable; hierarchy is the same for every app | Giulio |
 | 2026-11-19 | Consent = `?save=` query flag on every analyze endpoint (default false); same `AnalyzeResponse` shape either way | UI checkbox maps 1:1; FE handles one response type | Giulio |
+| 2026-11-19 | Roles A/B swapped: Theodor owns frontend, Giulio owns backend | Team decision | Theodor |
+| 2026-11-19 | Frontend UI = PrimeNG inbox layout: search + channel/verdict filters + cards on the left, scenario detail on the right (no icon sidebar) | Cleaner, consistent UI; verdict filter enables itself once `results` arrive | Theodor |
 | 2026-11-19 | Audio files on disk (`STORAGE_DIR`), only metadata in Postgres; model loaded once in FastAPI lifespan, 1 uvicorn worker | Memory + privacy (deletable) | Giulio |
 
 ---
