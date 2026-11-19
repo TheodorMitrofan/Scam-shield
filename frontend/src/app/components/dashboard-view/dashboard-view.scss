@@ -6,7 +6,7 @@
   margin: 0 0 14px;
   padding: 10px 14px;
   border-radius: 10px;
-  font-size: 16px;
+  font-size: 18px;
   background: var(--p-yellow-50);
   color: var(--p-yellow-900);
   div {
@@ -89,7 +89,7 @@
     vertical-align: middle;
   }
   th {
-    font-size: 15px;
+    font-size: 16px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: var(--app-muted);
@@ -131,7 +131,7 @@
 
 .code-type {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
 }
 
@@ -170,7 +170,7 @@
 
 .rf {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   padding: 3px 8px;
   border-radius: 6px;
@@ -181,12 +181,12 @@
 
 /* Verdict tag: readable from a few metres (brief M8); PrimeNG's default tag is ~12px. */
 .verdict-cell ::ng-deep .p-tag {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
   padding: 4px 12px;
   gap: 6px;
   .p-tag-icon {
-    font-size: 17px;
+    font-size: 18px;
     width: auto;
     height: auto;
   }
@@ -212,7 +212,7 @@
     margin: 14px 0 0;
   }
   .hint {
-    font-size: 16px;
+    font-size: 18px;
     margin-top: 6px;
   }
 }
