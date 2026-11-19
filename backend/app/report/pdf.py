@@ -112,6 +112,34 @@ def _requests(draft: FraudReportDraft) -> list[str]:
     return out
 
 
+def _signature(doc: _Doc, draft: FraudReportDraft, signer: str) -> None:
+    block_h = 10 + 4 * LINE  # gap + "Semnătura," + name + blank line + dotted line
+    if doc.will_page_break(block_h):
+        doc.add_page()
+    doc.ln(10)
+    y = doc.get_y()
+    box = 75
+    doc.set_font("Serif", "", 11)
+    doc.cell(80, LINE, f"Data: {draft.generated_at.strftime('%d.%m.%Y')}")
+    x = doc.w - doc.r_margin - box
+    doc.set_xy(x, y)
+    doc.cell(box, LINE, "Semnătura,", align="C")
+    # the name always fits on one line: shrink the font for very long names
+    size = 11.0
+    while size > 7 and doc.get_string_width(signer) > box:
+        size -= 0.5
+        doc.set_font("Serif", "", size)
+    if doc.get_string_width(signer) > box:
+        while signer and doc.get_string_width(signer + "…") > box:
+            signer = signer[:-1]
+        signer += "…"
+    doc.set_xy(x, y + LINE)
+    doc.cell(box, LINE, signer, align="C")
+    doc.set_font("Serif", "", 11)
+    doc.set_xy(x, y + 3 * LINE)
+    doc.cell(box, LINE, "..............................", align="C", new_x="LMARGIN", new_y="NEXT")
+
+
 def render_pdf(draft: FraudReportDraft, p: PersonalData) -> bytes:
     inc = draft.incident
     doc = _Doc()
@@ -195,14 +223,8 @@ def render_pdf(draft: FraudReportDraft, p: PersonalData) -> bytes:
     for k, e in enumerate(evidence, 1):
         doc.item(f"{k}.", f"{e};")
 
-    # Date + signature ---------------------------------------------------------------------------
-    doc.ln(12)
-    y = doc.get_y()
-    doc.set_font("Serif", "", 11)
-    doc.cell(80, LINE, f"Data: {draft.generated_at.strftime('%d.%m.%Y')}")
-    doc.set_xy(doc.w - doc.r_margin - 70, y)
-    signer = name if name != DOTS else ""
-    doc.multi_cell(70, LINE, f"Semnătura,\n{signer}\n\n..............................", align="C")
+    # Date + signature (kept together: never split across pages) -------------------------------
+    _signature(doc, draft, name if name != DOTS else "")
 
     # Annex 1: conversation ----------------------------------------------------------------------
     doc.add_page()

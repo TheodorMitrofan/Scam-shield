@@ -117,8 +117,8 @@ All under `http://localhost:8000/api`. CORS allows `http://localhost:4200`.
 | GET | `/conversations/{id}` | header `X-Client-Id` | `ConversationDetail` (original Scenario + AnalysisResult + EAV attributes) | B | done |
 | DELETE | `/conversations/{id}` · `/contacts/{id}` · `/history` | header `X-Client-Id` | `{ deleted: number }` | B | done |
 | POST | `/report/draft` | `{ scenario: Scenario, result?: AnalysisResult }` | `FraudReportDraft` · 422 if `risk_score < 50` | B | done |
-| POST | `/report/pdf` | `{ report: FraudReportDraft, personal_data?: PersonalData }` | `application/pdf` — formal „Plângere penală” (art. 289 C.proc.pen.), black & white, no scores; Anexa 1 = numbered conversation; empty fields as dotted lines — for preview / „Descarcă PDF” | B | done |
-| POST | `/report/send` | `{ report: FraudReportDraft, personal_data: PersonalData }` | `{ sent, recipient, message_id, sent_at }` · 422 missing name/contact or bad CNP/e-mail · 409 already sent · 503 SMTP not configured · 502 SMTP error | B | done |
+| POST | `/report/pdf` | `{ report: FraudReportDraft, personal_data?: PersonalData }` | `application/pdf` — formal „Plângere penală” (art. 289 C.proc.pen.), black & white, no scores; Anexa 1 = numbered conversation; signature block never split across pages; requires complete personal data (422) — for preview / „Descarcă PDF” | B | done |
+| POST | `/report/send` | `{ report: FraudReportDraft, personal_data: PersonalData }` | `{ sent, recipient, message_id, sent_at }` · 422 any required personal field missing / badly formatted · 409 already sent · 503 SMTP not configured · 502 SMTP error | B | done |
 
 **Fraud report (demo).** Only for SCAM (`risk_score ≥ 50`). `draft` returns the generated part (`incident`: summary,
 sender, numbered timeline with the first-alert message marked, red flags explained in Romanian, indicators —
@@ -187,8 +187,9 @@ Incident { scenario_id; channel; channel_label; sender: { name; address; known_c
            timeline: { n; author; author_label; text /*defanged*/; is_first_alert; flags }[];
            indicators: { kind: "url"|"email"|"phone"|"iban"|"amount"; value; display /*defanged*/; message_n|null }[] }
 PersonalField { key; label; type: "text"|"email"|"tel"|"date"|"time"|"number"|"checkbox"|"textarea"; required; hint? }
-PersonalData { last_name*; first_name*; phone | email (at least one)*; cnp? (13 digits); id_series_number?; address?;
-               incident_date? (YYYY-MM-DD); incident_time? (HH:MM); lost_money: bool; amount_lost?; bank?; additional_details? }
+PersonalData { REQUIRED: last_name, first_name, cnp (13 digits), id_series_number ("RX 123456" — 2 letters + 6 digits),
+               address, phone (≥10 digits), email, incident_date (YYYY-MM-DD, not in the future), incident_time (HH:MM);
+               optional: lost_money, amount_lost, bank, additional_details }  → /report/pdf and /report/send return 422 if incomplete
 ```
 
 ### 4.2.1 Database (PostgreSQL, hybrid relational + EAV) — `backend/app/db/models.py`

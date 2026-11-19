@@ -1,4 +1,13 @@
-import { Component, effect, inject, input, model, signal, untracked } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  model,
+  signal,
+  untracked,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -68,6 +77,18 @@ export class ReportDialog {
   protected readonly sentTo = signal<string | null>(null);
   protected readonly kindLabel = KIND_LABEL;
 
+  /** Labels of required fields still empty — both buttons stay disabled until this is empty. */
+  protected readonly missing = computed(() => {
+    const d = this.draft();
+    if (!d) return [];
+    const p = this.person();
+    return d.personal_fields
+      .filter((f) => f.required && (p[f.key] === null || p[f.key] === ''))
+      .map((f) => f.label);
+  });
+  /** Show which fields are missing only after the user tried once. */
+  protected readonly triedSubmit = signal(false);
+
   constructor() {
     // (Re)generate the report every time the dialog opens; forget personal data when it closes.
     effect(() => {
@@ -87,9 +108,20 @@ export class ReportDialog {
     this.person.update((p) => ({ ...p, [f.key]: val }));
   }
 
+  protected isMissing(f: PersonalField): boolean {
+    const v = this.person()[f.key];
+    return this.triedSubmit() && f.required && (v === null || v === '');
+  }
+
+  /** Returns false (and highlights the empty fields) if something required is still empty. */
+  private ready(): boolean {
+    this.triedSubmit.set(true);
+    return this.missing().length === 0;
+  }
+
   protected async downloadPdf(): Promise<void> {
     const d = this.draft();
-    if (!d) return;
+    if (!d || !this.ready()) return;
     this.busy.set('pdf');
     this.error.set(null);
     try {
@@ -109,7 +141,7 @@ export class ReportDialog {
 
   protected async send(): Promise<void> {
     const d = this.draft();
-    if (!d) return;
+    if (!d || !this.ready()) return;
     this.busy.set('send');
     this.error.set(null);
     try {
@@ -142,6 +174,7 @@ export class ReportDialog {
     this.error.set(null);
     this.sentTo.set(null);
     this.busy.set(null);
+    this.triedSubmit.set(false);
   }
 
   private message(e: unknown): string {

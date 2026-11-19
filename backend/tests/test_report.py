@@ -13,8 +13,10 @@ from app.report.indicators import defang, defang_text
 
 from .conftest import SCENARIOS
 
-PERSON = {"last_name": "Popescu", "first_name": "Maria", "phone": "0722 000 000",
-          "cnp": "2500101123456", "lost_money": True, "amount_lost": 1850, "bank": "Banca Dunărea"}
+PERSON = {"last_name": "Popescu", "first_name": "Maria", "phone": "0722 000 000", "email": "maria@example.com",
+          "cnp": "2500101123456", "id_series_number": "rx123456", "address": "București, Str. Florilor nr. 3, sector 3",
+          "incident_date": "2026-11-18", "incident_time": "14:30",
+          "lost_money": True, "amount_lost": 1850, "bank": "Banca Dunărea"}
 
 
 class FakeSMTP:
@@ -124,10 +126,16 @@ def test_recipient_cannot_be_overridden_by_client(client, smtp):
 
 
 @pytest.mark.parametrize("person", [
-    {"first_name": "Maria", "phone": "0722"},              # no last name
-    {"last_name": "Popescu", "first_name": "Maria"},       # no contact
-    {**PERSON, "cnp": "123"},                              # bad CNP
-    {**PERSON, "email": "nu-e-email"},                     # bad e-mail
+    {k: v for k, v in PERSON.items() if k != "last_name"},        # missing name
+    {k: v for k, v in PERSON.items() if k != "email"},            # missing e-mail (all identity fields required)
+    {k: v for k, v in PERSON.items() if k != "id_series_number"}, # missing ID card
+    {k: v for k, v in PERSON.items() if k != "incident_time"},    # missing time
+    {**PERSON, "address": "   "},                                 # blank counts as missing
+    {**PERSON, "cnp": "123"},                                     # bad CNP
+    {**PERSON, "email": "nu-e-email"},                            # bad e-mail
+    {**PERSON, "phone": "0722"},                                  # bad phone
+    {**PERSON, "id_series_number": "123456"},                     # bad ID card
+    {**PERSON, "incident_date": "2099-01-01"},                    # future date
 ])
 def test_send_validation(client, smtp, person):
     d = draft(client, "V01")
@@ -176,7 +184,7 @@ def test_robust_inputs(client, text):
            "red_flags": ["RF_CODE_REQUEST", "RF_URGENCY"], "warning": {"ro": "x"}}
     r = client.post("/api/report/draft", json={"scenario": sc, "result": res})
     assert r.status_code == 200
-    assert client.post("/api/report/pdf", json={"report": r.json()}).status_code == 200
+    assert client.post("/api/report/pdf", json={"report": r.json(), "personal_data": PERSON}).status_code == 200
 
 
 def test_defang_examples():
@@ -186,21 +194,53 @@ def test_defang_examples():
     assert defang_text("Ramburs 1.276 lei, dvs. azi") == "Ramburs 1.276 lei, dvs. azi"
 
 
-def test_pdf_download_blank_and_filled(client):
+def test_pdf_requires_complete_personal_data(client):
     d = draft(client, "V04")
-    blank = client.post("/api/report/pdf", json={"report": d})
+    blank = client.post("/api/report/pdf", json={"report": d, "personal_data": {}})
+    assert blank.status_code == 422 and "Vă rugăm completați" in str(blank.json())
     filled = client.post("/api/report/pdf", json={"report": d, "personal_data": PERSON})
-    for r in (blank, filled):
-        assert r.status_code == 200 and r.headers["content-type"] == "application/pdf"
-        assert r.content.startswith(b"%PDF") and len(r.content) > 5000
-    assert 'filename="sesizare-V04.pdf"' in blank.headers["content-disposition"]
+    assert filled.status_code == 200 and filled.headers["content-type"] == "application/pdf"
+    assert filled.content.startswith(b"%PDF") and len(filled.content) > 5000
+    assert 'filename="sesizare-V04.pdf"' in filled.headers["content-disposition"]
+
+
+def test_id_card_is_normalised():
+    from app.schemas.report import PersonalData
+    assert PersonalData(id_series_number="rx123456").id_series_number == "RX 123456"
+
+
+def _draft_obj(client, key):
+    from app.schemas.report import FraudReportDraft
+    return FraudReportDraft.model_validate(draft(client, key))
+
+
+@pytest.mark.parametrize("room", [5, 15, 25, 40])
+def test_signature_block_never_splits_across_pages(client, room):
+    """Bug: a long name pushed the signature's dotted line alone onto an otherwise empty page."""
+    from app.report.pdf import _Doc, _signature
+    doc = _Doc()
+    doc.add_page()
+    doc.set_y(doc.page_break_trigger - room)  # only `room` mm left on the page
+    start = doc.page
+    _signature(doc, _draft_obj(client, "V04"), "Popescu-Ionescu-Georgescu " * 4 + "Maria-Magdalena " * 4)
+    assert doc.page in (start, start + 1)          # moved at most once, as a whole
+    assert doc.get_y() <= doc.page_break_trigger   # everything fits on the page it is on
+
+
+def test_long_inputs_pdf_page_count(client):
+    """Body + signature + annex: V04 with long name/details must stay at 2-3 pages, not grow blank ones."""
+    long_person = {**PERSON, "last_name": "Popescu-Ionescu " * 6, "first_name": "Maria " * 10,
+                   "additional_details": "Detalii suplimentare despre incident. " * 60}
+    pdf = client.post("/api/report/pdf", json={"report": draft(client, "V04"), "personal_data": long_person}).content
+    pages = pdf.count(b"/Type /Page\n") or pdf.count(b"/Type /Page ")
+    assert pdf.startswith(b"%PDF") and 2 <= pages <= 3, pages
 
 
 def test_pdf_handles_every_validation_scam(client):
     for key in SCENARIOS:
         r = client.post("/api/report/draft", json={"scenario": SCENARIOS[key]})
         if r.status_code == 200:
-            assert client.post("/api/report/pdf", json={"report": r.json()}).status_code == 200
+            assert client.post("/api/report/pdf", json={"report": r.json(), "personal_data": PERSON}).status_code == 200
 
 
 def test_gmail_closing_connection_on_login_means_bad_password(client, smtp):

@@ -80,10 +80,25 @@ class PersonalField(BaseModel):
 
 _CNP = re.compile(r"^\d{13}$")
 _EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+_PHONE = re.compile(r"^\+?[\d\s.\-()]{10,20}$")
+_ID_CARD = re.compile(r"^([A-Za-z]{2})\s*(\d{6})$")  # Romanian ID card: series (2 letters) + number (6 digits)
+
+# Required to file the complaint (same list drives the UI form via PERSONAL_FIELDS).
+REQUIRED_PERSONAL = {
+    "last_name": "numele",
+    "first_name": "prenumele",
+    "cnp": "CNP-ul",
+    "id_series_number": "seria și numărul actului de identitate",
+    "address": "adresa de domiciliu",
+    "phone": "telefonul",
+    "email": "e-mailul",
+    "incident_date": "data incidentului",
+    "incident_time": "ora incidentului",
+}
 
 
 class PersonalData(BaseModel):
-    """Filled in by the user. All optional in the draft; `validate_for_sending` enforces the minimum."""
+    """Filled in by the user. Empty in the draft; `missing_required()` is enforced before PDF / send."""
 
     last_name: str | None = Field(default=None, max_length=100)
     first_name: str | None = Field(default=None, max_length=100)
@@ -118,17 +133,49 @@ class PersonalData(BaseModel):
             raise ValueError("Adresa de e-mail nu pare corectă.")
         return v.strip() if v else v
 
+    @field_validator("phone")
+    @classmethod
+    def _phone_format(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        v = v.strip()
+        if not _PHONE.match(v) or sum(c.isdigit() for c in v) < 10:
+            raise ValueError("Numărul de telefon nu pare corect (ex.: 0722 123 456).")
+        return v
+
+    @field_validator("id_series_number")
+    @classmethod
+    def _id_card_format(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        m = _ID_CARD.match(v.strip())
+        if not m:
+            raise ValueError("Seria și numărul actului: 2 litere și 6 cifre (ex.: RX 123456).")
+        return f"{m.group(1).upper()} {m.group(2)}"
+
+    @field_validator("incident_date")
+    @classmethod
+    def _not_in_future(cls, v: date | None) -> date | None:
+        if v is not None and v > date.today():
+            raise ValueError("Data incidentului nu poate fi în viitor.")
+        return v
+
+    def missing_required(self) -> list[str]:
+        return [label for key, label in REQUIRED_PERSONAL.items() if getattr(self, key) in (None, "")]
+
 
 PERSONAL_FIELDS: list[PersonalField] = [
     PersonalField(key="last_name", label="Nume", type="text", required=True),
     PersonalField(key="first_name", label="Prenume", type="text", required=True),
-    PersonalField(key="phone", label="Telefon", type="tel", hint="Telefon sau e-mail: măcar unul"),
-    PersonalField(key="email", label="E-mail", type="email", hint="Telefon sau e-mail: măcar unul"),
-    PersonalField(key="cnp", label="CNP", type="text", hint="13 cifre (opțional)"),
-    PersonalField(key="id_series_number", label="Seria și numărul actului de identitate", type="text"),
-    PersonalField(key="address", label="Adresa de domiciliu", type="text"),
-    PersonalField(key="incident_date", label="Data la care ați primit mesajul", type="date"),
-    PersonalField(key="incident_time", label="Ora aproximativă", type="time"),
+    PersonalField(key="cnp", label="CNP", type="text", required=True, hint="13 cifre"),
+    PersonalField(key="id_series_number", label="Seria și numărul actului de identitate", type="text",
+                  required=True, hint="Ex.: RX 123456"),
+    PersonalField(key="address", label="Adresa de domiciliu", type="text", required=True,
+                  hint="Localitate, stradă, nr., bloc, scară, etaj, ap., județ / sector"),
+    PersonalField(key="phone", label="Telefon", type="tel", required=True, hint="Ex.: 0722 123 456"),
+    PersonalField(key="email", label="E-mail", type="email", required=True),
+    PersonalField(key="incident_date", label="Data la care ați primit mesajul", type="date", required=True),
+    PersonalField(key="incident_time", label="Ora aproximativă", type="time", required=True),
     PersonalField(key="lost_money", label="Am pierdut bani", type="checkbox"),
     PersonalField(key="amount_lost", label="Suma pierdută (lei)", type="number"),
     PersonalField(key="bank", label="Banca dumneavoastră", type="text"),
@@ -145,9 +192,20 @@ class FraudReportDraft(BaseModel):
     personal_fields: list[PersonalField] = Field(default_factory=lambda: list(PERSONAL_FIELDS))
 
 
+def _require_complete(p: PersonalData) -> None:
+    missing = p.missing_required()
+    if missing:
+        raise ValueError("Vă rugăm completați: " + ", ".join(missing) + ".")
+
+
 class ReportPdfRequest(BaseModel):
     report: FraudReportDraft
-    personal_data: PersonalData = Field(default_factory=PersonalData)
+    personal_data: PersonalData
+
+    @model_validator(mode="after")
+    def _complete(self) -> "ReportPdfRequest":
+        _require_complete(self.personal_data)
+        return self
 
 
 class ReportSendRequest(BaseModel):
@@ -155,17 +213,8 @@ class ReportSendRequest(BaseModel):
     personal_data: PersonalData
 
     @model_validator(mode="after")
-    def _minimum_identity(self) -> "ReportSendRequest":
-        p = self.personal_data
-        missing = []
-        if not p.last_name:
-            missing.append("numele")
-        if not p.first_name:
-            missing.append("prenumele")
-        if not (p.phone or p.email):
-            missing.append("un telefon sau un e-mail")
-        if missing:
-            raise ValueError("Vă rugăm completați " + ", ".join(missing) + ".")
+    def _complete(self) -> "ReportSendRequest":
+        _require_complete(self.personal_data)
         return self
 
 

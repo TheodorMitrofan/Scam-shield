@@ -22,13 +22,22 @@
     </div>
   } @else if (draft(); as d) {
     <p class="intro">
-      Nu ați greșit cu nimic. Am pregătit raportul despre ce s-a întâmplat; completați doar datele
-      dumneavoastră și apăsați <strong>Trimite e-mail</strong>.
+      Nu ați greșit cu nimic. Am pregătit plângerea despre ce s-a întâmplat; completați datele
+      dumneavoastră (câmpurile cu <span class="req">*</span> sunt obligatorii) și apăsați
+      <strong>Trimite e-mail</strong>.
     </p>
 
     <div class="grid">
       <section class="form" aria-labelledby="pd-title">
         <h3 id="pd-title">Datele dumneavoastră</h3>
+        @if (triedSubmit() && missing().length) {
+          <p-message severity="warn" styleClass="err" role="alert">
+            Completați câmpurile obligatorii: {{ missing().join(', ') }}.
+          </p-message>
+        }
+        @if (error(); as e) {
+          <p-message severity="error" [text]="e" styleClass="err" role="alert" />
+        }
         @for (f of d.personal_fields; track f.key) {
           @switch (f.type) {
             @case ('checkbox') {
@@ -65,6 +74,9 @@
                   pInputText
                   [type]="f.type"
                   [required]="f.required"
+                  [class.ng-invalid]="isMissing(f)"
+                  [class.ng-dirty]="isMissing(f)"
+                  [attr.aria-invalid]="isMissing(f)"
                   [ngModel]="value(f)"
                   (ngModelChange)="set(f, $event)"
                   [attr.inputmode]="f.key === 'cnp' ? 'numeric' : null"
@@ -112,7 +124,7 @@
     </div>
   }
 
-  @if (error(); as e) {
+  @if (!draft() && error(); as e) {
     <p-message severity="error" [text]="e" styleClass="err" />
   }
 
