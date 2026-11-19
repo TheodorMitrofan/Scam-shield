@@ -1,0 +1,7 @@
+# Audio side feature (port 8001). Install: uv venv --python 3.12 audio/.venv && uv pip install --python audio/.venv/bin/python -r audio/requirements.txt
+numpy>=1.24
+scipy>=1.10
+matplotlib>=3.7
+fastapi>=0.115
+uvicorn[standard]>=0.32
+python-multipart>=0.0.9

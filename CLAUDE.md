@@ -57,7 +57,7 @@ someone else's area, (a) change the contract in §4 via a small PR and tell the 
 
 | Person | Area / role | Owns paths | Contact |
 |---|---|---|---|
-| Theodor | A — Frontend | `frontend/**` | |
+| Theodor | A — Frontend + audio side feature | `frontend/**`, `audio/**` | |
 | Giulio | B — Backend / DB / infra / audio pipeline | `backend/**`, `db/**`, `docker-compose.yml` | |
 | Francesco | C — ML / detector / API / warnings text | `detector/**` | |
 
@@ -76,6 +76,15 @@ Shared files (anyone may edit, keep diffs small, pull right before editing): `CL
 /backend                 FastAPI app; imports `scam_detector` or calls `DETECTOR_URL`             (B)
 /detector                Unified classification folder: `scam_detector/`, `api/`, `ml/`, `tests/` (C)
 /db                      SQL init / migrations                                                    (B)
+/frontend                Angular app                                (A)
+/backend                 FastAPI app; imports `scam_detector`       (B)
+/detector                Python package `scam_detector` (rules, model inference, scoring, warnings)  (C)
+/ml                      training scripts + synthetic dataset       (C)
+/models                  trained weights; models/scam-bert is in Git LFS (`git lfs install && git lfs pull`)  (C)
+/db                      SQL init / migrations                      (B)
+/audio                   SIDE FEATURE, not scored: aircraft fly-over location privacy check + synthetic demo (A)
+  service/               FastAPI app on port 8002 (separate process, own venv)
+  vendor/afg/            vendored `audio-flyover-geolocation` pipeline (MIT, see vendor/afg/LICENSE) — don't edit, re-copy from upstream
 /Scam_Shield_Public_Kit  official kit (read-only)
 ```
 Backend ↔ detector boundary is ONLY `scam_detector.load()` and `scam_detector.analyze(scenario: dict) -> dict` (see §4.2).
@@ -89,7 +98,9 @@ Backend ↔ detector boundary is ONLY `scam_detector.load()` and `scam_detector.
 | Seed demo data | TODO |
 | Deploy | TODO |
 
-Local ports: frontend `4200`, backend `8000`, model_detector `8001`, postgres `5544` (host; container uses 5432).
+Local ports: frontend `4200`, backend `8000`, model_detector `8001`, audio side feature `8002`, postgres `5544` (host; container uses 5432).
+
+Audio side feature: install `uv venv --python 3.12 audio/.venv && uv pip install --python audio/.venv/bin/python -r audio/requirements.txt` · run `cd audio && .venv/bin/uvicorn service.main:app --port 8002` (warms the demo in ~40 s at startup) · UI: `/?view=audio` (`&demo=1` auto-runs the demo).
 
 ---
 
@@ -135,6 +146,15 @@ the backend generates one and returns it as `client_id` — keep it). Response s
 `save=true` with the DB down → HTTP 503. Expired conversations are purged at startup and before every listing.
 Saving the same scenario id for the same contact again replaces it (no duplicates).
 DTO source of truth (Pydantic): `backend/app/schemas/` · DB tables: `backend/app/db/models.py`.
+
+### 4.1.1 Audio side feature API (port 8002, owner A) — NOT part of the scam detector
+| Method | Path | Request | Response |
+|---|---|---|---|
+| GET | `/api/audio/health` | – | `{ status, demo_ready }` |
+| POST | `/api/audio/audit` | multipart `file` = **WAV** (the browser converts mp3/m4a/webm to 8 kHz mono WAV first; no ffmpeg on the server) | `{ duration_s, risk: high\|medium\|low\|undetermined, flyovers, events[], status, reasons[], spectrogram: dataURL }` |
+| GET | `/api/audio/demo?seed=23` | – | synthetic localisation: `{ ok, truth, estimate, error_m, region_radius_m, bbox, flights[], events[], matched_flights[], spectrogram, heatmap }` (cached per seed) |
+
+Uploads are written to a temp file and deleted right after; nothing is stored or logged.
 
 ### 4.2 Data models
 ```ts
@@ -280,6 +300,7 @@ Append-only. Record anything another agent would otherwise get wrong or re-decid
 | 2026-11-19 | Frontend UI = PrimeNG inbox layout: search + channel/verdict filters + cards on the left, scenario detail on the right (no icon sidebar) | Cleaner, consistent UI; verdict filter enables itself once `results` arrive | Theodor |
 | 2026-11-19 | Fraud report generated only at risk ≥ 50; e-mailed to a hardcoded DEMO inbox (teammate), never Police/DNSC; personal data not stored/logged; links defanged | Demo must not contact real authorities; privacy; brief: never offer the message's links | Giulio |
 | 2026-11-19 | Report PDF with `fpdf2` + bundled DejaVu Sans (`backend/app/report/fonts`, free license) | Romanian diacritics on any OS; no system libs (WeasyPrint/Chrome) | Giulio |
+| 2026-11-19 | Audio location feature = separate service `audio/` (port 8002), owned by Theodor. It only (1) checks the user's OWN recording for aircraft fly-overs that leak where it was made and (2) runs the method on SYNTHETIC data. It never locates the speaker of an uploaded call | Upstream project forbids locating private people from private calls; would work on anyone's audio; real localisation needs a day of ADS-B data + date + region and is unreliable live. Heavy deps/CPU kept out of the main backend | Theodor |
 | 2026-11-19 | Audio files on disk (`STORAGE_DIR`), only metadata in Postgres; model loaded once in FastAPI lifespan, 1 uvicorn worker | Memory + privacy (deletable) | Giulio |
 
 ---

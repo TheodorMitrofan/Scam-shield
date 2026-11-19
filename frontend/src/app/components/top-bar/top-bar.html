@@ -2,10 +2,23 @@
   <div class="brand">
     <span class="logo" aria-hidden="true"><i class="pi pi-shield"></i></span>
     <span class="name">Scam Shield</span>
-    <span class="crumb"><i class="pi pi-inbox" aria-hidden="true"></i> Inbox</span>
+    <p-selectbutton
+      [options]="views"
+      optionValue="value"
+      [allowEmpty]="false"
+      [ngModel]="view()"
+      (ngModelChange)="view.set($event)"
+      class="views"
+      ariaLabel="Secțiune"
+    >
+      <ng-template #item let-o>
+        <i [class]="o.icon" aria-hidden="true"></i><span>{{ o.label }}</span>
+      </ng-template>
+    </p-selectbutton>
   </div>
 
   <div class="actions">
+    @if (view() === 'messages') {
     <button
       type="button"
       class="status"
@@ -24,6 +37,7 @@
       />
       <span>Salvează în istoric</span>
     </label>
+    }
     <p-button
       [icon]="dark() ? 'pi pi-moon' : 'pi pi-sun'"
       severity="secondary"
@@ -33,6 +47,7 @@
       pTooltip="Schimbă tema"
       tooltipPosition="bottom"
     />
+    @if (view() === 'messages') {
     <p-button
       label="Setul de validare"
       icon="pi pi-folder-open"
@@ -50,5 +65,6 @@
       <input type="file" webkitdirectory multiple (change)="onFiles($event)" />
     </label>
     <p-button label="Lipește mesaj" icon="pi pi-clipboard" (onClick)="paste.emit()" />
+    }
   </div>
 </header>
