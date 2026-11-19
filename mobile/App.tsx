@@ -9,14 +9,16 @@ import { SettingsScreen } from './src/screens/SettingsScreen';
 import { VerifyScreen } from './src/screens/VerifyScreen';
 import { ScamShieldProvider } from './src/store/ScamShieldContext';
 import { LoginScreen } from './src/screens/LoginScreen';
+import { AudioScreen } from './src/screens/AudioScreen';
 import { UserInfo, loadStoredUser, logout } from './src/auth';
 
-type Tab = 'inbox' | 'verify' | 'dashboard' | 'settings';
+type Tab = 'inbox' | 'verify' | 'dashboard' | 'audio' | 'settings';
 
 const TABS: { key: Tab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'inbox', label: 'Mesaje', icon: 'chatbubbles' },
   { key: 'verify', label: 'Verifică', icon: 'shield-checkmark' },
   { key: 'dashboard', label: 'Tablou', icon: 'stats-chart' },
+  { key: 'audio', label: 'Audio', icon: 'volume-high' },
   { key: 'settings', label: 'Setări', icon: 'settings' },
 ];
 
@@ -43,6 +45,7 @@ function MainShell({ user, onLogout }: { user: UserInfo; onLogout: () => void })
         {tab === 'inbox' ? <InboxScreen /> : null}
         {tab === 'verify' ? <VerifyScreen onOpenInbox={() => setTab('inbox')} /> : null}
         {tab === 'dashboard' ? <DashboardScreen onOpenInbox={() => setTab('inbox')} /> : null}
+        {tab === 'audio' ? <AudioScreen /> : null}
         {tab === 'settings' ? <SettingsScreen /> : null}
       </View>
 
