@@ -4,3 +4,4 @@ __pycache__/
 /models/
 /ml/runs/
 .pytest_cache/
+/ml/data/*.jsonl
