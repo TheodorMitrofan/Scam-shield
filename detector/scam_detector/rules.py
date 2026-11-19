@@ -85,6 +85,9 @@ PAYMENT = _c(
     r"(?:transfer|virament|depunere|plata)\b",
     r"\b(?:faci|faceti|fa|da|dai|dati|da-mi|poti\s+da)(?:-mi|-ne)?\s+(?:tu\s+)?(?:un\s+)?(?:transfer|virament)\b",
     r"\b(?:transferati|transfera|vireaza|virati|depuneti|depune|alimentati|alimenteaza|investiti|investeste)\b",
+    r"\bsa(?:-mi|-ne|\s+imi|\s+ne)?\s+(?:transferi|virezi|depui|trimiti|platesti|dai)\b(?:\s+\S+){0,3}?\s*"
+    r"(?:bani|banii|suma|lei|euro|eur|ron|\d)",  # "poti sa-mi transferi banii?"
+    r"\b(?:transferi|virezi)\b",
     r"\b(?:trimite|trimiteti|trimiti|imprumuta|imprumutati|imprumuti|da|dai|dati)(?:-mi|-ne)?\s+"
     r"(?:\S+\s+){0,3}(?:bani|banii|suma|lei|euro|eur|ron|dolari|€|\d[\d.,]*\s*(?:lei|ron|euro|eur|€))\b",
     r"\b(?:imprumut|un\s+imprumut)\b", r"\b(?:depui|depune|investesti|investeste|alimentezi)\s+(?:doar\s+|numai\s+)?\d",

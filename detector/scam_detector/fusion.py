@@ -91,8 +91,12 @@ def analyze_core(scenario: dict, model=None) -> dict:
             continue
         nt = norm(text)
         found = C.extract(nt)
+        rec["pending_contacts"] = []
         for c in found:
             if not c["official"]:
+                if c["kind"] == "phone":
+                    rec["pending_contacts"].append(c)  # decided after the whole thread is read (see below)
+                    continue
                 rec["flags"].add("RF_SUSPICIOUS_CONTACT")
                 rec["evidence"].append({"n": n, "flag": "RF_SUSPICIOUS_CONTACT", "span": list(c["span"]), "source": "contact"})
                 any_suspicious_contact = True
@@ -100,10 +104,27 @@ def analyze_core(scenario: dict, model=None) -> dict:
         for flag, span in R.detect(masked, known_contact=known, prev_ntext=prev_sender_ntext):
             rec["flags"].add(flag)
             rec["evidence"].append({"n": n, "flag": flag, "span": list(span), "source": "rule"})
+        # "continuam pe Telegram la @invest_crypto_fast": an off-platform handle is an unverifiable contact
+        if "RF_CHANNEL_SWITCH" in rec["flags"]:
+            for span in C.handles(masked):
+                rec["flags"].add("RF_SUSPICIOUS_CONTACT")
+                rec["evidence"].append({"n": n, "flag": "RF_SUSPICIOUS_CONTACT", "span": list(span), "source": "contact"})
+                any_suspicious_contact = True
         rec["claims"] = R.org_claims(masked)
         rec["ntext"] = masked
         prev_sender_ntext = masked
         per_msg.append(rec)
+
+    # An unlisted phone number alone is normal (a dentist, a plumber, a neighbour). It counts when the thread
+    # claims an organisation or carries another risk: "BancaDunarea: sunati urgent la 0721..." still fires.
+    phone_risky = bool(name_claim) or sender_email_bad or any(r["flags"] or r["claims"] for r in per_msg)
+    for rec in per_msg:
+        for c in rec.pop("pending_contacts", []):
+            if phone_risky:
+                rec["flags"].add("RF_SUSPICIOUS_CONTACT")
+                rec["evidence"].append({"n": rec["n"], "flag": "RF_SUSPICIOUS_CONTACT", "span": list(c["span"]),
+                                        "source": "contact"})
+                any_suspicious_contact = True
 
     # An unofficial e-mail address only counts when it matters: the sender claims to be an organisation,
     # the domain imitates one, or the thread already carries another risk (a neighbour's block-admin e-mail is fine).
@@ -220,7 +241,8 @@ _TYPE_KW = {
     "TECH_SUPPORT": r"suport(?:ul)?\s+tehnic|microsoft|windows|calculator|laptop|virus|any\s?desk|team\s?viewer|"
                     r"de\s+la\s+distanta|instalati|programul",
     "FAMILY_EMERGENCY": r"\bmami\b|\bmama\b|\btata\b|\btati\b|bunic|nepot|nepoata|\bfiul\b|\bfiica\b|puiule|numar(?:ul)?\s+nou|"
-                        r"accident|spital|arestat|cautiune|\bsunt\s+eu\b",
+                        r"accident|spital|arestat|\barest\b|cautiune|\bsunt\s+eu\b|\bbuni\b|avocat|daune|"
+                        r"lovit\s+(?:un|o)\s+(?:om|pieton|femeie|copil)",
     "MARKETPLACE": r"cumparator|vanzator|anunt|disponibil|livrare\s+sigura|sa\s+primiti\s+banii|primiti\s+banii|"
                    r"piata\s*mea|\bolx\b|produsul|il\s+iau|o\s+iau|curierul\s+va\s+ridica",
     "ACCOUNT_TAKEOVER": r"din\s+greseala|trimis\s+(?:\w+\s+){0,3}cod|cod\s+de\s+\d+\s+cifre|contul\s+(?:meu\s+)?de\s+whatsapp|"
@@ -231,7 +253,7 @@ _TYPE_KW = {
     "INVESTMENT": r"investi|crypto|bitcoin|randament|trading|bursa|actiuni|platforma\s+de|profit|broker|portofoliu|"
                   r"retrage(?:ti)?\s+(?:\w+\s+)?(?:profitul|castig)|contul\s+(?:\S+\s+){0,2}a\s+ajuns\s+la",
     "ROMANCE": r"iubit|iubito|iubitule|iubire|te\s+iubesc|draga\s+mea|dragul\s+meu|ne-am\s+cunoscut|sa\s+ne\s+vedem|"
-               r"bilet\s+de\s+avion|dor\s+de\s+tine|inima|militar|misiune|frumoas|ma\s+gandesc\s+la\s+tine|"
+               r"bilet\s+de\s+avion|dor\s+de\s+tine|(?<!de\s)inima|militar|misiune|frumoas|ma\s+gandesc\s+la\s+tine|"
                r"platforma\s+petroliera|suflet(?:ul)?\s+(?:meu\s+)?pereche",
     "JOB_OFFER": r"\bjob\b|loc\s+de\s+munca|angaj|lucr(?:ati|eaza|ezi)\s+de\s+acasa|like-uri|aprecieri|sarcini|task|"
                  r"recrut|castigati\s+\d+|pe\s+zi\b|comision(?:ul)?\s+pe",

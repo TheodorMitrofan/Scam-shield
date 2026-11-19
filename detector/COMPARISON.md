@@ -10,17 +10,19 @@ the honest numbers are on the **other** author's tests.
 | Giulio stress (43) — unseen by Francesco | *(30.0, own)* | 18.4 |
 | Giulio blind (15) — unseen by Francesco | *(30.0, own)* | 20.8 |
 | Giulio challenge (15) — unseen by Francesco | *(30.0, own)* | 13.3 |
-| Francesco stress_test.py (8) — unseen by Giulio | 27.8 | *(30.0, own)* |
-| Francesco creative traps (15) — unseen by Giulio | 23.0 | *(30.0, own)* |
+| Francesco stress_test.py (8) — unseen by Giulio | 27.8 → **30.0** after fixes | *(30.0, own)* |
+| Francesco creative traps (15) — unseen by Giulio | 23.0 → **30.0** after fixes | *(30.0, own)* |
 | Francesco benchmark (108) | 30.0 | 30.0 |
-| Scams called SAFE on the other's tests | 1 / 23 | 9 / 73 |
-| False alarms on the other's tests | 1 | 5 |
+| Scams called SAFE on the other's tests | 1 / 23 → 0 | 9 / 73 |
+| False alarms on the other's tests | 1 → 0 | 5 |
 | Malformed inputs that crash (of 5) | 0 | 2 |
 | Latency | ~25 ms (GPU model) | ~1 ms |
 
-Known weaknesses of scam_detector found by Francesco's tests (not fixed yet):
-- "poți să-mi transferi banii" is not detected as a payment request.
-- The romance keyword weighting pushes "moare de inimă" to ROMANCE.
-- A dentist SMS with an unlisted phone number gets RF_SUSPICIOUS_CONTACT.
-- RECORDER_HEALTH_01 (fake miracle supplement): the verdict and first alert are correct, but the type is wrong
-  (COURIER_FEE instead of OTHER), so the warning talks about a courier.
+Weaknesses found by Francesco's tests — **fixed** (regression test `test_regressions_from_scam_shield_creative_traps`).
+They were fixed after seeing his tests, so the 30.0 there is no longer a blind score:
+- "poți să-mi transferi banii" is now a payment request (2nd-person `transferi`/`virezi`, `să-mi ...`).
+- "moare de inimă" no longer counts as ROMANCE; `buni`, `avocat`, `daune`, `arest` count as FAMILY_EMERGENCY.
+- An unlisted phone number alone no longer raises RF_SUSPICIOUS_CONTACT; it counts only when the thread claims an
+  organisation or already carries another risk (same policy as sender e-mails).
+- An @handle given together with a channel switch ("pe Telegram la @invest_crypto_fast") is RF_SUSPICIOUS_CONTACT.
+- RECORDER_HEALTH_01 was already fixed earlier (type OTHER).

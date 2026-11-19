@@ -63,6 +63,14 @@ def extract(ntext: str):
     return found
 
 
+_HANDLE = re.compile(r"(?<![\w.@])@[a-z0-9_][a-z0-9_.]{2,31}\b")
+
+
+def handles(ntext: str):
+    """Spans of @usernames (Telegram / Instagram style) in normalised text."""
+    return [(m.start(), m.end()) for m in _HANDLE.finditer(ntext)]
+
+
 def sender_email_domain(sender: dict):
     addr = (sender or {}).get("address") or ""
     m = re.search(r"@([A-Za-z0-9.\-]+)", addr)
