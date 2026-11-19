@@ -128,3 +128,20 @@ def test_regressions_from_scam_shield_creative_traps():
     r = sd.analyze(_sc("BANKPH", "sms", {"name": None, "address": "+40 744 000 111", "known_contact": False},
                        ("sender", "Banca dvs: sunati la 0744 123 456 pentru deblocarea cardului.")))
     assert "RF_SUSPICIOUS_CONTACT" in r["red_flags"]
+
+
+def test_single_typos_in_keywords_still_detected():
+    # found by the validation-set mutation stress test: one typo per keyword used to hide the scam
+    r = sd.analyze(_sc("TYPO_PRIZE", "sms", {"name": None, "address": "+40 7xx xxx 904", "known_contact": False},
+                       ("sender", "Felicitări! Ați fost ales câtigătorul unui telefon nou la tobmola MegaShop. "
+                                  "Răspundeți cu DA pentru detalii.")))
+    assert r["verdict"] != "SAFE", r["red_flags"]
+    r = sd.analyze(_sc("TYPO_TECH", "call_transcript", {"name": None, "address": "+40 3xx xxx 117", "known_contact": False},
+                       ("sender", "Bună ziua, vă sun de la suporrtul tehnic Windows. Calculatorul dvs. trimite virruși pe internet.")))
+    assert {"RF_IMPERSONATION", "RF_THREAT"} <= set(r["red_flags"]), r["red_flags"]
+
+
+def test_typo_correction_leaves_ordinary_words_alone():
+    from scam_detector.text_utils import correct_typos
+    text = "in cadrul programului am platit deja, politica, cardul a expirat, l-am instalat, v-am transferat"
+    assert correct_typos(text) == text

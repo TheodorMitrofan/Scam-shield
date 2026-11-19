@@ -8,7 +8,7 @@ version = "3.0.0"
 description = "Scam Shield SOTA v3 Tier-6 local detector: Neural-SVD+Linear ensemble, semantic matching, de-obfuscation, and contact verification"
 requires-python = ">=3.9"
 dependencies = [
-    "scikit-learn>=1.3",
+    "scikit-learn==1.6.1",  # must match the version trained_model.joblib was pickled with
     "joblib>=1.3",
     "numpy>=1.24",
     "pandas>=2.0",
