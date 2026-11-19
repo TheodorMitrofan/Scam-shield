@@ -100,8 +100,6 @@ Backend ↔ detector boundary is ONLY `scam_detector.load()` and `scam_detector.
 
 Local ports: frontend `4200`, backend `8000`, model_detector `8001`, audio side feature `8002`, postgres `5544` (host; container uses 5432).
 
-Audio side feature: install `uv venv --python 3.12 audio/.venv && uv pip install --python audio/.venv/bin/python -r audio/requirements.txt` · run `cd audio && .venv/bin/uvicorn service.main:app --port 8002` (warms the demo in ~40 s at startup) · UI: `/?view=audio` (`&demo=1` auto-runs the demo).
-Audio side feature: needs `ffmpeg` (`brew install ffmpeg`); install `uv venv --python 3.12 audio/.venv && uv pip install --python audio/.venv/bin/python -r audio/requirements.txt` · run `cd audio && .venv/bin/uvicorn service.main:app --port 8002` (warms the demo in ~40 s at startup) · UI: `/?view=audio` (`&demo=1` auto-runs the demo).
 Audio side feature: needs `ffmpeg` (`brew install ffmpeg`); install `uv venv --python 3.12 audio/.venv && uv pip install --python audio/.venv/bin/python -r audio/requirements.txt` · run `cd audio && .venv/bin/uvicorn service.main:app --port 8002` (warms the demo in ~40 s at startup) · UI: `/?view=audio` (`&demo=ro|it|fr` auto-runs that demo).
 
 ---
