@@ -11,7 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=(".env", "../.env"), extra="ignore")
 
-    database_url: str = "postgresql+psycopg://scam:scam@localhost:5432/scamshield"
+    database_url: str = "postgresql+psycopg://scam:scam@localhost:5544/scamshield"
     cors_origins: str = "http://localhost:4200"
     model_dir: str = "models/scam-bert"
     storage_dir: str = "data"

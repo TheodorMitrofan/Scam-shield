@@ -85,13 +85,13 @@ Backend ↔ detector boundary is ONLY `scam_detector.load()` and `scam_detector.
 | Task | Command |
 |---|---|
 | Install | `cd frontend && npm install` · backend: `cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt` · detector: TODO (C) |
-| Run locally | `cd frontend && npm start` → http://localhost:4200 (demo shortcut: `/?load=validation&id=V04`) · DB: `docker compose -p scamshield up -d --wait postgres` (port taken? `POSTGRES_PORT=5433` + matching `DATABASE_URL`) · backend: `cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000` → http://localhost:8000/docs |
+| Run locally | `cd frontend && npm start` → http://localhost:4200 (demo shortcut: `/?load=validation&id=V04`) · DB: `docker compose -p scamshield up -d --wait postgres` · backend: `cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000` → http://localhost:8000/docs |
 | Run tests | backend: `cd backend && .venv/bin/python -m pytest -q` (SQLite in-memory, no Docker needed) · C: `pytest detector/` |
 | Lint / format | TODO |
 | Seed demo data | TODO |
 | Deploy | TODO |
 
-Local ports: frontend `4200`, backend `8000`, postgres `5432`.
+Local ports: frontend `4200`, backend `8000`, postgres `5544` (host; container uses 5432).
 
 ---
 
@@ -190,11 +190,11 @@ All env vars must be listed here **and** in `.env.example` (with dummy values). 
 
 | Variable | Used by | Purpose |
 |---|---|---|
-| `DATABASE_URL` | backend | `postgresql+psycopg://scam:scam@localhost:5432/scamshield` |
+| `DATABASE_URL` | backend | `postgresql+psycopg://scam:scam@localhost:5544/scamshield` |
 | `MODEL_DIR` | backend → detector | path to fine-tuned weights, default `models/scam-bert` |
 | `STORAGE_DIR` | backend | where audio files are stored (stage 5), default `data/` |
 | `CORS_ORIGINS` | backend | default `http://localhost:4200` (comma-separated) |
-| `POSTGRES_PORT` | docker-compose | host port for Postgres, default `5432` |
+| `POSTGRES_PORT` | docker-compose | host port for Postgres, default `5544` |
 
 ---
 

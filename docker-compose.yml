@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: scam   # local dev only
       POSTGRES_DB: scamshield
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"   # POSTGRES_PORT=5433 if 5432 is already taken
+      - "${POSTGRES_PORT:-5544}:5432"   # host 5544 (5432 is often taken by other projects)
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
