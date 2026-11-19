@@ -16,10 +16,11 @@ import { ScenarioStore } from '../../services/scenario-store';
 export class TopBar {
   protected readonly store = inject(ScenarioStore);
   readonly paste = output<void>();
-  /** Which part of the app is shown: the scam-check inbox or the separate audio feature. */
-  readonly view = model<'messages' | 'audio'>('messages');
+  /** Which part of the app is shown: the scam-check inbox, the results dashboard, or the audio feature. */
+  readonly view = model<'messages' | 'dashboard' | 'audio'>('messages');
   protected readonly views = [
     { label: 'Mesaje', value: 'messages', icon: 'pi pi-inbox' },
+    { label: 'Dashboard', value: 'dashboard', icon: 'pi pi-table' },
     { label: 'Audio', value: 'audio', icon: 'pi pi-volume-up' },
   ];
   protected readonly dark = signal(false);

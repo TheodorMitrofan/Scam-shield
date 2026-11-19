@@ -2,6 +2,8 @@
 
 @if (view() === 'audio') {
   <app-audio-page />
+} @else if (view() === 'dashboard') {
+  <app-dashboard-view (openScenario)="openFromDashboard()" />
 } @else {
 <main class="layout" [class.show-detail]="showDetail()">
   <section class="list" aria-label="Scenarii">

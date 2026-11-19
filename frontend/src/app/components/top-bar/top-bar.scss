@@ -47,3 +47,11 @@
   .views { margin-left: 0; }
   .actions { width: 100%; }
 }
+
+/* Phone: the three view tabs (Mesaje / Dashboard / Audio) share the full width instead of pushing the page sideways. */
+@media (max-width: 520px) {
+  .brand { flex-wrap: wrap; width: 100%; }
+  .views { width: 100%; display: flex; }
+  :host ::ng-deep .views .p-togglebutton { flex: 1 1 0; min-width: 0; padding-inline: 0.5rem; }
+  .views i { display: none; } /* text only, so „Dashboard” is not cut */
+}

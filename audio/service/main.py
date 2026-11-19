@@ -27,7 +27,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from scipy import signal
 from scipy.io import wavfile
 
-from . import pipeline
+from . import claim, pipeline
 
 log = logging.getLogger("audio")
 logging.basicConfig(level=logging.INFO)
@@ -69,8 +69,24 @@ async def _demo(scenario: str) -> dict:
 
 
 async def _warm_all() -> None:
+    await _claim(_default_claim())  # ~6 s, so it is ready first
     for sc in pipeline.SCENARIOS:  # one after another: each run is CPU-heavy
         await _demo(sc)
+
+
+_claim_cache: dict[str, dict] = {}
+_claim_lock = asyncio.Lock()
+
+
+def _default_claim() -> str:
+    return claim.claimed_place(" ".join(t for _, t in claim.TRANSCRIPT)) or "madrid"
+
+
+async def _claim(key: str) -> dict:
+    async with _claim_lock:
+        if key not in _claim_cache:
+            _claim_cache[key] = await run_in_threadpool(claim.verify_claim, key)
+    return _claim_cache[key]
 
 
 @asynccontextmanager
@@ -141,3 +157,24 @@ async def demo_recording(scenario: str = PathParam(pattern=SCENARIO_PATTERN)) ->
     if not path.is_file():
         raise HTTPException(404, "Înregistrarea nu este disponibilă.")
     return FileResponse(path, media_type="audio/wav", filename=f"scam-shield-demo-{scenario}.wav")
+
+
+CLAIM_PATTERN = "^(" + "|".join(claim.PLACES) + ")$"
+
+
+@app.get("/api/audio/claim")
+async def claim_check(claimed: str | None = Query(None, pattern=CLAIM_PATTERN)) -> dict:
+    """„Nepotul e în Spania?” — SYNTHETIC voice message from a fake grandson; checks the place he CLAIMS
+    (from the transcript, or `claimed`) against the aircraft heard behind him, using the known message time.
+    City-level verdict only: never returns the other person's coordinates."""
+    return await _claim(claimed or _default_claim())
+
+
+@app.get("/api/audio/claim/recording.wav")
+async def claim_recording() -> FileResponse:
+    """The simulated voice message (voice + aircraft in the background), ~100 s."""
+    await _claim(_default_claim())
+    path = pipeline.RECORDINGS_DIR / "claim.wav"
+    if not path.is_file():
+        raise HTTPException(404, "Mesajul vocal nu este disponibil.")
+    return FileResponse(path, media_type="audio/wav", filename="scam-shield-mesaj-vocal.wav")

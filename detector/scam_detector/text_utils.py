@@ -58,11 +58,80 @@ def normalize_text(text: str) -> str:
     return cleaned.strip()
 
 
+# --------------------------------------------------------------------------------------------- typo tolerance
+# Distinctive keywords the rules look for. A token one typo away (Damerau-Levenshtein: a letter changed, missing,
+# doubled or two letters swapped; two typos for words of 10+ letters) is rewritten to the keyword before the rules
+# run, so "tobmola", "catigatorul", "suporrtul", "virrusi" or "AnyDek" still match.
+# Deliberately NOT listed: keywords with an ordinary Romanian word one typo away, which would cause false alarms on
+# genuine messages, e.g. platiti/platit ("am platit deja"), achitati/achitat, politia/politica, cardului/cadrului,
+# expira/expirat, transfer/transferat, instalati/instalat.
+_TYPO_LEXICON = frozenset({
+    # prizes / too good to be true
+    "castigatorul", "castigat", "castigati", "tombola", "premiu", "premiul", "felicitari", "voucher", "garantat",
+    # impersonation
+    "suport", "suportul", "tehnic", "bancadunarea", "dunarea", "curierexpres", "megashop", "microsoft",
+    "windows", "defender", "procuror", "procurorul", "ghiseul", "reprogramare",
+    # threats
+    "virusi", "infectat", "blocat", "deblocare", "suspendat",
+    # remote access
+    "anydesk", "teamviewer", "rustdesk", "distanta",
+    # urgency
+    "urgent", "urgenta", "imediat", "grabiti",
+})
+_TYPO_MIN_LEN = 6
+_TYPO_CORE_RX = re.compile(r"^([^a-z]*)([a-z]+)([^a-z]*)$")
+
+
+def _damerau_levenshtein(a: str, b: str, limit: int) -> int:
+    """Optimal string alignment distance, stopping early once it exceeds `limit`."""
+    if abs(len(a) - len(b)) > limit:
+        return limit + 1
+    prev2, prev = None, list(range(len(b) + 1))
+    for i in range(1, len(a) + 1):
+        cur = [i] + [0] * len(b)
+        for j in range(1, len(b) + 1):
+            cost = 0 if a[i - 1] == b[j - 1] else 1
+            cur[j] = min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost)
+            if prev2 is not None and i > 1 and j > 1 and a[i - 1] == b[j - 2] and a[i - 2] == b[j - 1]:
+                cur[j] = min(cur[j], prev2[j - 2] + 1)
+        if min(cur) > limit:
+            return limit + 1
+        prev2, prev = prev, cur
+    return prev[-1]
+
+
+def _correct_word(word: str) -> str:
+    if len(word) < _TYPO_MIN_LEN or word in _TYPO_LEXICON:
+        return word
+    best, best_key = word, None
+    for kw in _TYPO_LEXICON:
+        if kw[0] != word[0]:  # typos rarely hit the first letter; this also keeps false matches down
+            continue
+        limit = 2 if len(kw) >= 10 else 1
+        d = _damerau_levenshtein(word, kw, limit)
+        if d <= limit:
+            key = (d, abs(len(kw) - len(word)), kw)
+            if best_key is None or key < best_key:
+                best, best_key = kw, key
+    return best
+
+
+def correct_typos(norm_text: str) -> str:
+    """Rewrites near-miss keywords in already-normalized text. Tokens with digits, '.', '@', '/', '-' (links,
+    e-mails, amounts, codes, compound forms like "mi-am") are never touched."""
+    out = []
+    for tok in norm_text.split(" "):
+        m = _TYPO_CORE_RX.match(tok)
+        out.append(f"{m.group(1)}{_correct_word(m.group(2))}{m.group(3)}" if m else tok)
+    return " ".join(out)
+
+
 def deobfuscate_for_detection(text: str) -> str:
     """
     Normalizes text AND removes common adversarial obfuscation:
     - Spaced single letters ("A n y D e s k" -> "anydesk")
     - Leet-speak inside mixed letter tokens ("c0dul", "bl0cat", "b@nca") while leaving pure numbers intact.
+    - Single typos in distinctive keywords ("tobmola" -> "tombola"), see `correct_typos`.
     """
     norm = normalize_text(text)
     if not norm:
@@ -80,7 +149,7 @@ def deobfuscate_for_detection(text: str) -> str:
             if not re.fullmatch(r'[\d.,]+(?:h|lei|ron|eur|euro)?', tok_core):
                 tok = tok.translate(_LEET_MAP)
         decoded.append(tok)
-    return " ".join(decoded)
+    return correct_typos(" ".join(decoded))
 
 
 URL_REGEX = re.compile(
