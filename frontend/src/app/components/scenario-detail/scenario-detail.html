@@ -5,17 +5,17 @@
       icon="pi pi-arrow-left"
       severity="secondary"
       [text]="true"
-      ariaLabel="Înapoi la listă"
+      [ariaLabel]="'Înapoi la listă' | ui"
       (onClick)="back.emit()"
     />
-    <span class="pos">Scenariul {{ store.selectedIndex() }}/{{ store.scenarios().length }}</span>
+    <span class="pos">{{ 'Scenariul' | ui }} {{ store.selectedIndex() }}/{{ store.scenarios().length }}</span>
     <div class="acts">
-      <p-button label="Marchează ca necitit" severity="secondary" (onClick)="markUnread()" />
+      <p-button [label]="'Marchează ca necitit' | ui" severity="secondary" (onClick)="markUnread()" />
       <p-button
         icon="pi pi-trash"
         severity="secondary"
-        ariaLabel="Șterge din listă"
-        pTooltip="Șterge din listă"
+        [ariaLabel]="'Șterge din listă' | ui"
+        [pTooltip]="'Șterge din listă' | ui"
         tooltipPosition="bottom"
         (onClick)="remove()"
       />
@@ -24,15 +24,15 @@
 
   <div class="meta">
     @if (tag(); as t) {
-      <p-tag [value]="t.label" [severity]="t.severity" [rounded]="true" />
+      <p-tag [value]="t.label | ui" [severity]="t.severity" [rounded]="true" />
     }
-    <span class="id">{{ s.id }} · {{ channelLabel[s.channel] }}</span>
+    <span class="id">{{ s.id }} · {{ channelLabel[s.channel] | ui }}</span>
   </div>
   <h2 class="title">{{ sender() }}</h2>
 
   @if (store.isAnalyzing(s.id)) {
     <div class="analyzing" role="status">
-      <i class="pi pi-spin pi-spinner" aria-hidden="true"></i> Se analizează mesajul…
+      <i class="pi pi-spin pi-spinner" aria-hidden="true"></i> {{ 'Se analizează mesajul…' | ui }}
     </div>
   } @else if (store.selectedResult(); as r) {
     <div class="warning" [class]="'v-' + r.verdict" role="status">
@@ -76,13 +76,13 @@
     @if (r.risk_score >= reportMinScore) {
       <div class="report">
         <p-button
-          label="Raportează frauda"
+          [label]="'Raportează frauda' | ui"
           icon="pi pi-flag"
           severity="danger"
           size="large"
           (onClick)="reportOpen.set(true)"
         />
-        <span>Pregătim noi sesizarea; dumneavoastră completați doar datele personale.</span>
+        <span>{{ 'Pregătim noi sesizarea; dumneavoastră completați doar datele personale.' | ui }}</span>
       </div>
       <app-report-dialog [(visible)]="reportOpen" [scenario]="s" [result]="r" />
     }
@@ -102,8 +102,8 @@
     }
   } @else if (store.apiError()) {
     <div class="analyzing offline" role="status">
-      <i class="pi pi-wifi" aria-hidden="true"></i> Mesajul nu a putut fi verificat acum.
-      <p-button label="Reîncearcă" size="small" [text]="true" (onClick)="store.analyze([s])" />
+      <i class="pi pi-wifi" aria-hidden="true"></i> {{ 'Mesajul nu a putut fi verificat acum.' | ui }}
+      <p-button [label]="'Reîncearcă' | ui" size="small" [text]="true" (onClick)="store.analyze([s])" />
     </div>
   }
 
@@ -113,6 +113,6 @@
 } @else {
   <div class="empty">
     <i class="pi pi-comments" aria-hidden="true"></i>
-    <p>Alegeți o conversație din listă ca s-o vedeți aici.</p>
+    <p>{{ 'Alegeți o conversație din listă ca s-o vedeți aici.' | ui }}</p>
   </div>
 }

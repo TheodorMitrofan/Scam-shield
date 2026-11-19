@@ -8,11 +8,12 @@ import { TooltipModule } from 'primeng/tooltip';
 import { AuthService } from '../../services/auth.service';
 import { ScenarioStore } from '../../services/scenario-store';
 import { UiLang } from '../../services/ui-lang';
+import { UiPipe } from '../../services/ui.pipe';
 
 /** Header: brand on the left; backend status, theme toggle, consolidated add-actions modal, and logout on the right. */
 @Component({
   selector: 'app-top-bar',
-  imports: [FormsModule, ButtonModule, DialogModule, SelectButtonModule, ToggleSwitchModule, TooltipModule],
+  imports: [UiPipe, FormsModule, ButtonModule, DialogModule, SelectButtonModule, ToggleSwitchModule, TooltipModule],
   templateUrl: './top-bar.html',
   styleUrl: './top-bar.scss',
 })

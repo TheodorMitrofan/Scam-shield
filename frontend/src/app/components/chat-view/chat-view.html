@@ -6,13 +6,13 @@
   <header class="bar">
     <div class="avatar" aria-hidden="true">{{ initial() }}</div>
     <div class="who">
-      <div class="name">{{ title() }}</div>
+      <div class="name">{{ title() | ui }}</div>
       @if (subtitle()) {
         <div class="addr">{{ subtitle() }}</div>
       }
     </div>
     <span class="contact" [class.known]="scenario().sender.known_contact">
-      {{ scenario().sender.known_contact ? '✓ În agendă' : '⚠ Nu e în agendă' }}
+      {{ (scenario().sender.known_contact ? '✓ În agendă' : '⚠ Nu e în agendă') | ui }}
     </span>
   </header>
 
@@ -23,7 +23,7 @@
       <li class="row" [class.me]="m.from === 'reader'">
         <div class="bubble" [class.alert]="isFirstAlert(result(), m.n)">
           @if (m.from === 'reader') {
-            <span class="sr-only">Dumneavoastră:</span>
+            <span class="sr-only">{{ 'Dumneavoastră:' | ui }}</span>
           }
           <p class="text">@if (m.text) {@for (seg of segments(m.n, m.text); track $index) {@if (seg.flag) {<mark class="danger" tabindex="0" role="button" [title]="flagLabel(seg.flag)" (click)="explain(m.n, seg.flag)" (keydown.enter)="explain(m.n, seg.flag)" [attr.aria-label]="seg.text + ': ' + flagLabel(seg.flag)">{{ seg.text }}</mark>} @else {{{ seg.text }}}}} @else {(mesaj gol)}</p>
           @if (explained(); as e) { @if (e.n === m.n) { <p class="why-note" role="status"><i class="pi pi-exclamation-triangle" aria-hidden="true"></i><span>{{ flagLabel(e.flag) }}</span></p> } }
@@ -37,7 +37,7 @@
         </div>
       </li>
     } @empty {
-      <li class="empty">Conversația nu are mesaje.</li>
+      <li class="empty">{{ 'Conversația nu are mesaje.' | ui }}</li>
     }
   </ol>
 </section>

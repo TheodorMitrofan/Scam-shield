@@ -9,10 +9,10 @@
       [ngModel]="view()"
       (ngModelChange)="view.set($event)"
       class="views"
-      ariaLabel="Secțiune"
+      [ariaLabel]="'Secțiune' | ui"
     >
       <ng-template #item let-o>
-        <i [class]="o.icon" aria-hidden="true"></i><span>{{ o.label }}</span>
+        <i [class]="o.icon" aria-hidden="true"></i><span>{{ o.label | ui }}</span>
       </ng-template>
     </p-selectbutton>
   </div>
@@ -36,8 +36,8 @@
       severity="secondary"
       [outlined]="true"
       (onClick)="toggleTheme()"
-      [ariaLabel]="dark() ? 'Temă deschisă' : 'Temă întunecată'"
-      pTooltip="Schimbă tema"
+      [ariaLabel]="(dark() ? 'Temă deschisă' : 'Temă întunecată') | ui"
+      [pTooltip]="'Schimbă tema' | ui"
       tooltipPosition="bottom"
     />
   </div>
@@ -52,12 +52,12 @@
       [pTooltip]="status().hint"
       tooltipPosition="bottom"
     >
-      <span class="dot" aria-hidden="true"></span>{{ status().label }}
+      <span class="dot" aria-hidden="true"></span>{{ status().label | ui }}
     </button>
     }
     @if (view() !== 'audio') {
       <p-button
-        label="Adaugă / Verifică"
+        [label]="'Adaugă / Verifică' | ui"
         icon="pi pi-plus"
         [loading]="store.loading()"
         (onClick)="actionsOpen.set(true)"
@@ -68,8 +68,8 @@
         icon="pi pi-sign-out"
         severity="secondary"
         [outlined]="true"
-        [ariaLabel]="'Ieșire (' + u.username + ')'"
-        [pTooltip]="'Ieșire (' + u.username + ' · ' + u.role + ')'"
+        [ariaLabel]="('Ieșire' | ui) + ' (' + u.username + ')'"
+        [pTooltip]="('Ieșire' | ui) + ' (' + u.username + ' · ' + u.role + ')'"
         tooltipPosition="bottom"
         (onClick)="logout.emit()"
       />
@@ -78,14 +78,14 @@
 </header>
 
 <p-dialog
-  header="Adaugă și configurează verificarea"
+  [header]="'Adaugă și configurează verificarea' | ui"
   [modal]="true"
   [(visible)]="actionsOpen"
   [style]="{ width: 'min(420px, 94vw)' }"
 >
   <div class="modal-body">
     <p-button
-      label="Lipește mesaj sau conversație"
+      [label]="'Lipește mesaj sau conversație' | ui"
       icon="pi pi-clipboard"
       [fluid]="true"
       (onClick)="openPaste()"
@@ -94,19 +94,19 @@
     <div class="modal-grid">
       <label class="file-btn modal-file">
         <i class="pi pi-file" aria-hidden="true"></i>
-        <span>Fișiere JSON</span>
+        <span>{{ 'Fișiere JSON' | ui }}</span>
         <input type="file" accept=".json,application/json" multiple (change)="onFiles($event)" />
       </label>
       <label class="file-btn modal-file">
         <i class="pi pi-folder" aria-hidden="true"></i>
-        <span>Folder JSON</span>
+        <span>{{ 'Folder JSON' | ui }}</span>
         <input type="file" webkitdirectory multiple (change)="onFiles($event)" />
       </label>
     </div>
 
     @if (auth.isAdmin()) {
       <p-button
-        label="Încarcă setul de validare (Admin)"
+        [label]="'Încarcă setul de validare (Admin)' | ui"
         icon="pi pi-folder-open"
         severity="secondary"
         [outlined]="true"
@@ -118,8 +118,8 @@
 
     <div class="modal-consent" (click)="store.saveHistory.set(!store.saveHistory())">
       <div class="consent-info">
-        <strong>Salvează în istoric</strong>
-        <small>Conversațiile verificate se păstrează în baza de date pentru contul dvs.</small>
+        <strong>{{ 'Salvează în istoric' | ui }}</strong>
+        <small>{{ 'Conversațiile verificate se păstrează în baza de date pentru contul dvs.' | ui }}</small>
       </div>
       <div class="consent-switch" (click)="$event.stopPropagation()">
         <p-toggleswitch

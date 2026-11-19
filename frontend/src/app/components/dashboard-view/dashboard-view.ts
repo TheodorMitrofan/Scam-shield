@@ -5,6 +5,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { AnalysisResult, Scenario, Verdict } from '../../models/scenario';
 import { TagSeverity, flagLabel, scamTypeLabel } from '../../services/result-utils';
 import { ScenarioStore } from '../../services/scenario-store';
+import { UiPipe } from '../../services/ui.pipe';
 
 interface DashboardRow {
   scenario: Scenario;
@@ -30,7 +31,7 @@ const VERDICT_ICON: Record<Verdict, string> = {
  */
 @Component({
   selector: 'app-dashboard-view',
-  imports: [ButtonModule, TagModule, TooltipModule],
+  imports: [UiPipe, ButtonModule, TagModule, TooltipModule],
   templateUrl: './dashboard-view.html',
   styleUrl: './dashboard-view.scss',
 })

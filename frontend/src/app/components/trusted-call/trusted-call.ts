@@ -12,6 +12,13 @@ interface TrustedContact {
 const STORAGE_KEY = 'scamshield-trusted-contact';
 
 /**
+ * HACK (hackathon demo): pre-filled trusted contact so the jury can press the button once and see it ring.
+ * It is the team member's own number, used with his consent. The user can still change it ("Schimbă persoana").
+ * Remove after the demo.
+ */
+const DEMO_CONTACT: TrustedContact = { name: 'Theodor', phone: '0760 042 470' };
+
+/**
  * „Sunați pe cineva de încredere” (brief nice-to-have). One big button that opens the phone's dialer
  * (tel: link) for a person the USER chose. The number is typed by the user and kept only in this
  * browser — never a number taken from the suspicious message.
@@ -97,9 +104,9 @@ export class TrustedCall {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       const c = raw ? JSON.parse(raw) : null;
-      return c && typeof c.name === 'string' && typeof c.phone === 'string' ? c : null;
+      return c && typeof c.name === 'string' && typeof c.phone === 'string' ? c : DEMO_CONTACT;
     } catch {
-      return null;
+      return DEMO_CONTACT;
     }
   }
 

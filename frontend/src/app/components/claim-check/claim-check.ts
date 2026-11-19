@@ -5,6 +5,8 @@ import { AUDIO_API_BASE } from '../../api.config';
 import { AnalysisResult, Scenario } from '../../models/scenario';
 import { ApiService } from '../../services/api.service';
 import { VERDICT_LABEL } from '../../services/result-utils';
+import { UiLang } from '../../services/ui-lang';
+import { UiPipe } from '../../services/ui.pipe';
 
 interface AreaCheck {
   label: string;
@@ -34,12 +36,13 @@ export interface ClaimResult {
  */
 @Component({
   selector: 'app-claim-check',
-  imports: [ButtonModule, TagModule],
+  imports: [UiPipe, ButtonModule, TagModule],
   templateUrl: './claim-check.html',
   styleUrl: './claim-check.scss',
 })
 export class ClaimCheck implements OnInit {
   private readonly api = inject(ApiService);
+  protected readonly lang = inject(UiLang);
 
   protected readonly recordingUrl = `${AUDIO_API_BASE}/claim/recording.wav`;
   protected readonly verdictLabel = VERDICT_LABEL;

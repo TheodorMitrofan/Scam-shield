@@ -2,10 +2,12 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { AnalysisResult, CHANNEL_LABEL, Scenario } from '../../models/scenario';
 import { evidenceSegments, flagsAt, isFirstAlert } from '../../services/result-utils';
 import { UiLang } from '../../services/ui-lang';
+import { UiPipe } from '../../services/ui.pipe';
 
 /** Renders sms / whatsapp / chat scenarios as a phone messaging app. */
 @Component({
   selector: 'app-chat-view',
+  imports: [UiPipe],
   templateUrl: './chat-view.html',
   styleUrl: './chat-view.scss',
 })

@@ -18,6 +18,8 @@ import { TextareaModule } from 'primeng/textarea';
 import { FraudReportDraft, PersonalData, PersonalField } from '../../models/report';
 import { AnalysisResult, Scenario } from '../../models/scenario';
 import { ApiError, ApiService } from '../../services/api.service';
+import { EN, UiPipe } from '../../services/ui.pipe';
+import { UiLang } from '../../services/ui-lang';
 
 const EMPTY: PersonalData = {
   last_name: null,
@@ -50,7 +52,7 @@ const KIND_LABEL: Record<string, string> = {
  */
 @Component({
   selector: 'app-report-dialog',
-  imports: [
+  imports: [UiPipe, 
     FormsModule,
     DialogModule,
     ButtonModule,
@@ -86,6 +88,12 @@ export class ReportDialog {
       .filter((f) => f.required && (p[f.key] === null || p[f.key] === ''))
       .map((f) => f.label);
   });
+  private readonly uiLang = inject(UiLang);
+  /** Missing field names in the chosen UI language. */
+  protected missingLabels(): string[] {
+    return this.missing().map((l) => (this.uiLang.lang() === 'en' ? (EN[l] ?? l) : l));
+  }
+
   /** Show which fields are missing only after the user tried once. */
   protected readonly triedSubmit = signal(false);
 
