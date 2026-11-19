@@ -73,6 +73,7 @@ Shared files (anyone may edit, keep diffs small, pull right before editing): `CL
 
 ```
 /frontend                Angular app                                                              (A)
+/mobile                  Expo (React Native) app for iOS & Android                        (A)
 /backend                 FastAPI app; imports `scam_detector` or calls `DETECTOR_URL`             (B)
 /detector                Unified classification folder: `scam_detector/`, `api/`, `ml/`, `tests/` (C)
 /db                      SQL init / migrations                                                    (B)
@@ -91,8 +92,8 @@ Backend ↔ detector boundary is ONLY `scam_detector.load()` and `scam_detector.
 
 | Task | Command |
 |---|---|
-| Install | `cd frontend && npm install` · backend: `cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt` · detector API: `pip install -r detector/api/requirements.txt` (or `pip install -e detector`) |
-| Run locally | `cd frontend && npm start` → http://localhost:4200 (demo shortcut: `/?load=validation&id=V04`) · DB: `docker compose -p scamshield up -d --wait postgres` · backend: `cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000` → http://localhost:8000/docs · detector API: `python3 -m detector.api --port 8001` (from repo root), then start the backend with `DETECTOR_URL=http://127.0.0.1:8001` |
+| Install | `cd frontend && npm install` · mobile: `cd mobile && npm install` · backend: `cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt` · detector API: `pip install -r detector/api/requirements.txt` (or `pip install -e detector`) |
+| Run locally | `cd frontend && npm start` → http://localhost:4200 (demo shortcut: `/?load=validation&id=V04`) · mobile (iPhone/Android): `cd mobile && npm start` (scan QR in Expo Go; bind backend with `--host 0.0.0.0`) · DB: `docker compose -p scamshield up -d --wait postgres` · backend: `cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000` → http://localhost:8000/docs · detector API: `python3 -m detector.api --port 8001` (from repo root), then start the backend with `DETECTOR_URL=http://127.0.0.1:8001` |
 | Run tests | backend: `cd backend && .venv/bin/python -m pytest -q` · C: `python3 detector/api/tests/test_api.py` & `PYTHONPATH=detector python3 detector/tests/stress_test.py --with-challenge` |
 | Lint / format | TODO |
 | Seed demo data | TODO |
@@ -304,6 +305,7 @@ Append-only. Record anything another agent would otherwise get wrong or re-decid
 | 2026-11-19 | Report PDF with `fpdf2` + bundled DejaVu Sans (`backend/app/report/fonts`, free license) | Romanian diacritics on any OS; no system libs (WeasyPrint/Chrome) | Giulio |
 | 2026-11-19 | Audio location feature = separate service `audio/` (port 8002), owned by Theodor. It only (1) checks the user's OWN recording for aircraft fly-overs that leak where it was made and (2) runs the method on SYNTHETIC data. It never locates the speaker of an uploaded call | Upstream project forbids locating private people from private calls; would work on anyone's audio; real localisation needs a day of ADS-B data + date + region and is unreliable live. Heavy deps/CPU kept out of the main backend | Theodor |
 | 2026-11-19 | Audio files on disk (`STORAGE_DIR`), only metadata in Postgres; model loaded once in FastAPI lifespan, 1 uvicorn worker | Memory + privacy (deletable) | Giulio |
+| 2026-11-19 | Added `mobile/` Expo (React Native, SDK 58) app for iPhone & Android using the existing §4 API contracts + offline validation fallback | Mobile client for iOS/Android Expo Go without touching Angular frontend or FastAPI backend | Francesco |
 
 ---
 
