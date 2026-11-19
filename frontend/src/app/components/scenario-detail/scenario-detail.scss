@@ -181,6 +181,18 @@
   gap: 6px;
   margin-bottom: 18px;
 }
+.highlight-hint {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: -8px 0 16px;
+  font-size: 18px;
+  line-height: 1.45;
+  color: var(--app-muted);
+  i {
+    margin-top: 4px;
+  }
+}
 .flags-title {
   font-weight: 600;
   margin-right: 4px;

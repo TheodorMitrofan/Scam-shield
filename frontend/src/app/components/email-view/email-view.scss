@@ -31,3 +31,22 @@
   .contact { background: #3d3214; color: #fcd34d;
     &.known { background: #12331f; color: #86efac; } }
 }
+
+
+/* Dangerous words found by the detector (evidence spans): visible on any bubble colour, light or dark. */
+mark.danger {
+  color: inherit;
+  background: rgb(255 82 82 / 0.22);
+  border-bottom: 3px solid #e53935;
+  border-radius: 3px;
+  padding: 0 1px;
+  cursor: help;
+  &:focus-visible { outline: 2px solid #e53935; outline-offset: 1px; }
+}
+
+.why-note {
+  display: flex; gap: 6px; align-items: flex-start; margin: 6px 0 0; padding: 6px 10px; border-radius: 8px;
+  font-size: 17px; font-weight: 600; line-height: 1.35; color: inherit;
+  background: rgb(255 82 82 / 0.16); border-left: 3px solid #e53935;
+  i { color: #e53935; margin-top: 3px; }
+}
