@@ -62,7 +62,8 @@ def build(result: dict, scenario: dict) -> dict:
     t = result["scam_type"]
     flags = set(result["red_flags"])
     sender = scenario.get("sender") or {}
-    texts = [m.get("text") or "" for m in scenario.get("messages") or [] if m.get("from") == "sender"]
+    texts = [str(m.get("text") or "") for m in scenario.get("messages") or []
+             if isinstance(m, dict) and (m.get("from") or "sender") == "sender"]
     orgs = result.get("_claim_orgs") or []
     org = next((o for o in orgs if _official(o)), None)
     off = _official(org)

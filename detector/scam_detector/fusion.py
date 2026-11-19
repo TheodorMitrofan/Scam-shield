@@ -66,7 +66,7 @@ def analyze_core(scenario: dict, model=None) -> dict:
     sender = scenario.get("sender") or {}
     known = bool(sender.get("known_contact"))
     msgs = [m for m in (scenario.get("messages") or []) if isinstance(m, dict)]
-    msgs = sorted(msgs, key=lambda m: m.get("n") or 0)
+    msgs = sorted(msgs, key=lambda m: int(m["n"]) if str(m.get("n", "")).isdigit() else 0)
     if not msgs:
         return _empty_result(sid)
 
