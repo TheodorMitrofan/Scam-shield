@@ -52,11 +52,10 @@ ALIASES = {"spania": "madrid", "franta": "paris", "italia": "roma", "anglia": "l
 ACTUAL = SCENARIOS["ro"]  # where the (simulated) message was really recorded
 
 TRANSCRIPT = [
-    (3.0, "Mamă, sunt eu, Andrei. Am pățit ceva urât. Am făcut un accident aici, la Madrid, în Spania. "
-          "Mi-au luat telefonul, de asta te sun de pe numărul ăsta nou. Am nevoie urgent de două mii de euro "
-          "pentru avocat."),
-    (40.0, "Te rog să nu-i spui lui tata, se enervează. Îți trimit acum contul. Fă transferul cât mai repede, "
-           "până la ora cinci."),
+    (3.0, "Mamă, sunt eu, Andrei. Mi s-a stricat telefonul, ăsta e numărul nou. Am făcut un accident aici, "
+          "la Madrid, în Spania, și am nevoie de ajutor."),
+    (40.0, "Poți să-mi faci tu un transfer de două mii de euro pentru avocat? Te rog să nu-i spui lui tata, "
+           "se enervează. E urgent, până la ora cinci."),
 ]
 
 
@@ -183,6 +182,7 @@ def verify_claim(claimed_key: str = "madrid") -> dict:
         "ok": True,
         "simulated": True,
         "transcript": " ".join(t for _, t in TRANSCRIPT),
+        "transcript_parts": [t for _, t in TRANSCRIPT],
         "message_time_utc": truth["rec_start_utc"],
         "duration_s": CLIP_S,
         "claimed": {"key": claimed_key, "label": label, **claimed},
