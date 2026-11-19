@@ -1,4 +1,7 @@
-<app-top-bar (paste)="pasteOpen.set(true)" [(view)]="view" />
+@if (!auth.user()) {
+  <app-login-view (authenticated)="onAuthenticated()" />
+} @else {
+<app-top-bar (paste)="pasteOpen.set(true)" (logout)="onLogout()" [(view)]="view" />
 
 @if (view() === 'audio') {
   <app-audio-page />
@@ -16,3 +19,4 @@
 }
 
 <app-paste-dialog [(visible)]="pasteOpen" />
+}

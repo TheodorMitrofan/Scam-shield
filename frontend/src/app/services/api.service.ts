@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { API_BASE } from '../api.config';
 import {
   FraudReportDraft,
@@ -7,6 +7,16 @@ import {
   ReportSendResponse,
 } from '../models/report';
 import { AnalysisResult, Scenario } from '../models/scenario';
+import { AuthService } from './auth.service';
+
+export interface SavedConversationDto {
+  id: string;
+  external_id: string;
+  owner_username?: string | null;
+  owner_role?: 'admin' | 'user' | null;
+  scenario: Scenario;
+  result: AnalysisResult;
+}
 
 /** CLAUDE.md §4.1 — same shape whether or not the user consented to saving. */
 export interface AnalyzeResponse {
@@ -37,12 +47,18 @@ const CLIENT_ID_KEY = 'scamshield-client-id';
 /** Thin fetch wrapper around the FastAPI backend. Message text is never logged here. */
 @Injectable({ providedIn: 'root' })
 export class ApiService {
+  private readonly auth = inject(AuthService);
+
   health(): Promise<HealthResponse> {
     return this.request('GET', '/health');
   }
 
   validationSet(): Promise<Scenario[]> {
     return this.request('GET', '/scenarios/validation');
+  }
+
+  historyConversations(): Promise<SavedConversationDto[]> {
+    return this.request('GET', '/history/conversations');
   }
 
   analyze(scenario: Scenario, save: boolean): Promise<AnalyzeResponse> {
@@ -104,7 +120,13 @@ export class ApiService {
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const headers: Record<string, string> = {};
     if (body !== undefined) headers['Content-Type'] = 'application/json';
-    if (this.clientId) headers['X-Client-Id'] = this.clientId;
+    const user = this.auth.user();
+    if (user) {
+      headers['X-User-Id'] = user.id;
+      headers['X-Client-Id'] = user.id;
+    } else if (this.clientId) {
+      headers['X-Client-Id'] = this.clientId;
+    }
 
     let res: Response;
     try {

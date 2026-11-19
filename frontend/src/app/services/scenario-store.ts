@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { AnalysisResult, CHANNEL_LABEL, Channel, Scenario, Verdict } from '../models/scenario';
 import { ApiError, ApiService, HealthResponse } from './api.service';
+import { AuthService } from './auth.service';
 import { byId, parseScenario, scenarioFromText } from './scenario-parser';
 
 // HACK: until backend GET /api/scenarios/validation exists, the validation JSONs are served
@@ -30,6 +31,7 @@ export function normalize(s: string): string {
 @Injectable({ providedIn: 'root' })
 export class ScenarioStore {
   private readonly api = inject(ApiService);
+  private readonly auth = inject(AuthService);
 
   readonly scenarios = signal<Scenario[]>([]);
   readonly selectedId = signal<string | null>(null);
@@ -43,8 +45,8 @@ export class ScenarioStore {
   /** Last backend problem, shown as a banner; null when everything works. */
   readonly apiError = signal<string | null>(null);
   readonly health = signal<HealthResponse | null>(null);
-  /** Consent checkbox: only when true does the backend store the conversation (?save=true). */
-  readonly saveHistory = signal(false);
+  /** Consent checkbox: default true when logged in so cross-tenant history persists across logins. */
+  readonly saveHistory = signal(true);
 
   // Inbox UI state
   readonly search = signal('');
@@ -170,11 +172,43 @@ export class ScenarioStore {
     await this.analyze(parsed);
   }
 
+  async loadTenantHistory(): Promise<void> {
+    const u = this.auth.user();
+    if (!u) return;
+    this.loading.set(true);
+    try {
+      const saved = await this.api.historyConversations();
+      const seen = new Map<string, number>();
+      const scenarios: Scenario[] = [];
+      const results: Record<string, AnalysisResult> = {};
+      for (const row of saved) {
+        const count = (seen.get(row.external_id) ?? 0) + 1;
+        seen.set(row.external_id, count);
+        const displayId = count > 1 ? `${row.external_id}-${count}` : row.external_id;
+        scenarios.push({ ...row.scenario, id: displayId });
+        results[displayId] = { ...row.result, id: displayId };
+      }
+      this.replace(scenarios, []);
+      this.results.set(results);
+      this.apiError.set(null);
+    } catch (e) {
+      this.replace([], []);
+      this.apiError.set(e instanceof Error ? e.message : 'Nu am putut încărca istoricul.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
   async loadValidationSet(): Promise<void> {
+    if (!this.auth.isAdmin()) {
+      this.apiError.set('Setul implicit de validare este disponibil doar pentru administrator.');
+      return;
+    }
     this.loading.set(true);
     try {
       const fromApi = await this.api.validationSet();
-      this.replace(fromApi.map((raw, i) => parseScenario(raw, VALIDATION_IDS[i] ?? `V${i + 1}`)), []);
+      const items = fromApi.map((raw, i) => parseScenario(raw, VALIDATION_IDS[i] ?? `V${i + 1}`));
+      this.replace(items, []);
       await this.analyze(this.scenarios());
       return;
     } catch {

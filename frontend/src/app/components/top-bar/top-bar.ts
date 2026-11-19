@@ -1,21 +1,24 @@
 import { Component, computed, inject, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TooltipModule } from 'primeng/tooltip';
+import { AuthService } from '../../services/auth.service';
 import { ScenarioStore } from '../../services/scenario-store';
 import { UiLang } from '../../services/ui-lang';
 import { UiPipe } from '../../services/ui.pipe';
 
-/** Header: brand on the left; backend status, consent switch, theme toggle and load actions on the right. */
+/** Header: brand on the left; backend status, theme toggle, consolidated add-actions modal, and logout on the right. */
 @Component({
   selector: 'app-top-bar',
-  imports: [UiPipe, FormsModule, ButtonModule, SelectButtonModule, ToggleSwitchModule, TooltipModule],
+  imports: [UiPipe, FormsModule, ButtonModule, DialogModule, SelectButtonModule, ToggleSwitchModule, TooltipModule],
   templateUrl: './top-bar.html',
   styleUrl: './top-bar.scss',
 })
 export class TopBar {
+  protected readonly auth = inject(AuthService);
   protected readonly store = inject(ScenarioStore);
   protected readonly lang = inject(UiLang);
   protected readonly langs = [
@@ -23,6 +26,8 @@ export class TopBar {
     { label: 'EN', value: 'en' },
   ];
   readonly paste = output<void>();
+  readonly logout = output<void>();
+  protected readonly actionsOpen = signal(false);
   /** Which part of the app is shown: the scam-check inbox, the results dashboard, or the audio feature. */
   readonly view = model<'messages' | 'dashboard' | 'audio'>('messages');
   protected readonly views = [
@@ -77,7 +82,20 @@ export class TopBar {
 
   protected onFiles(ev: Event): void {
     const input = ev.target as HTMLInputElement;
-    if (input.files?.length) void this.store.loadFiles(input.files);
+    if (input.files?.length) {
+      this.actionsOpen.set(false);
+      void this.store.loadFiles(input.files);
+    }
     input.value = '';
+  }
+
+  protected openPaste(): void {
+    this.actionsOpen.set(false);
+    this.paste.emit();
+  }
+
+  protected loadValidation(): void {
+    this.actionsOpen.set(false);
+    void this.store.loadValidationSet();
   }
 }

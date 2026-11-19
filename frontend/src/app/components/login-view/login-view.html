@@ -1,0 +1,118 @@
+<div class="wrap">
+  <section class="card" [attr.aria-label]="'Autentificare' | ui">
+    <div class="head">
+      <span class="logo" aria-hidden="true"><i class="pi pi-shield"></i></span>
+      <div class="head-copy">
+        <h1>Scam Shield</h1>
+        <p>{{ 'Autentificați-vă pentru a accesa mesajele și verificările' | ui }}</p>
+      </div>
+      <p-selectbutton
+        [options]="langs"
+        optionLabel="label"
+        optionValue="value"
+        [allowEmpty]="false"
+        [ngModel]="lang.lang()"
+        (ngModelChange)="lang.set($event)"
+        class="langs"
+        ariaLabel="Limba / Language"
+      />
+    </div>
+
+    <div class="tabs">
+      <button
+        type="button"
+        [class.active]="mode() === 'login'"
+        (click)="mode.set('login'); error.set(null)"
+      >
+        {{ 'Autentificare' | ui }}
+      </button>
+      <button
+        type="button"
+        [class.active]="mode() === 'register'"
+        (click)="mode.set('register'); error.set(null)"
+      >
+        {{ 'Cont nou (User)' | ui }}
+      </button>
+    </div>
+
+    <form class="form" (ngSubmit)="submit()">
+      <label class="field">
+        <span>{{ 'Utilizator' | ui }}</span>
+        <input
+          pInputText
+          type="text"
+          name="username"
+          autocomplete="username"
+          [placeholder]="'ex. admin, user, maria' | ui"
+          [ngModel]="username()"
+          (ngModelChange)="username.set($event)"
+        />
+      </label>
+
+      @if (mode() === 'register') {
+        <label class="field">
+          <span>{{ 'Nume afișat (opțional)' | ui }}</span>
+          <input
+            pInputText
+            type="text"
+            name="displayName"
+            [placeholder]="'ex. Ion Ionescu' | ui"
+            [ngModel]="displayName()"
+            (ngModelChange)="displayName.set($event)"
+          />
+        </label>
+      }
+
+      <label class="field">
+        <span>{{ 'Parolă' | ui }}</span>
+        <input
+          pInputText
+          type="password"
+          name="password"
+          autocomplete="current-password"
+          placeholder="••••••••"
+          [ngModel]="password()"
+          (ngModelChange)="password.set($event)"
+        />
+      </label>
+
+      @if (error(); as err) {
+        <p-message severity="error" [text]="err | ui" />
+      }
+
+      <p-button
+        type="submit"
+        [label]="(mode() === 'login' ? 'Intră în cont' : 'Creează cont User') | ui"
+        icon="pi pi-sign-in"
+        [loading]="busy()"
+        [disabled]="!username().trim() || !password()"
+        [fluid]="true"
+      />
+    </form>
+
+    <div class="demo">
+      <div class="demo-title">{{ 'Conturi demo din baza de date (click pentru acces rapid):' | ui }}</div>
+      <div class="demo-list">
+        @for (acc of demoAccounts; track acc.username) {
+          <button
+            type="button"
+            class="demo-btn"
+            [disabled]="busy()"
+            (click)="quickLogin(acc.username, acc.password)"
+          >
+            <p-tag
+              [value]="acc.role.toUpperCase()"
+              [severity]="acc.role === 'admin' ? 'warn' : 'info'"
+              [rounded]="true"
+            />
+            <span class="demo-info">
+              <strong>{{ acc.username }}</strong>
+              <small>{{ acc.label | ui }} · {{ 'parola:' | ui }} <code>{{ acc.password }}</code></small>
+            </span>
+            <i class="pi pi-arrow-right" aria-hidden="true"></i>
+          </button>
+        }
+      </div>
+    </div>
+  </section>
+</div>

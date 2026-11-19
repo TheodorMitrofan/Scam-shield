@@ -11,6 +11,7 @@ from .analysis import (
     verdict_for,
 )
 from .api import AnalyzeResponse, AnalyzeTextRequest, AudioAnalyzeResponse, HealthResponse
+from .auth import AccountPreview, LoginRequest, RegisterRequest, UserInfo, UserRole
 from .storage import (
     ApplicationSummary,
     ContactSummary,
@@ -23,6 +24,7 @@ from .scenario import AudioRef, Author, Channel, Message, Scenario, Sender, Voic
 
 __all__ = [
     "RED_FLAG_POINTS",
+    "AccountPreview",
     "AnalysisResult",
     "ApplicationSummary",
     "ContactSummary",
@@ -37,13 +39,17 @@ __all__ = [
     "DeleteResponse",
     "Evidence",
     "HealthResponse",
+    "LoginRequest",
     "Message",
     "MessageFlags",
     "RedFlag",
+    "RegisterRequest",
     "SaveOptions",
     "ScamType",
     "Scenario",
     "Sender",
+    "UserInfo",
+    "UserRole",
     "Verdict",
     "VoiceLocation",
     "WarningText",

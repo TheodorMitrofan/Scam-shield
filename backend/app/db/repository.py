@@ -12,12 +12,14 @@ from sqlalchemy import case, delete, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.schemas import (
+    AccountPreview,
     AnalysisResult,
     ApplicationSummary,
     ContactSummary,
     ConversationDetail,
     ConversationSummary,
     Scenario,
+    UserInfo,
 )
 
 from .models import (
@@ -27,6 +29,8 @@ from .models import (
     Contact,
     Conversation,
     MessageRow,
+    User,
+    user_uuid,
 )
 
 # ---------------------------------------------------------------------------------------------
@@ -182,11 +186,55 @@ def save_conversation(
 
 
 # ---------------------------------------------------------------------------------------------
+# Users & auth (minimalist match on username + password)
+# ---------------------------------------------------------------------------------------------
+
+
+def _user_dto(u: User) -> UserInfo:
+    return UserInfo(id=u.id, username=u.username, role=u.role, display_name=u.display_name)  # type: ignore[arg-type]
+
+
+def authenticate_user(s: Session, username: str, password: str) -> UserInfo | None:
+    u = s.scalars(select(User).where(User.username == username, User.password == password)).first()
+    return _user_dto(u) if u else None
+
+
+def get_user(s: Session, user_id: uuid.UUID) -> UserInfo | None:
+    u = s.get(User, user_id)
+    return _user_dto(u) if u else None
+
+
+def create_user(s: Session, username: str, password: str, display_name: str | None = None) -> UserInfo | None:
+    if s.scalars(select(User).where(User.username == username)).first() is not None:
+        return None
+    u = User(
+        id=uuid.uuid4(),
+        username=username,
+        password=password,
+        role="user",
+        display_name=(display_name or username).strip() or username,
+    )
+    s.add(u)
+    s.flush()
+    return _user_dto(u)
+
+
+def list_accounts(s: Session) -> list[AccountPreview]:
+    rows = s.scalars(select(User).order_by(User.role, User.username))
+    return [AccountPreview(username=u.username, role=u.role, display_name=u.display_name) for u in rows]  # type: ignore[arg-type]
+
+
+def admin_has_conversations(s: Session) -> bool:
+    aid = user_uuid("admin")
+    return s.scalars(select(Conversation.id).where(Conversation.client_id == aid).limit(1)).first() is not None
+
+
+# ---------------------------------------------------------------------------------------------
 # Read
 # ---------------------------------------------------------------------------------------------
 
 
-def _summary(c: Conversation, app_code: str, message_count: int) -> dict:
+def _summary(c: Conversation, app_code: str, message_count: int, owner: User | None = None) -> dict:
     return dict(
         id=c.id,
         application=app_code,
@@ -200,27 +248,24 @@ def _summary(c: Conversation, app_code: str, message_count: int) -> dict:
         risk_score=c.risk_score,
         first_alert=c.first_alert,
         message_count=message_count,
+        owner_username=owner.username if owner else None,
+        owner_role=owner.role if owner else None,
     )
 
 
-def list_applications(s: Session, client_id: uuid.UUID) -> list[ApplicationSummary]:
+def list_applications(s: Session, client_id: uuid.UUID | None) -> list[ApplicationSummary]:
     purge_expired(s)
-    conv_stats = (
-        select(
-            Conversation.application_id.label("app_id"),
-            func.count(Conversation.id).label("conversations"),
-            func.sum(case((Conversation.verdict == "SCAM", 1), else_=0)).label("scams"),
-        )
-        .where(Conversation.client_id == client_id)
-        .group_by(Conversation.application_id)
-        .subquery()
+    conv_q = select(
+        Conversation.application_id.label("app_id"),
+        func.count(Conversation.id).label("conversations"),
+        func.sum(case((Conversation.verdict == "SCAM", 1), else_=0)).label("scams"),
     )
-    contact_stats = (
-        select(Contact.application_id.label("app_id"), func.count(Contact.id).label("contacts"))
-        .where(Contact.client_id == client_id)
-        .group_by(Contact.application_id)
-        .subquery()
-    )
+    contact_q = select(Contact.application_id.label("app_id"), func.count(Contact.id).label("contacts"))
+    if client_id is not None:
+        conv_q = conv_q.where(Conversation.client_id == client_id)
+        contact_q = contact_q.where(Contact.client_id == client_id)
+    conv_stats = conv_q.group_by(Conversation.application_id).subquery()
+    contact_stats = contact_q.group_by(Contact.application_id).subquery()
     rows = s.execute(
         select(Application, contact_stats.c.contacts, conv_stats.c.conversations, conv_stats.c.scams)
         .outerjoin(contact_stats, contact_stats.c.app_id == Application.id)
@@ -240,14 +285,17 @@ def list_applications(s: Session, client_id: uuid.UUID) -> list[ApplicationSumma
     ]
 
 
-def list_contacts(s: Session, client_id: uuid.UUID, app_code: str) -> list[ContactSummary]:
+def list_contacts(s: Session, client_id: uuid.UUID | None, app_code: str) -> list[ContactSummary]:
     purge_expired(s)
-    contacts = s.scalars(
+    q = (
         select(Contact)
         .join(Application)
         .options(selectinload(Contact.conversations))
-        .where(Contact.client_id == client_id, Application.code == app_code)
-    ).all()
+        .where(Application.code == app_code)
+    )
+    if client_id is not None:
+        q = q.where(Contact.client_id == client_id)
+    contacts = s.scalars(q).all()
     out = []
     for c in contacts:
         last = max(c.conversations, key=lambda x: x.updated_at, default=None)
@@ -268,15 +316,15 @@ def list_contacts(s: Session, client_id: uuid.UUID, app_code: str) -> list[Conta
     return out
 
 
-def list_conversations(s: Session, client_id: uuid.UUID, contact_id: uuid.UUID) -> list[ConversationSummary] | None:
+def list_conversations(s: Session, client_id: uuid.UUID | None, contact_id: uuid.UUID) -> list[ConversationSummary] | None:
     purge_expired(s)
-    contact = s.scalars(
-        select(Contact)
-        .options(selectinload(Contact.application))
-        .where(Contact.id == contact_id, Contact.client_id == client_id)
-    ).first()
+    q = select(Contact).options(selectinload(Contact.application)).where(Contact.id == contact_id)
+    if client_id is not None:
+        q = q.where(Contact.client_id == client_id)
+    contact = s.scalars(q).first()
     if contact is None:
         return None
+    owner = s.get(User, contact.client_id)
     rows = s.execute(
         select(Conversation, func.count(MessageRow.id))
         .outerjoin(MessageRow)
@@ -284,24 +332,13 @@ def list_conversations(s: Session, client_id: uuid.UUID, contact_id: uuid.UUID) 
         .group_by(Conversation.id)
         .order_by(Conversation.external_id)
     )
-    return [ConversationSummary(**_summary(c, contact.application.code, n)) for c, n in rows]
+    return [ConversationSummary(**_summary(c, contact.application.code, n, owner)) for c, n in rows]
 
 
-def load_conversation(s: Session, client_id: uuid.UUID, conv_id: uuid.UUID) -> ConversationDetail | None:
-    c = s.scalars(
-        select(Conversation)
-        .options(
-            selectinload(Conversation.messages),
-            selectinload(Conversation.contact),
-            selectinload(Conversation.application),
-        )
-        .where(Conversation.id == conv_id, Conversation.client_id == client_id)
-    ).first()
-    if c is None:
-        return None
-    attrs = _get_attrs(s, [c.id, *(m.id for m in c.messages)])
+def _to_detail(
+    c: Conversation, attrs: dict[uuid.UUID, dict[str, Any]], owner: User | None
+) -> ConversationDetail:
     conv_attrs = attrs[c.id]
-
     messages = []
     for m in c.messages:
         msg: dict[str, Any] = {"n": m.n, "from": m.author, "text": m.text}
@@ -345,11 +382,55 @@ def load_conversation(s: Session, client_id: uuid.UUID, conv_id: uuid.UUID) -> C
         }
     )
     return ConversationDetail(
-        **_summary(c, c.application.code, len(c.messages)),
+        **_summary(c, c.application.code, len(c.messages), owner),
         scenario=Scenario.model_validate(scenario),
         result=result,
         attributes=conv_attrs,
     )
+
+
+def load_conversation(s: Session, client_id: uuid.UUID | None, conv_id: uuid.UUID) -> ConversationDetail | None:
+    q = (
+        select(Conversation)
+        .options(
+            selectinload(Conversation.messages),
+            selectinload(Conversation.contact),
+            selectinload(Conversation.application),
+        )
+        .where(Conversation.id == conv_id)
+    )
+    if client_id is not None:
+        q = q.where(Conversation.client_id == client_id)
+    c = s.scalars(q).first()
+    if c is None:
+        return None
+    attrs = _get_attrs(s, [c.id, *(m.id for m in c.messages)])
+    owner = s.get(User, c.client_id)
+    return _to_detail(c, attrs, owner)
+
+
+def list_saved_conversations(s: Session, client_id: uuid.UUID | None) -> list[ConversationDetail]:
+    """List saved conversations visible to this user (or across all tenants when client_id is None)."""
+    purge_expired(s)
+    q = (
+        select(Conversation)
+        .options(
+            selectinload(Conversation.messages),
+            selectinload(Conversation.contact),
+            selectinload(Conversation.application),
+        )
+        .order_by(Conversation.updated_at.desc(), Conversation.external_id)
+    )
+    if client_id is not None:
+        q = q.where(Conversation.client_id == client_id)
+    convs = s.scalars(q).all()
+    if not convs:
+        return []
+    entity_ids = [x for c in convs for x in (c.id, *(m.id for m in c.messages))]
+    attrs = _get_attrs(s, entity_ids)
+    owner_ids = {c.client_id for c in convs}
+    owners = {u.id: u for u in s.scalars(select(User).where(User.id.in_(owner_ids)))}
+    return [_to_detail(c, attrs, owners.get(c.client_id)) for c in convs]
 
 
 # ---------------------------------------------------------------------------------------------
@@ -374,20 +455,27 @@ def _delete_orphan_contacts(s: Session) -> None:
         s.execute(delete(Contact).where(Contact.id.in_(ids)))
 
 
-def delete_conversation(s: Session, client_id: uuid.UUID, conv_id: uuid.UUID) -> int:
-    n = _delete_conversations(s, (Conversation.id == conv_id) & (Conversation.client_id == client_id))
+def delete_conversation(s: Session, client_id: uuid.UUID | None, conv_id: uuid.UUID) -> int:
+    where = Conversation.id == conv_id
+    if client_id is not None:
+        where = where & (Conversation.client_id == client_id)
+    n = _delete_conversations(s, where)
     _delete_orphan_contacts(s)
     return n
 
 
-def delete_contact(s: Session, client_id: uuid.UUID, contact_id: uuid.UUID) -> int:
-    n = _delete_conversations(s, (Conversation.contact_id == contact_id) & (Conversation.client_id == client_id))
+def delete_contact(s: Session, client_id: uuid.UUID | None, contact_id: uuid.UUID) -> int:
+    where = Conversation.contact_id == contact_id
+    if client_id is not None:
+        where = where & (Conversation.client_id == client_id)
+    n = _delete_conversations(s, where)
     _delete_orphan_contacts(s)
     return n
 
 
-def delete_all(s: Session, client_id: uuid.UUID) -> int:
-    n = _delete_conversations(s, Conversation.client_id == client_id)
+def delete_all(s: Session, client_id: uuid.UUID | None) -> int:
+    where = True if client_id is None else (Conversation.client_id == client_id)
+    n = _delete_conversations(s, where)
     _delete_orphan_contacts(s)
     return n
 
