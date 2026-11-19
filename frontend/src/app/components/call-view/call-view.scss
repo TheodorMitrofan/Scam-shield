@@ -23,10 +23,6 @@
 .line.me { background: rgb(80 160 255 / 0.22); margin-left: 32px; }
 .line.alert { outline: 4px solid #ff5252; outline-offset: 2px; }
 .who { font-size: 15px; opacity: 0.9; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-.n {
-  min-width: 24px; height: 24px; border-radius: 12px; background: #fff; color: #111; font-size: 13px;
-  display: grid; place-items: center;
-}
 .ts { margin-left: auto; font-variant-numeric: tabular-nums; }
 .text { margin: 0; font-size: 18px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
 .flags { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 4px;

@@ -9,10 +9,6 @@
 .email.reply { background: #f4f8ff; }
 .email.alert { outline: 4px solid #c62828; outline-offset: 2px; }
 .meta { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
-.n {
-  min-width: 26px; height: 26px; border-radius: 13px; background: #3a3a3c; color: #fff; font-size: 13px;
-  display: grid; place-items: center; flex: none;
-}
 .from { font-weight: 700; font-size: 19px; color: #111; }
 .addr, .to { font-size: 16px; color: #444; overflow-wrap: anywhere; }
 .contact {
@@ -32,7 +28,6 @@
   .addr, .to { color: #9ca3af; }
   .email { border-color: #2f353d; }
   .email.reply { background: #17263a; }
-  .n { background: #e5e7eb; color: #111; }
   .contact { background: #3d3214; color: #fcd34d;
     &.known { background: #12331f; color: #86efac; } }
 }

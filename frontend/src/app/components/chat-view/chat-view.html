@@ -22,7 +22,6 @@
     @for (m of scenario().messages; track m.n) {
       <li class="row" [class.me]="m.from === 'reader'">
         <div class="bubble" [class.alert]="isFirstAlert(result(), m.n)">
-          <span class="n" aria-label="Mesajul {{ m.n }}">{{ m.n }}</span>
           @if (m.from === 'reader') {
             <span class="sr-only">Dumneavoastră:</span>
           }

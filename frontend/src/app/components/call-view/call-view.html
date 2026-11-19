@@ -29,7 +29,6 @@
     @for (m of scenario().messages; track m.n) {
       <li class="line" [class.me]="m.from === 'reader'" [class.alert]="isFirstAlert(result(), m.n)">
         <div class="who">
-          <span class="n">{{ m.n }}</span>
           {{ m.from === 'reader' ? 'Dumneavoastră' : 'Apelantul' }}
           @if (m.start_s != null) {
             <span class="ts">{{ fmt(m.start_s) }}</span>

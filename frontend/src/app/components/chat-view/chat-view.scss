@@ -35,11 +35,6 @@
 }
 .row.me .bubble { background: var(--out); color: var(--out-fg); }
 .bubble.alert { outline: 4px solid #c62828; outline-offset: 2px; }
-.n {
-  position: absolute; top: -8px; left: -8px; min-width: 24px; height: 24px; border-radius: 12px; padding: 0 6px;
-  background: #3a3a3c; color: #fff; font-size: 13px; display: grid; place-items: center;
-}
-.row.me .n { left: auto; right: -8px; }
 .text { margin: 0; font-size: 18px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
 .flags { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 4px;
   li { font-size: 12px; background: #c62828; color: #fff; border-radius: 4px; padding: 2px 6px; } }
@@ -56,7 +51,6 @@
   .theme-chat     { --bg: #18181b; --bar: #c2410c; --bar-fg: #fff; --in: #27272a; --in-fg: #f4f4f5; --out: #7c2d12; --out-fg: #fff7ed; }
   .bar { border-bottom-color: rgb(255 255 255 / 0.08); }
   .channel-tag { color: #9ca3af; }
-  .n { background: #e5e7eb; color: #111; }
   .contact { background: #3d3214; color: #fcd34d;
     &.known { background: #12331f; color: #86efac; } }
   .empty { color: #9ca3af; }
