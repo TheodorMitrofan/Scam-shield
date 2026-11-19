@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import analyze, history, system
+from app.api import analyze, history, report, system
 from app.config import get_settings
 from app.db.session import Database
 from app.detector.client import DetectorClient
@@ -32,7 +32,7 @@ def create_app(db: Database | None = None, detector: DetectorClient | None = Non
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    for r in (system.router, analyze.router, history.router):
+    for r in (system.router, analyze.router, history.router, report.router):
         app.include_router(r, prefix="/api")
     return app
 
