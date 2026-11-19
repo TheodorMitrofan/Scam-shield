@@ -107,8 +107,8 @@ def test_send_emails_demo_inbox(client, smtp):
     assert msg["To"] == "francescomartinut18@gmail.com" and msg["From"] == "sender@test.local"
     assert "DEMO" in msg["Subject"]
     body = msg.get_body(("plain",)).get_content()
-    assert "Popescu Maria" in body and "2500101123456" in body and "bancadunarea-securitate[.]com" in body
-    assert "bancadunarea-securitate.com" not in body
+    assert "Popescu Maria" in body and "plângere penală" in body and "0722 000 000" in body
+    assert "bancadunarea-securitate.com" not in body and "/100" not in body  # no raw links, no scores
     atts = {a.get_filename(): a for a in msg.iter_attachments()}
     assert set(atts) == {"sesizare.pdf", "raport.json"}
     assert atts["sesizare.pdf"].get_content().startswith(b"%PDF")

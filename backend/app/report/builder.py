@@ -94,72 +94,39 @@ def build_draft(scenario: Scenario, result: AnalysisResult) -> FraudReportDraft:
 # E-mail
 # ---------------------------------------------------------------------------------------------
 
-_KIND_LABEL = {"url": "Adresă de internet", "email": "Adresă de e-mail", "phone": "Număr de telefon",
-               "iban": "Cont bancar (IBAN)", "amount": "Sumă menționată"}
-
-
-def _v(x) -> str:
-    return str(x) if x not in (None, "") else "—"
 
 
 def render_text(draft: FraudReportDraft, p: PersonalData) -> str:
-    inc = draft.incident
-    lines = [
-        "SESIZARE PRIVIND O TENTATIVĂ DE ÎNȘELĂCIUNE",
-        "(raport generat automat de Scam Shield — DEMO hackathon, nu a fost trimis autorităților)",
+    """Short, formal cover letter; the complaint itself is the attached PDF."""
+    name = f"{p.last_name or ''} {p.first_name or ''}".strip()
+    contact = ", ".join(x for x in (p.phone, p.email) if x)
+    when = p.incident_date.strftime("%d.%m.%Y") if p.incident_date else "nespecificată"
+    return "\n".join([
+        "Bună ziua,",
         "",
-        "1. DATELE PETENTULUI",
-        f"   Nume și prenume: {_v(p.last_name)} {_v(p.first_name)}",
-        f"   CNP: {_v(p.cnp)}",
-        f"   Act de identitate (serie, număr): {_v(p.id_series_number)}",
-        f"   Domiciliu: {_v(p.address)}",
-        f"   Telefon: {_v(p.phone)}",
-        f"   E-mail: {_v(p.email)}",
+        f"Subsemnatul/a {name} vă transmit, atașat, o plângere penală privind o tentativă de înșelăciune "
+        f"prin {draft.incident.channel_label}, din data de {when}.",
         "",
-        "2. DESCRIEREA FAPTEI",
-        f"   Data incidentului: {p.incident_date.strftime('%d.%m.%Y') if p.incident_date else 'nespecificată'}",
-        f"   Canal: {inc.channel_label}",
-        f"   Tip: {inc.scam_type_label} (scor de risc {inc.risk_score}/100)",
-        f"   {inc.summary_ro}",
+        "Plângerea (sesizare.pdf) cuprinde datele mele de identificare, starea de fapt și, în Anexa 1, "
+        "transcrierea integrală a conversației.",
         "",
-        "3. EXPEDITORUL SUSPECT",
-        f"   Nume afișat: {_v(defang_text(inc.sender.name or ''))}",
-        f"   Număr / adresă: {_v(defang_text(inc.sender.address or ''))}",
-        f"   În agenda mea: {'da' if inc.sender.known_contact else 'nu'}",
+        f"Mă puteți contacta la: {contact}.",
         "",
-        "4. CONVERSAȚIA (mesajele numerotate)",
-    ]
-    for t in inc.timeline:
-        mark = "  <-- aici a început tentativa" if t.is_first_alert else ""
-        lines.append(f"   [{t.n}] {t.author_label}: {t.text}{mark}")
-    lines += ["", "5. ELEMENTE DE IDENTIFICARE (scrise dezactivat, nu le accesați)"]
-    if inc.indicators:
-        lines += [f"   - {_KIND_LABEL[i.kind]}: {i.display}" for i in inc.indicators]
-    else:
-        lines.append("   —")
-    lines += ["", "6. SEMNALE DE ÎNȘELĂCIUNE DETECTATE"]
-    lines += [f"   - Persoana {f.label} ({f.code.value})" for f in inc.red_flags] or ["   —"]
-    lines += [
+        "Cu respect,",
+        name,
         "",
-        "7. PREJUDICIU",
-        f"   Am pierdut bani: {'da' if p.lost_money else 'nu'}",
-        f"   Suma: {_v(p.amount_lost)}{' lei' if p.amount_lost is not None else ''}",
-        f"   Banca: {_v(p.bank)}",
-        "",
-        "8. ALTE DETALII",
-        f"   {_v(p.additional_details)}",
-        "",
-        f"Raport nr. {draft.report_id} · generat la {draft.generated_at.strftime('%d.%m.%Y %H:%M')} UTC",
-    ]
-    return "\n".join(lines)
+        "—",
+        "Mesaj generat cu Scam Shield (demonstrație hackathon). Nu a fost transmis autorităților.",
+    ])
 
 
 def render_email(draft: FraudReportDraft, personal: PersonalData, sender: str) -> EmailMessage:
     now = datetime.now(UTC)
     msg = EmailMessage()
+    name = f"{personal.last_name or ''} {personal.first_name or ''}".strip()
     msg["Subject"] = (
-        f"[Scam Shield – DEMO] Sesizare tentativă de fraudă – {draft.incident.scam_type_label} – "
-        f"{draft.incident.channel_label} – {now.strftime('%d.%m.%Y')}"
+        f"[DEMO] Plângere penală – tentativă de înșelăciune prin {draft.incident.channel_label} – "
+        f"{name} – {now.strftime('%d.%m.%Y')}"
     )
     msg["From"] = sender
     msg["To"] = REPORT_RECIPIENT  # HACK: demo only — hardcoded, never real authorities

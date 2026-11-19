@@ -4,7 +4,7 @@ import { AnalysisResult, Channel, Scenario, Verdict } from './scenario';
 export interface PersonalField {
   key: keyof PersonalData;
   label: string;
-  type: 'text' | 'email' | 'tel' | 'date' | 'number' | 'checkbox' | 'textarea';
+  type: 'text' | 'email' | 'tel' | 'date' | 'time' | 'number' | 'checkbox' | 'textarea';
   required: boolean;
   hint?: string | null;
 }
@@ -18,6 +18,7 @@ export interface PersonalData {
   phone: string | null;
   email: string | null;
   incident_date: string | null; // YYYY-MM-DD
+  incident_time: string | null; // HH:MM
   lost_money: boolean;
   amount_lost: number | null;
   bank: string | null;

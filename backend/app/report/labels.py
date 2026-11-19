@@ -67,3 +67,42 @@ FLAG_LABEL = {
     RedFlag.EMOTIONAL_PRESSURE: "a folosit frica, mila sau afecțiunea ca presiune",
     RedFlag.CHANNEL_SWITCH: "a cerut mutarea conversației în altă aplicație",
 }
+
+
+# --- Formal complaint ("Sesizare") wording, third person -------------------------------------------
+
+# Contact channel as written in a complaint: "am fost contactat/ă prin intermediul ..."
+CHANNEL_FORMAL = {
+    Channel.SMS: "unui mesaj SMS",
+    Channel.WHATSAPP: "aplicației WhatsApp",
+    Channel.EMAIL: "unui mesaj e-mail",
+    Channel.CHAT: "unei platforme de mesagerie online",
+    Channel.CALL_TRANSCRIPT: "unui apel telefonic",
+}
+
+# The pretext used by the author.
+SCAM_TYPE_PRETEXT = {
+    ScamType.BANK_IMPERSONATION: "s-a prezentat drept reprezentant al băncii, invocând blocarea cardului sau o problemă de securitate a contului",
+    ScamType.COURIER_FEE: "s-a prezentat drept reprezentant al unei firme de curierat, invocând o taxă pentru livrarea unui colet",
+    ScamType.AUTHORITY_IMPERSONATION: "s-a prezentat drept reprezentant al unei instituții publice, invocând o rambursare sau o actualizare de date",
+    ScamType.FAMILY_EMERGENCY: "s-a prezentat drept un membru al familiei care și-ar fi schimbat numărul de telefon și care ar avea nevoie urgentă de bani",
+    ScamType.TECH_SUPPORT: "s-a prezentat drept reprezentant al unui serviciu de suport tehnic, susținând că dispozitivul meu ar fi infectat",
+    ScamType.MARKETPLACE: "s-a prezentat drept cumpărător pe o platformă de anunțuri, susținând că plata ar fi fost deja efectuată",
+    ScamType.ACCOUNT_TAKEOVER: "a susținut că mi-ar fi trimis din greșeală un cod prin SMS",
+    ScamType.INVESTMENT: "mi-a propus o investiție cu câștiguri garantate",
+    ScamType.ROMANCE: "a inițiat o relație de prietenie online, urmată de solicitări de bani",
+    ScamType.JOB_OFFER: "mi-a oferit un câștig facil pentru efectuarea unor sarcini simple online",
+    ScamType.PRIZE_LOTTERY: "mi-a comunicat că aș fi câștigat un premiu",
+    ScamType.OTHER: "a încercat să mă determine să îi furnizez bani, date sau acces la dispozitivele mele",
+    ScamType.NONE: "",
+}
+
+# What was concretely requested, per red flag (only the "request" flags).
+FLAG_REQUEST = {
+    RedFlag.DATA_REQUEST: "furnizarea datelor cardului bancar sau a unor date personale ori de autentificare",
+    RedFlag.CODE_REQUEST: "comunicarea unui cod de confirmare primit prin SMS (OTP)",
+    RedFlag.REMOTE_ACCESS: "instalarea unei aplicații de control la distanță a dispozitivului",
+    RedFlag.PAYMENT_REQUEST: "efectuarea unei plăți sau a unui transfer de bani",
+    RedFlag.SECRECY: "păstrarea secretului față de familie",
+    RedFlag.CHANNEL_SWITCH: "continuarea discuției pe o altă aplicație",
+}

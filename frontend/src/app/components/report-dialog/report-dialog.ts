@@ -19,6 +19,7 @@ const EMPTY: PersonalData = {
   phone: null,
   email: null,
   incident_date: null,
+  incident_time: null,
   lost_money: false,
   amount_lost: null,
   bank: null,

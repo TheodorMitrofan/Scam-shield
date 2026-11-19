@@ -91,8 +91,7 @@
           <ul class="ind">
             @for (i of d.incident.indicators; track i.kind + i.value) {
               <li>
-                <span>{{ kindLabel[i.kind] }}</span
-                ><code>{{ i.display }}</code>
+                <span>{{ kindLabel[i.kind] }}</span><code>{{ i.display }}</code>
               </li>
             }
           </ul>

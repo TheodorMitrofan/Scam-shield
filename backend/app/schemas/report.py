@@ -6,7 +6,7 @@ Personal data is never stored or logged; it only goes into the e-mail.
 """
 
 import re
-from datetime import date, datetime
+from datetime import date, datetime, time
 from typing import Literal
 from uuid import UUID
 
@@ -73,7 +73,7 @@ class PersonalField(BaseModel):
 
     key: str
     label: str
-    type: Literal["text", "email", "tel", "date", "number", "checkbox", "textarea"]
+    type: Literal["text", "email", "tel", "date", "time", "number", "checkbox", "textarea"]
     required: bool = False
     hint: str | None = None
 
@@ -93,6 +93,7 @@ class PersonalData(BaseModel):
     phone: str | None = Field(default=None, max_length=30)
     email: str | None = Field(default=None, max_length=200)
     incident_date: date | None = None
+    incident_time: time | None = None
     lost_money: bool = False
     amount_lost: float | None = Field(default=None, ge=0)
     bank: str | None = Field(default=None, max_length=100)
@@ -127,6 +128,7 @@ PERSONAL_FIELDS: list[PersonalField] = [
     PersonalField(key="id_series_number", label="Seria și numărul actului de identitate", type="text"),
     PersonalField(key="address", label="Adresa de domiciliu", type="text"),
     PersonalField(key="incident_date", label="Data la care ați primit mesajul", type="date"),
+    PersonalField(key="incident_time", label="Ora aproximativă", type="time"),
     PersonalField(key="lost_money", label="Am pierdut bani", type="checkbox"),
     PersonalField(key="amount_lost", label="Suma pierdută (lei)", type="number"),
     PersonalField(key="bank", label="Banca dumneavoastră", type="text"),
