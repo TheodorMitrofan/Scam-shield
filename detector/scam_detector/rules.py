@@ -26,7 +26,10 @@ NEG_ADVICE = _c(
 CODE_NOUN = _c(r"\bcod(?:ul|uri|urile|ului)?\b", r"\botp\b", r"\bparola\s+unica\b", r"\bcifre(?:le)?\b",
                r"\bcod(?:ul)?\s+(?:de\s+)?(?:confirmare|verificare|activare|securitate|acces|autentificare)")
 CODE_REQ_STRONG = _c(
-    r"\b(?:da|dati|trimite|trimiteti|spune|spuneti|citeste|cititi)-mi-l\b",
+    r"\b(?:da|dati|trimite|trimiteti|spune|spuneti|citeste|cititi|zi|ziceti|scrie|scrieti)-mi-l\b",
+    r"\b(?:sa\s+)?(?:ne|mi|imi)\s+(?:comunicati|spuneti|dati|cititi|dictati|transmiteti|trimiteti|spui|dai|citesti|trimiti|"
+    r"comunici|transmiti)\b[^.!?]{0,40}\b(?:cod\w*|cifre\w*|otp)",
+    r"\b(?:send|give|tell|read)\s+(?:me|us)\s+(?:the\s+)?(?:\w+\s+)?(?:code|otp|pin)\b",
     r"\bmi-l\s+(?:poti|puteti|cititi|citesti|citeste|spui|spuneti|dai|dati|trimiti|trimiteti|transmiti|transmiteti|"
     r"dictezi|dictati|zici|scrii|scrieti)\b",
     r"\bpe\s+care\s+(?:mi|ni)-?l\b",
@@ -62,6 +65,7 @@ DATA_STRONG = _c(
     r"\bintrati\s+(?:acum\s+)?in\s+(?:contul|aplicatia)\s+(?:\w+\s+)?(?:de\s+banca|bancii|bancar|de\s+internet\s+banking)",
     r"\b(?:logati|autentificati|conectati)-va\s+(?:\w+\s+)?(?:in|pe)\s+(?:contul|aplicatia|internet\s+banking)",
     r"\bintrati\s+in\s+(?:internet|mobile)\s+banking\b", r"\bcredentiale(?:le)?\b",
+    r"\bcard\s+(?:details|number)\b", r"\bpassword\b",
 )
 DATA_WEAK = _c(r"\biban(?:-ul|ul)?\b", r"\bbuletin(?:ul)?\b", r"\bcartea\s+de\s+identitate\b", r"\bdatele\b",
                r"\bcontul\s+(?:de\s+)?(?:banca|bancar)\b")
@@ -69,7 +73,8 @@ DATA_DESCRIPTIVE = re.compile(r"\b(?:va\s+vad|v-au\s+furat|au\s+furat|au\s+acces
 DATA_VERB = _c(
     r"\b(?:completati|completeaza|introduceti|introdu|trimiteti|trimite|confirmati|confirma|furnizati|spuneti|spune|"
     r"dati|da-mi|dictati|comunicati|scrieti|scrie|actualizati|actualizeaza|verificam|verifica|validati|valideaza|"
-    r"accesati|incarcati|atasati|avem\s+nevoie|am\s+nevoie|ne\s+trebuie|ne\s+confirmati|sa\s+va\s+confirmam)\b",
+    r"accesati|incarcati|atasati|avem\s+nevoie|am\s+nevoie|ne\s+trebuie|ne\s+confirmati|sa\s+va\s+confirmam|"
+    r"autentificati-va|autentifica-te|logati-va|logheaza-te|conectati-va|enter|verify|confirm|provide|update)\b",
 )
 
 # ---------------------------------------------------------------- RF_PAYMENT_REQUEST
@@ -82,7 +87,9 @@ PAYMENT = _c(
     r"\b(?:transferati|transfera|vireaza|virati|depuneti|depune|alimentati|alimenteaza|investiti|investeste)\b",
     r"\b(?:trimite|trimiteti|trimiti|imprumuta|imprumutati|imprumuti|da|dai|dati)(?:-mi|-ne)?\s+"
     r"(?:\S+\s+){0,3}(?:bani|banii|suma|lei|euro|eur|ron|dolari|€|\d[\d.,]*\s*(?:lei|ron|euro|eur|€))\b",
-    r"\b(?:imprumut|un\s+imprumut)\b", r"\b(?:poti|puteti)\s+(?:sa\s+)?(?:\w+\s+)?(?:imprumuta|trimite\s+bani|plati)\b",
+    r"\b(?:imprumut|un\s+imprumut)\b", r"\b(?:depui|depune|investesti|investeste|alimentezi)\s+(?:doar\s+|numai\s+)?\d",
+    r"\b(?:pay|send|transfer)\s+(?:the\s+|a\s+|us\s+)?(?:\S+\s+){0,3}(?:fee|eur|euro|usd|\$|€|money|payment)",
+    r"\b(?:customs|delivery|shipping)\s+fee\b", r"\b(?:poti|puteti)\s+(?:sa\s+)?(?:\w+\s+)?(?:imprumuta|trimite\s+bani|plati)\b",
     r"\b(?:western\s+union|moneygram|paysafe|card(?:uri)?\s+cadou|gift\s?card)\b",
     r"\bcumparati\s+(?:\w+\s+)?(?:voucher|card|cupon)",
     r"\b(?:o\s+)?(?:taxa|comision|garantie|avans|depozit|cautiune)\s+(?:\w+\s+){0,3}de\s+\d[\d.,]*\s*(?:lei|ron|euro|eur|€)",
@@ -130,6 +137,9 @@ TOO_GOOD = _c(
     r"\bvesti\s+bune\b", r"(?<!card\s)\b(?:bonus|cadou)\s+de\s+\d", r"\bvoucher\s+de\s+\d", r"\bcastigati\b", r"\bpoti\s+castiga\b", r"\bputeti\s+castiga\b",
     r"\bmostenire\b", r"\bdespagubire\s+de\b", r"\bde\s+\d+\s*(?:ori|x)\s+(?:mai\s+mult|banii)",
     r"\b(?:recomandat|recomandata)\s+de\s+(?:experti|specialisti)",
+    r"\b(?:am\s+)?(?:facut|castigat|scos)\s+\d[\d.,]*\s*(?:de\s+)?(?:lei|ron|euro|eur|€|dolari)\s+(?:in|intr-o)\s+(?:o\s+|doar\s+o\s+)?"
+    r"(?:zi|saptamana|luna|ora)\b",
+    r"\byou\s+(?:have\s+)?won\b", r"\bwinner\b", r"\bguaranteed\b",
 )
 
 # ---------------------------------------------------------------- RF_URGENCY
@@ -142,6 +152,7 @@ URGENCY = _c(
     r"\btrebuie\s+(?:\S+\s+){0,4}(?:azi|astazi|acum)\b", r"\b(?:azi|astazi)\s+(?:\S+\s+){0,2}(?:trebuie|ultima)\b",
     r"\bin\s+(?:aceasta|seara\s+asta|ziua\s+de\s+azi)\b", r"\bdoar\s+azi\b", r"\bastazi\s+este\s+ultima\b",
     r"\bin\s+cateva\s+(?:minute|ore)\b",
+    r"\b(?:immediately|asap|within\s+\d+\s*(?:h|hours|minutes))\b", r"\bexpires?\b",
 )
 
 # ---------------------------------------------------------------- RF_THREAT
@@ -153,7 +164,8 @@ THREAT = _c(
     r"\b(?:cont|calculator|telefon)(?:ul)?\s+(?:\S+\s+){0,3}(?:spart|compromis|hackuit|atacat)",
     r"\bactivitate\s+suspecta\b", r"\b(?:tranzacti(?:e|i)|plat(?:a|i)|operatiun(?:e|i)|retrager(?:e|i)|transfer)\s+(?:\S+\s+){0,2}suspect", r"\bacces\s+neautorizat\b",
     r"\bveti\s+pierde\b", r"\bva\s+fi\s+(?:sters|anulat|inchis|blocat|suspendat)", r"\bfurat\s+bani",
-    r"\bv-au\s+furat\b", r"\b(?:goleasca|golit|goli)\s+(?:\w+\s+)?contul\b", r"\bplangere\s+penala\b", r"\bin\s+instanta\b",
+    r"\bv-au\s+furat\b", r"\bincearca\s+sa\s+(?:va\s+)?(?:transfere|retraga|fure|goleasca|acceseze)\b",
+    r"\b(?:on\s+hold|suspended|blocked|locked)\b", r"\b(?:goleasca|golit|goli)\s+(?:\w+\s+)?contul\b", r"\bplangere\s+penala\b", r"\bin\s+instanta\b",
 )
 
 # ---------------------------------------------------------------- RF_EMOTIONAL_PRESSURE
@@ -169,7 +181,7 @@ EMOTIONAL = _c(
 # ---------------------------------------------------------------- RF_CHANNEL_SWITCH
 _APPS = r"(?:telegram|whatsapp|whats\s?app|signal|viber|messenger|instagram|skype|wechat|discord|tiktok)"
 CHANNEL_SWITCH = _c(
-    r"\b(?:vorbim|scrie(?:-mi|ti-mi)?|contacteaza(?:-ma)?|contactati(?:-ma|-ne)?|adauga(?:-ma)?|adaugati(?:-ma|-ne)?|"
+    r"\b(?:vorbim|scrie(?:-mi|-ne|ti-mi|ti-ne)?|contacteaza(?:-ma|-ne)?|contactati(?:-ma|-ne)?|adauga(?:-ma)?|adaugati(?:-ma|-ne)?|"
     r"treci|trecem|treceti|continuam|mutam|vorbi|discutam|gasesti|gasiti|intra|intrati)\s+(?:\S+\s+){0,3}pe\s+" + _APPS,
     r"\bpe\s+" + _APPS + r"\s+(?:\S+\s+){0,2}(?:vorbim|discutam|continuam|e\s+mai\s+(?:simplu|usor|sigur))",
     r"\bt\.me/", r"\bwa\.me/", r"\bgrupul\s+(?:nostru\s+)?(?:de\s+)?" + _APPS,
@@ -207,6 +219,17 @@ def _spans(regex, text, flag):
     return [(flag, (m.start(), m.end())) for m in regex.finditer(text)]
 
 
+PAY_ON_DELIVERY = re.compile(r"\bla\s+livrare\b|\bramburs\b|\bcash\s+la\b|\bla\s+ridicare\b|\bnumerar\s+la\b|\bla\s+fata\s+locului\b")
+
+
+def _is_request_list(ntext, sent, pos):
+    """A bare list of data items is a request too: "Numele complet, CNP-ul si numarul cardului." /
+    "Card number and CVV, please." -> the data word is near the start of the sentence or the sentence asks (?/va rog)."""
+    s0 = ntext.find(sent)
+    near_start = s0 >= 0 and pos - s0 <= 30
+    return near_start or "?" in sent or bool(re.search(r"\b(?:va\s+rog|te\s+rog|please)\b", sent))
+
+
 def _sentence_of(text, pos):
     for s, e in sentences(text):
         if s <= pos < e:
@@ -241,6 +264,8 @@ def detect(ntext: str, known_contact: bool = False, prev_ntext: str = ""):
             continue
         if DATA_DESCRIPTIVE.search(sent) and not DATA_VERB.search(sent):
             continue  # "hackerii va vad parolele" describes a threat, it is not a request
+        if not DATA_VERB.search(sent) and not _is_request_list(ntext, sent, m.start()):
+            continue  # "...dupa 3 introduceri gresite ale PIN-ului" only mentions the PIN
         out.append(("RF_DATA_REQUEST", (m.start(), m.end())))
     for m in DATA_WEAK.finditer(ntext):
         sent = _sentence_of(ntext, m.start())
@@ -258,6 +283,8 @@ def detect(ntext: str, known_contact: bool = False, prev_ntext: str = ""):
             continue
         if re.search(r"\b0\s*(?:lei|ron)\b", sent) and not re.search(r"\b(?:achitati|platiti|transferati)\b", sent):
             continue
+        if PAY_ON_DELIVERY.search(sent):
+            continue  # "puteti plati la livrare / ramburs / cash la ridicare" is the safe way to pay
         out.append(("RF_PAYMENT_REQUEST", (m.start(), m.end())))
 
     if not known_contact:

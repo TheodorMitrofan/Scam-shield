@@ -103,6 +103,13 @@ def analyze_core(scenario: dict, model=None) -> dict:
         prev_sender_ntext = masked
         per_msg.append(rec)
 
+    # An unofficial e-mail address only counts when it matters: the sender claims to be an organisation,
+    # the domain imitates one, or the thread already carries another risk (a neighbour's block-admin e-mail is fine).
+    if sender_email_bad:
+        compact_dom = compact(dom)
+        lookalike = any(k in compact_dom for k in cat.orgs) or bool(R.org_claims(norm(dom.replace(".", " ").replace("-", " "))))
+        risky = any(r["flags"] or r["claims"] for r in per_msg)
+        sender_email_bad = bool(name_claim) or lookalike or risky
     if sender_email_bad:
         first_sender = next((r for r in per_msg if r["from"] == "sender"), None)
         if first_sender is not None:
@@ -217,8 +224,9 @@ _TYPE_KW = {
                                r"minister|guvern|amenda|dosar|indexare|cnas|tribunal|instanta|comisar|ancheta|procuror|parchet",
     "COURIER_FEE": r"colet|awb|livrar|curier|posta|expeditie|reprogramare|vama|depozit(?:ul)?\s+curier",
     "INVESTMENT": r"investi|crypto|bitcoin|randament|trading|bursa|actiuni|platforma\s+de|profit|broker|portofoliu",
-    "ROMANCE": r"iubit|iubito|iubitule|te\s+iubesc|draga\s+mea|dragul\s+meu|ne-am\s+cunoscut|sa\s+ne\s+vedem|"
-               r"bilet\s+de\s+avion|dor\s+de\s+tine|inima|militar|misiune",
+    "ROMANCE": r"iubit|iubito|iubitule|iubire|te\s+iubesc|draga\s+mea|dragul\s+meu|ne-am\s+cunoscut|sa\s+ne\s+vedem|"
+               r"bilet\s+de\s+avion|dor\s+de\s+tine|inima|militar|misiune|frumoas|ma\s+gandesc\s+la\s+tine|"
+               r"platforma\s+petroliera|suflet(?:ul)?\s+(?:meu\s+)?pereche",
     "JOB_OFFER": r"\bjob\b|loc\s+de\s+munca|angaj|lucr(?:ati|eaza|ezi)\s+de\s+acasa|like-uri|aprecieri|sarcini|task|"
                  r"recrut|castigati\s+\d+|pe\s+zi\b|comision(?:ul)?\s+pe",
     "PRIZE_LOTTERY": r"castig|tombola|premiu|loteri|extragere|felicitari|ales\s+castigator",
