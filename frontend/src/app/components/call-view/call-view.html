@@ -1,0 +1,49 @@
+<section class="call" aria-label="Apel telefonic">
+  <header class="screen">
+    <div class="avatar" aria-hidden="true">📞</div>
+    <div class="caller">{{ caller() }}</div>
+    @if (scenario().sender.name && scenario().sender.address) {
+      <div class="number">{{ scenario().sender.address }}</div>
+    }
+    <div class="status">
+      {{ scenario().audio ? 'Mesaj vocal' : 'Apel — transcriere' }} ·
+      {{ scenario().sender.known_contact ? '✓ În agendă' : '⚠ Număr necunoscut' }}
+    </div>
+  </header>
+
+  @if (audioSrc(); as src) {
+    <div class="voice">
+      <span aria-hidden="true">🎤</span>
+      <audio controls preload="metadata" [src]="src"></audio>
+      @if (scenario().audio?.location; as loc) {
+        <div class="loc">
+          Regiune estimată din voce: <strong>{{ loc.region }}</strong> ({{
+            (loc.confidence * 100).toFixed(0)
+          }}%)
+        </div>
+      }
+    </div>
+  }
+
+  <ol class="captions">
+    @for (m of scenario().messages; track m.n) {
+      <li class="line" [class.me]="m.from === 'reader'" [class.alert]="isFirstAlert(result(), m.n)">
+        <div class="who">
+          <span class="n">{{ m.n }}</span>
+          {{ m.from === 'reader' ? 'Dumneavoastră' : 'Apelantul' }}
+          @if (m.start_s != null) {
+            <span class="ts">{{ fmt(m.start_s) }}</span>
+          }
+        </div>
+        <p class="text">{{ m.text || '(liniște)' }}</p>
+        @if (flagsAt(result(), m.n).length) {
+          <ul class="flags">
+            @for (f of flagsAt(result(), m.n); track f) {
+              <li [title]="f">{{ flagLabel(f) }}</li>
+            }
+          </ul>
+        }
+      </li>
+    }
+  </ol>
+</section>

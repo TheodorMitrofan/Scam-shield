@@ -1,0 +1,38 @@
+:host { display: block; }
+.mail {
+  max-width: 760px; margin: 0 auto; background: #fff; border: 1px solid #d0d4da; border-radius: 12px;
+  overflow: hidden; box-shadow: 0 6px 20px rgb(0 0 0 / 0.1);
+}
+.toolbar { background: #1a73e8; color: #fff; padding: 12px 18px; font-size: 18px; font-weight: 600; }
+.subject { margin: 0; padding: 18px 20px 6px; font-size: 22px; color: #111; overflow-wrap: anywhere; }
+.email { margin: 12px 20px 20px; padding: 16px; border: 1px solid #e3e6ea; border-radius: 10px; }
+.email.reply { background: #f4f8ff; }
+.email.alert { outline: 4px solid #c62828; outline-offset: 2px; }
+.meta { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+.n {
+  min-width: 26px; height: 26px; border-radius: 13px; background: #3a3a3c; color: #fff; font-size: 13px;
+  display: grid; place-items: center; flex: none;
+}
+.from { font-weight: 700; font-size: 19px; color: #111; }
+.addr, .to { font-size: 16px; color: #444; overflow-wrap: anywhere; }
+.contact {
+  display: inline-block; margin-left: 6px; font-size: 14px; padding: 2px 8px; border-radius: 999px;
+  background: #fff3cd; color: #6b4a00;
+  &.known { background: #d1f2dc; color: #0b5c2a; }
+}
+.body { margin: 0; font-size: 18px; line-height: 1.5; color: #111; white-space: pre-wrap; overflow-wrap: anywhere; }
+.flags { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 4px;
+  li { font-size: 12px; background: #c62828; color: #fff; border-radius: 4px; padding: 2px 6px; } }
+
+/* Dark mode: dark mail client. */
+:host-context(.app-dark) {
+  .mail { background: #1b1f24; border-color: #2f353d; box-shadow: 0 6px 20px rgb(0 0 0 / 0.45); }
+  .toolbar { background: #1e3a5f; color: #e5edff; }
+  .subject, .from, .body { color: #e5e7eb; }
+  .addr, .to { color: #9ca3af; }
+  .email { border-color: #2f353d; }
+  .email.reply { background: #17263a; }
+  .n { background: #e5e7eb; color: #111; }
+  .contact { background: #3d3214; color: #fcd34d;
+    &.known { background: #12331f; color: #86efac; } }
+}

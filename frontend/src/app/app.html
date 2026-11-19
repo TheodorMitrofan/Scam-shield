@@ -1,0 +1,12 @@
+<app-top-bar (paste)="pasteOpen.set(true)" />
+
+<main class="layout" [class.show-detail]="showDetail()">
+  <section class="list" aria-label="Scenarii">
+    <app-inbox-list (opened)="showDetail.set(true)" />
+  </section>
+  <section class="detail" aria-label="Detaliu scenariu">
+    <app-scenario-detail (back)="showDetail.set(false)" />
+  </section>
+</main>
+
+<app-paste-dialog [(visible)]="pasteOpen" />

@@ -1,0 +1,144 @@
+<p-dialog
+  header="Verificați un mesaj sau o conversație"
+  [modal]="true"
+  [(visible)]="visible"
+  [style]="{ width: 'min(1100px, 96vw)' }"
+  [dismissableMask]="true"
+  [draggable]="false"
+>
+  <div class="grid">
+    <div class="form">
+      <span class="lbl">De unde vine mesajul?</span>
+      <p-selectbutton
+        [options]="channelOptions"
+        optionValue="value"
+        [allowEmpty]="false"
+        [ngModel]="channel()"
+        (ngModelChange)="channel.set($event)"
+        class="channels"
+      >
+        <ng-template #item let-o>
+          <i [class]="o.icon" aria-hidden="true"></i><span>{{ o.label }}</span>
+        </ng-template>
+      </p-selectbutton>
+
+      <div class="row">
+        <label class="field">
+          <span class="lbl">Nume expeditor (opțional)</span>
+          <input
+            pInputText
+            [ngModel]="senderName()"
+            (ngModelChange)="senderName.set($event)"
+            placeholder="Ex.: BancaDunarea"
+          />
+        </label>
+        <label class="field">
+          <span class="lbl">{{ addressLabel() }} (opțional)</span>
+          <input
+            pInputText
+            [ngModel]="senderAddress()"
+            (ngModelChange)="senderAddress.set($event)"
+            [placeholder]="channel() === 'email' ? 'nume@exemplu.ro' : '+40 7xx xxx xxx'"
+          />
+        </label>
+      </div>
+      <label class="check">
+        <p-checkbox
+          [binary]="true"
+          [ngModel]="knownContact()"
+          (ngModelChange)="knownContact.set($event)"
+        />
+        <span>Expeditorul este salvat în agendă</span>
+      </label>
+
+      <label for="paste-msg-0" class="lbl">Mesajul sau conversația</label>
+      <ol class="composer">
+        @for (d of drafts(); track d.id; let i = $index) {
+          <li class="msg" [class.me]="d.from === 'reader'">
+            <button
+              type="button"
+              class="side"
+              [class.me]="d.from === 'reader'"
+              (click)="toggleSide(i)"
+              [attr.aria-label]="'Mesajul ' + (i + 1) + ': ' + sideLabel(d.from) + '. Apăsați ca să schimbați.'"
+              pTooltip="Apăsați ca să schimbați cine a scris"
+              tooltipPosition="top"
+            >
+              {{ sideLabel(d.from) }}
+            </button>
+            <textarea
+              [id]="'paste-msg-' + i"
+              pTextarea
+              rows="1"
+              [autoResize]="true"
+              [ngModel]="d.text"
+              (ngModelChange)="setText(i, $event)"
+              (keydown.enter)="onEnter($event, i)"
+              (keydown.backspace)="onBackspace($event, i)"
+              (paste)="onPaste($event, i)"
+              [placeholder]="i === 0 ? placeholder() : 'Răspunsul…'"
+            ></textarea>
+            @if (drafts().length > 1) {
+              <p-button
+                icon="pi pi-times"
+                severity="secondary"
+                [text]="true"
+                [rounded]="true"
+                size="small"
+                [ariaLabel]="'Șterge mesajul ' + (i + 1)"
+                (onClick)="remove(i)"
+              />
+            }
+          </li>
+        }
+      </ol>
+      <p class="hint">
+        <i class="pi pi-info-circle" aria-hidden="true"></i>
+        <span
+          ><kbd>Enter</kbd> trece la următorul mesaj, de la celălalt vorbitor. <kbd>Shift</kbd>+<kbd>Enter</kbd>
+          face un rând nou în același mesaj. Apăsați pe eticheta din stânga ca să schimbați cine a
+          scris.</span
+        >
+      </p>
+    </div>
+
+    <div class="preview">
+      <div class="preview-head">
+        <span class="lbl">Previzualizare</span>
+        <span class="count">{{ count() }} {{ count() === 1 ? 'mesaj' : 'mesaje' }}</span>
+        <p-button
+          icon="pi pi-arrow-right-arrow-left"
+          label="Inversează"
+          severity="secondary"
+          size="small"
+          [text]="true"
+          pTooltip="Schimbă cine e expeditorul și cine sunteți dumneavoastră"
+          tooltipPosition="left"
+          [disabled]="count() === 0"
+          (onClick)="swapAll()"
+        />
+      </div>
+      <div class="preview-body">
+        @if (count()) {
+          <app-conversation [scenario]="preview()" />
+        } @else {
+          <div class="empty">
+            <i class="pi pi-eye" aria-hidden="true"></i>
+            <p>Aici vedeți mesajul așa cum arată în aplicație.</p>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <ng-template #footer>
+    <p-button label="Renunță" severity="secondary" [text]="true" (onClick)="visible.set(false)" />
+    <p-button
+      label="Verifică"
+      icon="pi pi-search"
+      size="large"
+      [disabled]="!count()"
+      (onClick)="submit()"
+    />
+  </ng-template>
+</p-dialog>

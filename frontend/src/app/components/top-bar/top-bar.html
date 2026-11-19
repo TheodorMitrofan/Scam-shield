@@ -1,0 +1,54 @@
+<header class="top">
+  <div class="brand">
+    <span class="logo" aria-hidden="true"><i class="pi pi-shield"></i></span>
+    <span class="name">Scam Shield</span>
+    <span class="crumb"><i class="pi pi-inbox" aria-hidden="true"></i> Inbox</span>
+  </div>
+
+  <div class="actions">
+    <button
+      type="button"
+      class="status"
+      [class]="'status ' + status().kind"
+      (click)="recheck()"
+      [pTooltip]="status().hint"
+      tooltipPosition="bottom"
+    >
+      <span class="dot" aria-hidden="true"></span>{{ status().label }}
+    </button>
+    <label class="consent" pTooltip="Doar dacă bifați, conversațiile verificate se păstrează (le puteți șterge oricând)." tooltipPosition="bottom">
+      <p-toggleswitch
+        [ngModel]="store.saveHistory()"
+        (ngModelChange)="store.saveHistory.set($event)"
+        inputId="consent"
+      />
+      <span>Salvează în istoric</span>
+    </label>
+    <p-button
+      [icon]="dark() ? 'pi pi-moon' : 'pi pi-sun'"
+      severity="secondary"
+      [outlined]="true"
+      (onClick)="toggleTheme()"
+      [ariaLabel]="dark() ? 'Temă deschisă' : 'Temă întunecată'"
+      pTooltip="Schimbă tema"
+      tooltipPosition="bottom"
+    />
+    <p-button
+      label="Setul de validare"
+      icon="pi pi-folder-open"
+      severity="secondary"
+      [outlined]="true"
+      [loading]="store.loading()"
+      (onClick)="store.loadValidationSet()"
+    />
+    <label class="file-btn">
+      <i class="pi pi-file" aria-hidden="true"></i> Fișiere JSON
+      <input type="file" accept=".json,application/json" multiple (change)="onFiles($event)" />
+    </label>
+    <label class="file-btn">
+      <i class="pi pi-folder" aria-hidden="true"></i> Folder
+      <input type="file" webkitdirectory multiple (change)="onFiles($event)" />
+    </label>
+    <p-button label="Lipește mesaj" icon="pi pi-clipboard" (onClick)="paste.emit()" />
+  </div>
+</header>

@@ -1,0 +1,43 @@
+<section
+  class="phone"
+  [class]="'theme-' + scenario().channel"
+  [attr.aria-label]="'Conversație ' + label()"
+>
+  <header class="bar">
+    <div class="avatar" aria-hidden="true">{{ initial() }}</div>
+    <div class="who">
+      <div class="name">{{ title() }}</div>
+      @if (subtitle()) {
+        <div class="addr">{{ subtitle() }}</div>
+      }
+    </div>
+    <span class="contact" [class.known]="scenario().sender.known_contact">
+      {{ scenario().sender.known_contact ? '✓ În agendă' : '⚠ Nu e în agendă' }}
+    </span>
+  </header>
+
+  <div class="channel-tag">{{ label() }}</div>
+
+  <ol class="thread">
+    @for (m of scenario().messages; track m.n) {
+      <li class="row" [class.me]="m.from === 'reader'">
+        <div class="bubble" [class.alert]="isFirstAlert(result(), m.n)">
+          <span class="n" aria-label="Mesajul {{ m.n }}">{{ m.n }}</span>
+          @if (m.from === 'reader') {
+            <span class="sr-only">Dumneavoastră:</span>
+          }
+          <p class="text">{{ m.text || '(mesaj gol)' }}</p>
+          @if (flagsAt(result(), m.n).length) {
+            <ul class="flags">
+              @for (f of flagsAt(result(), m.n); track f) {
+                <li [title]="f">{{ flagLabel(f) }}</li>
+              }
+            </ul>
+          }
+        </div>
+      </li>
+    } @empty {
+      <li class="empty">Conversația nu are mesaje.</li>
+    }
+  </ol>
+</section>
