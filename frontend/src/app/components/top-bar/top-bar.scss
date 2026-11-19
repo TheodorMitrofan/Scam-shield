@@ -17,7 +17,10 @@
   padding-left: 12px; border-left: 1px solid var(--app-border);
 }
 
-.actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.prefs { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+/* actions always on their own row, so .prefs stays top-right on every page */
+.actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; flex-basis: 100%; }
+.actions:empty { display: none; }
 
 .status {
   display: inline-flex; align-items: center; gap: 8px; padding: 0.4rem 0.75rem; border-radius: 999px;

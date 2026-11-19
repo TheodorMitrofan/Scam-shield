@@ -17,27 +17,8 @@
     </p-selectbutton>
   </div>
 
-  <div class="actions">
-    @if (view() !== 'audio') {
-    <button
-      type="button"
-      class="status"
-      [class]="'status ' + status().kind"
-      (click)="recheck()"
-      [pTooltip]="status().hint"
-      tooltipPosition="bottom"
-    >
-      <span class="dot" aria-hidden="true"></span>{{ status().label }}
-    </button>
-    <label class="consent" pTooltip="Doar dacă bifați, conversațiile verificate se păstrează (le puteți șterge oricând)." tooltipPosition="bottom">
-      <p-toggleswitch
-        [ngModel]="store.saveHistory()"
-        (ngModelChange)="store.saveHistory.set($event)"
-        inputId="consent"
-      />
-      <span>Salvează în istoric</span>
-    </label>
-    }
+  <!-- Language + theme: same place on every page (top right, next to the view tabs). -->
+  <div class="prefs">
     <p-selectbutton
       [options]="langs"
       optionLabel="label"
@@ -59,6 +40,29 @@
       pTooltip="Schimbă tema"
       tooltipPosition="bottom"
     />
+  </div>
+
+  <div class="actions">
+    @if (view() !== 'audio') {
+    <button
+      type="button"
+      class="status"
+      [class]="'status ' + status().kind"
+      (click)="recheck()"
+      [pTooltip]="status().hint"
+      tooltipPosition="bottom"
+    >
+      <span class="dot" aria-hidden="true"></span>{{ status().label }}
+    </button>
+    <label class="consent" pTooltip="Doar dacă bifați, conversațiile verificate se păstrează (le puteți șterge oricând)." tooltipPosition="bottom">
+      <p-toggleswitch
+        [ngModel]="store.saveHistory()"
+        (ngModelChange)="store.saveHistory.set($event)"
+        inputId="consent"
+      />
+      <span>Salvează în istoric</span>
+    </label>
+    }
     @if (view() !== 'audio') {
     <p-button
       label="Setul de validare"
