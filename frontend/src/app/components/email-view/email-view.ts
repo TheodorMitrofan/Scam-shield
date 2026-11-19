@@ -1,6 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { AnalysisResult, Scenario } from '../../models/scenario';
-import { flagsAt, isFirstAlert } from '../../services/result-utils';
+import { flagLabel, flagsAt, isFirstAlert } from '../../services/result-utils';
 
 /** Renders an `email` scenario like a mail client; each message is one e-mail in the thread. */
 @Component({
@@ -23,5 +23,6 @@ export class EmailView {
   );
 
   protected readonly flagsAt = flagsAt;
+  protected readonly flagLabel = flagLabel;
   protected readonly isFirstAlert = isFirstAlert;
 }

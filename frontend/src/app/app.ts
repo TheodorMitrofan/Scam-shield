@@ -1,19 +1,25 @@
 import { Component, inject, signal } from '@angular/core';
-import { Conversation } from './components/conversation/conversation';
-import { ScenarioList } from './components/scenario-list/scenario-list';
-import { CHANNEL_LABEL } from './models/scenario';
+import { InboxList } from './components/inbox-list/inbox-list';
+import { PasteDialog } from './components/paste-dialog/paste-dialog';
+import { ScenarioDetail } from './components/scenario-detail/scenario-detail';
+import { TopBar } from './components/top-bar/top-bar';
 import { ScenarioStore } from './services/scenario-store';
 
 @Component({
   selector: 'app-root',
-  imports: [Conversation, ScenarioList],
+  imports: [TopBar, InboxList, ScenarioDetail, PasteDialog],
   templateUrl: './app.html',
   styleUrl: './app.scss',
+  host: {
+    '(dragover)': '$event.preventDefault()',
+    '(drop)': 'onDrop($event)',
+  },
 })
 export class App {
   protected readonly store = inject(ScenarioStore);
-  protected readonly label = CHANNEL_LABEL;
-  protected readonly pasted = signal('');
+  protected readonly pasteOpen = signal(false);
+  /** Mobile only: whether the detail panel replaces the list. */
+  protected readonly showDetail = signal(false);
 
   constructor() {
     // Demo shortcut: /?load=validation&id=V04 opens the validation set directly.
@@ -25,19 +31,8 @@ export class App {
     }
   }
 
-  protected onFiles(ev: Event): void {
-    const input = ev.target as HTMLInputElement;
-    if (input.files?.length) void this.store.loadFiles(input.files);
-    input.value = '';
-  }
-
   protected onDrop(ev: DragEvent): void {
     ev.preventDefault();
     if (ev.dataTransfer?.files.length) void this.store.loadFiles(ev.dataTransfer.files);
-  }
-
-  protected addPasted(): void {
-    const t = this.pasted().trim();
-    if (t) this.store.addPasted(t);
   }
 }

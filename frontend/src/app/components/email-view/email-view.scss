@@ -23,3 +23,16 @@
 .body { margin: 0; font-size: 18px; line-height: 1.5; color: #111; white-space: pre-wrap; overflow-wrap: anywhere; }
 .flags { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 4px;
   li { font-size: 12px; background: #c62828; color: #fff; border-radius: 4px; padding: 2px 6px; } }
+
+/* Dark mode: dark mail client. */
+:host-context(.app-dark) {
+  .mail { background: #1b1f24; border-color: #2f353d; box-shadow: 0 6px 20px rgb(0 0 0 / 0.45); }
+  .toolbar { background: #1e3a5f; color: #e5edff; }
+  .subject, .from, .body { color: #e5e7eb; }
+  .addr, .to { color: #9ca3af; }
+  .email { border-color: #2f353d; }
+  .email.reply { background: #17263a; }
+  .n { background: #e5e7eb; color: #111; }
+  .contact { background: #3d3214; color: #fcd34d;
+    &.known { background: #12331f; color: #86efac; } }
+}

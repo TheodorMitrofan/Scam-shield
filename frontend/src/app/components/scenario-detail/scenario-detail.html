@@ -1,0 +1,95 @@
+@if (store.selected(); as s) {
+  <header class="head">
+    <p-button
+      class="back"
+      icon="pi pi-arrow-left"
+      severity="secondary"
+      [text]="true"
+      ariaLabel="Înapoi la listă"
+      (onClick)="back.emit()"
+    />
+    <span class="pos">Scenariul {{ store.selectedIndex() }}/{{ store.scenarios().length }}</span>
+    <div class="acts">
+      <p-button label="Marchează ca necitit" severity="secondary" (onClick)="markUnread()" />
+      <p-button
+        icon="pi pi-trash"
+        severity="secondary"
+        ariaLabel="Șterge din listă"
+        pTooltip="Șterge din listă"
+        tooltipPosition="bottom"
+        (onClick)="remove()"
+      />
+    </div>
+  </header>
+
+  <div class="meta">
+    @if (tag(); as t) {
+      <p-tag [value]="t.label" [severity]="t.severity" [rounded]="true" />
+    }
+    <span class="id">{{ s.id }} · {{ channelLabel[s.channel] }}</span>
+  </div>
+  <h2 class="title">{{ sender() }}</h2>
+
+  @if (store.isAnalyzing(s.id)) {
+    <div class="analyzing" role="status">
+      <i class="pi pi-spin pi-spinner" aria-hidden="true"></i> Se analizează mesajul…
+    </div>
+  } @else if (store.selectedResult(); as r) {
+    <div class="warning" [class]="'v-' + r.verdict" role="status">
+      <i
+        class="pi"
+        [class.pi-times-circle]="r.verdict === 'SCAM'"
+        [class.pi-exclamation-triangle]="r.verdict === 'SUSPICIOUS'"
+        [class.pi-check-circle]="r.verdict === 'SAFE'"
+        aria-hidden="true"
+      ></i>
+      <div>
+        <div class="verdict">{{ verdictLabel[r.verdict] }}</div>
+        <p>{{ r.warning.ro }}</p>
+      </div>
+    </div>
+
+    <dl class="facts">
+      <div>
+        <dt>Risc</dt>
+        <dd>
+          <span class="score">{{ r.risk_score }}<small>/100</small></span>
+          <span class="bar" [class]="'bar v-' + r.verdict" aria-hidden="true"
+            ><span [style.width.%]="r.risk_score"></span
+          ></span>
+        </dd>
+      </div>
+      <div>
+        <dt>Tip</dt>
+        <dd [title]="r.scam_type">{{ scamTypeLabel(r.scam_type) }}</dd>
+      </div>
+      <div>
+        <dt>Prima alertă</dt>
+        <dd>{{ r.first_alert ? 'la mesajul ' + r.first_alert : '—' }}</dd>
+      </div>
+    </dl>
+
+    @if (r.red_flags.length) {
+      <div class="flags">
+        <span class="flags-title">De ce:</span>
+        @for (f of r.red_flags; track f) {
+          <p-tag [value]="flagLabel(f)" severity="secondary" [title]="f" />
+        }
+      </div>
+    }
+  } @else if (store.apiError()) {
+    <div class="analyzing offline" role="status">
+      <i class="pi pi-wifi" aria-hidden="true"></i> Mesajul nu a putut fi verificat acum.
+      <p-button label="Reîncearcă" size="small" [text]="true" (onClick)="store.analyze([s])" />
+    </div>
+  }
+
+  <div class="conv">
+    <app-conversation [scenario]="s" [result]="store.selectedResult()" />
+  </div>
+} @else {
+  <div class="empty">
+    <i class="pi pi-comments" aria-hidden="true"></i>
+    <p>Alegeți o conversație din listă ca s-o vedeți aici.</p>
+  </div>
+}

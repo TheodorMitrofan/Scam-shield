@@ -39,7 +39,7 @@
         @if (flagsAt(result(), m.n).length) {
           <ul class="flags">
             @for (f of flagsAt(result(), m.n); track f) {
-              <li>{{ f }}</li>
+              <li [title]="f">{{ flagLabel(f) }}</li>
             }
           </ul>
         }

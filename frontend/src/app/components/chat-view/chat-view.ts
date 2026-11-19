@@ -1,6 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { AnalysisResult, CHANNEL_LABEL, Scenario } from '../../models/scenario';
-import { flagsAt, isFirstAlert } from '../../services/result-utils';
+import { flagLabel, flagsAt, isFirstAlert } from '../../services/result-utils';
 
 /** Renders sms / whatsapp / chat scenarios as a phone messaging app. */
 @Component({
@@ -20,10 +20,12 @@ export class ChatView {
     const s = this.scenario().sender;
     return s.name && s.address && s.address !== s.name ? s.address : null;
   });
+  /** First letter of the sender's name; a generic person icon for bare numbers like "+40 7xx…". */
   protected readonly initial = computed(
-    () => this.title().match(/\p{L}/u)?.[0]?.toUpperCase() ?? '👤',
+    () => this.scenario().sender.name?.match(/\p{L}/u)?.[0]?.toUpperCase() ?? '👤',
   );
 
   protected readonly flagsAt = flagsAt;
+  protected readonly flagLabel = flagLabel;
   protected readonly isFirstAlert = isFirstAlert;
 }

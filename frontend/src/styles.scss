@@ -1,6 +1,30 @@
-html { font-size: 18px; }
+@import 'primeicons/primeicons.css';
+
+:root {
+  --app-bg: #f4f5f7;
+  --app-surface: #ffffff;
+  --app-border: #e5e7eb;
+  --app-text: #111827;
+  --app-muted: #6b7280;
+  --app-hover: #f9fafb;
+  --app-accent: var(--p-primary-600);
+}
+.app-dark {
+  --app-bg: #0f1115;
+  --app-surface: #181b21;
+  --app-border: #2a2f38;
+  --app-text: #f3f4f6;
+  --app-muted: #9ca3af;
+  --app-hover: #1f232b;
+  --app-accent: var(--p-primary-400);
+}
+
+html { font-size: 16px; }
 body {
-  margin: 0; background: #eef1f5; color: #111;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', sans-serif; font-size: 18px;
+  margin: 0;
+  background: var(--app-bg);
+  color: var(--app-text);
+  font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
+  font-size: 16px;
 }
 * { box-sizing: border-box; }

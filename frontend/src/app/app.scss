@@ -1,33 +1,18 @@
-:host { display: block; max-width: 1280px; margin: 0 auto; padding: 16px; }
-.top { margin-bottom: 12px;
-  h1 { margin: 0; font-size: 30px; }
-  .tag { margin: 4px 0 0; font-size: 18px; color: #444; } }
+:host { display: block; max-width: 1680px; margin: 0 auto; padding: 0 24px 24px; min-height: 100vh; }
 
-.load, .paste {
-  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
-  background: #fff; border: 2px dashed #c3ccd6; border-radius: 14px; padding: 14px; margin-bottom: 12px;
+.layout {
+  display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 28px; align-items: start;
 }
-.paste { border-style: solid; flex-direction: column; align-items: stretch;
-  label { font-size: 18px; font-weight: 600; }
-  textarea { font: inherit; font-size: 18px; padding: 10px; border-radius: 10px; border: 2px solid #9aa5b1; resize: vertical; }
-  .big { align-self: flex-start; } }
-.big {
-  font: inherit; font-size: 18px; font-weight: 700; padding: 12px 18px; border-radius: 12px; border: 2px solid #1a73e8;
-  background: #1a73e8; color: #fff; cursor: pointer;
-  &.secondary { background: #fff; color: #1a73e8; }
-  &:disabled { opacity: 0.5; cursor: default; }
-  &:focus-visible, &:focus-within { outline: 3px solid #0b3d91; outline-offset: 2px; }
-  input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.detail {
+  position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; border-radius: 16px;
 }
-label.big { position: relative; }
-.hint { font-size: 16px; color: #555; }
 
-.errors { background: #fff3cd; color: #6b4a00; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: 16px; }
-
-.layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
-.side h2, .view-title { font-size: 20px; margin: 0 0 10px; }
-.empty { font-size: 20px; color: #555; text-align: center; padding: 40px 0; grid-column: 1 / -1; }
-
-@media (max-width: 800px) {
-  .layout { grid-template-columns: 1fr; }
+@media (max-width: 900px) {
+  :host { padding: 0 16px 16px; }
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .detail { position: static; max-height: none; display: none; }
+  .layout.show-detail {
+    .list { display: none; }
+    .detail { display: block; }
+  }
 }
