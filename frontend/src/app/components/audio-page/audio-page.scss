@@ -77,6 +77,18 @@ figure { margin: 0 0 16px;
   figcaption { font-size: 14px; color: var(--app-muted); margin-top: 6px; } }
 .heat img { max-width: 440px; }
 
+.scenarios { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.where { margin: 4px 0 10px; font-size: 18px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sim {
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 8px;
+  border-radius: 999px; background: color-mix(in srgb, var(--p-amber-500) 20%, transparent); color: var(--p-amber-700);
+}
+:host-context(.app-dark) .sim { color: var(--p-amber-200); }
+.listen {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;
+  audio { flex: 1; min-width: 240px; height: 40px; }
+  a { color: var(--app-accent); font-weight: 600; text-decoration: none; display: inline-flex; gap: 6px; align-items: center; }
+}
 .result {
   display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 14px; color: var(--app-muted); font-size: 16px;
   .big { font-size: 34px; font-weight: 800; color: var(--app-text); }

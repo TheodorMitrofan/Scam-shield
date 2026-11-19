@@ -126,28 +126,38 @@
     <header>
       <h2><i class="pi pi-map-marker" aria-hidden="true"></i> Demonstrație: cum se află locul</h2>
       <p class="sub">
-        Pe o înregistrare <strong>simulată</strong> de 24 de minute cu două avioane, comparăm sunetul cu
-        traseele a ~70 de zboruri și găsim locul microfonului. Nu localizăm nicio persoană reală.
+        Pe o înregistrare <strong>simulată</strong> de 24 de minute cu două avioane cu elice, comparăm sunetul
+        cu traseele a ~70 de zboruri și găsim locul microfonului. Locurile sunt reale (lângă aerodromuri),
+        zborurile și sunetul sunt simulate. Nu localizăm nicio persoană reală.
       </p>
     </header>
 
-    @if (!demo()) {
-      <p-button
-        label="Pornește demonstrația"
-        icon="pi pi-play"
-        size="large"
-        [loading]="demoBusy()"
-        (onClick)="runDemo()"
-      />
-      @if (demoBusy()) {
-        <p class="hint">Prima rulare durează aproximativ 40 de secunde.</p>
+    <div class="scenarios" role="group" aria-label="Alegeți locul demonstrației">
+      @for (sc of scenarios; track sc.value) {
+        <p-button
+          [label]="sc.flag + ' ' + sc.label"
+          [severity]="scenario() === sc.value && (demo() || demoBusy()) ? undefined : 'secondary'"
+          [outlined]="!(scenario() === sc.value && (demo() || demoBusy()))"
+          size="large"
+          [loading]="demoBusy() && scenario() === sc.value"
+          [disabled]="demoBusy()"
+          (onClick)="runDemo(sc.value)"
+        />
       }
+    </div>
+    @if (demoBusy()) {
+      <p class="hint">Calculăm… dacă serviciul abia a pornit, durează până la un minut.</p>
     }
     @if (demoError(); as err) {
       <div class="error" role="alert"><i class="pi pi-exclamation-triangle" aria-hidden="true"></i> {{ err }}</div>
     }
 
     @if (demo(); as d) {
+      <h3 class="where">{{ d.country }} · {{ d.place }} <span class="sim">simulat</span></h3>
+      <div class="listen">
+        <audio controls preload="none" [src]="recordingUrl(d.scenario)"></audio>
+        <a [href]="recordingUrl(d.scenario)" download><i class="pi pi-download" aria-hidden="true"></i> Descarcă înregistrarea</a>
+      </div>
       <div class="result">
         <span class="big">{{ n(d.error_m) }} m</span>
         <span>între locul găsit și locul real · zona de incertitudine ±{{ n(d.region_radius_m) }} m</span>
@@ -165,7 +175,7 @@
         <a class="place real" [href]="mapUrl(d.truth.lat, d.truth.lon)" target="_blank" rel="noopener">
           <span class="dot truth"></span>
           <span>
-            <strong>Locul real al microfonului</strong>
+            <strong>Locul real al microfonului (simulat)</strong>
             <small>{{ d.truth.lat.toFixed(5) }}, {{ d.truth.lon.toFixed(5) }}</small>
           </span>
           <i class="pi pi-external-link" aria-hidden="true"></i>
@@ -173,8 +183,8 @@
       </div>
       <p class="note">
         <i class="pi pi-info-circle" aria-hidden="true"></i>
-        Scenariu simulat lângă Kansas City (SUA): acolo sunt traseele de zbor folosite în simulare. Apăsați pe un
-        loc ca să-l deschideți în OpenStreetMap.
+        Apăsați pe un loc ca să-l deschideți în OpenStreetMap. Tonul avioanelor e foarte slab: se vede în
+        spectrogramă mai bine decât se aude.
       </p>
 
       <div class="maps">

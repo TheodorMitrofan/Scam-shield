@@ -28,9 +28,14 @@ export interface DemoFlight {
   points: [number, number][]; // [lat, lon]
 }
 
+export type DemoScenario = 'ro' | 'it' | 'fr';
+
 export interface DemoResult {
   ok: boolean;
   reason?: string;
+  scenario: DemoScenario;
+  country: string;
+  place: string;
   seed: number;
   runtime_s: number;
   recording_s: number;
@@ -66,8 +71,12 @@ export class AudioApiService {
     return this.send(fetch(`${AUDIO_API_BASE}/audit?engine=${engine}`, { method: 'POST', body: fd }));
   }
 
-  demo(seed?: number): Promise<DemoResult> {
-    return this.send(fetch(`${AUDIO_API_BASE}/demo${seed ? `?seed=${seed}` : ''}`));
+  demo(scenario: DemoScenario): Promise<DemoResult> {
+    return this.send(fetch(`${AUDIO_API_BASE}/demo?scenario=${scenario}`));
+  }
+
+  recordingUrl(scenario: DemoScenario): string {
+    return `${AUDIO_API_BASE}/demo/${scenario}/recording.wav`;
   }
 
   private async send<T>(req: Promise<Response>): Promise<T> {

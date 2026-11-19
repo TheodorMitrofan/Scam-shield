@@ -18,7 +18,8 @@ import tempfile
 from pathlib import Path
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+from fastapi import FastAPI, File, HTTPException, Path as PathParam, Query, UploadFile
+from fastapi.responses import FileResponse
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -38,26 +39,31 @@ def _to_wav(src: str, dst: str) -> None:
         raise RuntimeError("ffmpeg missing")
     subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", src, "-vn", "-ac", "1", "-ar", "8000",
                     "-c:a", "pcm_s16le", dst], check=True, capture_output=True, timeout=300)
-DEFAULT_SEED = 23
+SCENARIO_PATTERN = "^(" + "|".join(pipeline.SCENARIOS) + ")$"
 
-_demo_cache: dict[int, dict] = {}
-_demo_locks: dict[int, asyncio.Lock] = {}
+_demo_cache: dict[str, dict] = {}
+_demo_locks: dict[str, asyncio.Lock] = {}
 
 
-async def _demo(seed: int) -> dict:
-    if seed in _demo_cache:
-        return _demo_cache[seed]
-    lock = _demo_locks.setdefault(seed, asyncio.Lock())
-    async with lock:  # one CPU-heavy run per seed, concurrent callers wait for it
-        if seed not in _demo_cache:
-            _demo_cache[seed] = await run_in_threadpool(pipeline.demo, seed)
-    return _demo_cache[seed]
+async def _demo(scenario: str) -> dict:
+    if scenario in _demo_cache:
+        return _demo_cache[scenario]
+    lock = _demo_locks.setdefault(scenario, asyncio.Lock())
+    async with lock:  # one CPU-heavy run per scenario, concurrent callers wait for it
+        if scenario not in _demo_cache:
+            _demo_cache[scenario] = await run_in_threadpool(pipeline.demo, scenario)
+    return _demo_cache[scenario]
+
+
+async def _warm_all() -> None:
+    for sc in pipeline.SCENARIOS:  # one after another: each run is CPU-heavy
+        await _demo(sc)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Warm the default demo in the background so the live demo answers instantly.
-    task = asyncio.create_task(_demo(DEFAULT_SEED))
+    # Warm every demo scenario in the background so the live demo answers instantly (~30 s each).
+    task = asyncio.create_task(_warm_all())
     yield
     task.cancel()
 
@@ -73,7 +79,8 @@ app.add_middleware(
 
 @app.get("/api/audio/health")
 def health() -> dict:
-    return {"status": "ok", "demo_ready": DEFAULT_SEED in _demo_cache}
+    return {"status": "ok", "demo_ready": [sc for sc in pipeline.SCENARIOS if sc in _demo_cache],
+            "scenarios": {k: {"country": v["country"], "place": v["place"]} for k, v in pipeline.SCENARIOS.items()}}
 
 
 @app.post("/api/audio/audit")
@@ -108,6 +115,16 @@ async def audit(
 
 
 @app.get("/api/audio/demo")
-async def demo(seed: int = Query(DEFAULT_SEED, ge=1, le=10_000)) -> dict:
-    """Full localisation on a SYNTHETIC recording (~40 s the first time per seed, then cached)."""
-    return await _demo(seed)
+async def demo(scenario: str = Query("ro", pattern=SCENARIO_PATTERN)) -> dict:
+    """Full localisation on a SYNTHETIC recording placed at a real area (~30 s the first time, then cached)."""
+    return await _demo(scenario)
+
+
+@app.get("/api/audio/demo/{scenario}/recording.wav")
+async def demo_recording(scenario: str = PathParam(pattern=SCENARIO_PATTERN)) -> FileResponse:
+    """The simulated recording itself (24 min, 4 kHz), so it can be played or downloaded."""
+    await _demo(scenario)
+    path = pipeline.RECORDINGS_DIR / f"{scenario}.wav"
+    if not path.is_file():
+        raise HTTPException(404, "Înregistrarea nu este disponibilă.")
+    return FileResponse(path, media_type="audio/wav", filename=f"scam-shield-demo-{scenario}.wav")

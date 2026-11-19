@@ -201,16 +201,34 @@ def audit_dopplergeist(wav_path: str) -> dict:
 
 # ----------------------------------------------------------------------------- demo (synthetic)
 
-def demo(seed: int = 23) -> dict:
-    """Synthetic blind test, two fly-overs with unknown clock (the method's main mode)."""
+# Simulated scenarios placed at REAL places near small-aircraft airfields (the flights and the sound are
+# synthetic; only the area is real, so the map links open somewhere meaningful). The microphone is placed
+# by the simulator up to ~6 km from the centre.
+SCENARIOS: dict[str, dict] = {
+    "ro": {"country": "România", "place": "București, zona Aeroportului Băneasa", "lat": 44.503, "lon": 26.102,
+           "ground": 90.0, "seed": 23},
+    "it": {"country": "Italia", "place": "Milano, zona aerodromului Bresso", "lat": 45.540, "lon": 9.203,
+           "ground": 140.0, "seed": 23},
+    "fr": {"country": "Franța", "place": "Paris, zona aerodromului Toussus-le-Noble", "lat": 48.752, "lon": 2.106,
+           "ground": 160.0, "seed": 23},
+}
+RECORDINGS_DIR = Path(__file__).resolve().parents[1] / "demo_cache"
+
+def demo(scenario: str = "ro") -> dict:
+    """Synthetic blind test, two fly-overs with unknown clock (the method's main mode), at a real place."""
     from afg.scoring import heatmap, rank_consistent, score_candidates, trace_check
     from afg.search import run_search
     from afg.simulate import simulate
     from afg.tracks import Flights, Resampled
 
+    sc = SCENARIOS[scenario]
+    seed = sc["seed"]
     t_start = time.time()
     with tempfile.TemporaryDirectory(prefix="afg_demo_") as work:
-        truth, wav, tdir = simulate(work, seed=seed)
+        truth, wav, tdir = simulate(work, lat0=sc["lat"], lon0=sc["lon"], ground=sc["ground"], seed=seed)
+        RECORDINGS_DIR.mkdir(exist_ok=True)
+        import shutil
+        shutil.copyfile(wav, RECORDINGS_DIR / f"{scenario}.wav")  # so the jury can listen / download it
         x, fs, _ = audio.load_audio(wav, fs=FS)
         spec = audio.compute_spectrogram(x, fs, 1.0, 0.2, 20, 600, 120)
         boxes = sorted(audio.detect_events(spec, 40, 400, 1), key=lambda e: -e["score_z"])[:2]
@@ -288,6 +306,9 @@ def demo(seed: int = 23) -> dict:
 
         return {
             "ok": True,
+            "scenario": scenario,
+            "country": sc["country"],
+            "place": sc["place"],
             "seed": seed,
             "runtime_s": time.time() - t_start,
             "recording_s": float(truth["rec_duration_s"]),

@@ -9,6 +9,7 @@ import {
   AuditResult,
   AuditRisk,
   DemoResult,
+  DemoScenario,
 } from '../../services/audio-api.service';
 import { FlightMap } from './flight-map';
 
@@ -77,13 +78,20 @@ export class AudioPage implements OnDestroy {
   private timer: ReturnType<typeof setInterval> | null = null;
 
   // --- demo
+  protected readonly scenarios: { value: DemoScenario; flag: string; label: string }[] = [
+    { value: 'ro', flag: '🇷🇴', label: 'București' },
+    { value: 'it', flag: '🇮🇹', label: 'Milano' },
+    { value: 'fr', flag: '🇫🇷', label: 'Paris' },
+  ];
+  protected readonly scenario = signal<DemoScenario>('ro');
   protected readonly demoBusy = signal(false);
   protected readonly demo = signal<DemoResult | null>(null);
   protected readonly demoError = signal<string | null>(null);
 
   constructor() {
-    // Demo link for the pitch: /?view=audio&demo=1 runs the synthetic demo straight away.
-    if (new URLSearchParams(location.search).get('demo') === '1') void this.runDemo();
+    // Demo link for the pitch: /?view=audio&demo=1 (or demo=it / demo=fr) runs the synthetic demo straight away.
+    const d = new URLSearchParams(location.search).get('demo');
+    if (d) void this.runDemo((['ro', 'it', 'fr'].includes(d) ? d : 'ro') as DemoScenario);
   }
 
   /** OpenStreetMap link with a marker (no API key, no tracking parameters). */
@@ -180,11 +188,17 @@ export class AudioPage implements OnDestroy {
     }
   }
 
-  protected async runDemo(): Promise<void> {
+  protected recordingUrl(sc: DemoScenario): string {
+    return this.api.recordingUrl(sc);
+  }
+
+  protected async runDemo(sc: DemoScenario = this.scenario()): Promise<void> {
+    this.scenario.set(sc);
+    this.demo.set(null);
     this.demoBusy.set(true);
     this.demoError.set(null);
     try {
-      const d = await this.api.demo();
+      const d = await this.api.demo(sc);
       if (!d.ok) throw new Error(d.reason ?? 'Demonstrația nu a reușit.');
       this.demo.set(d);
     } catch (e) {
