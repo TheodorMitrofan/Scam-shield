@@ -4,12 +4,12 @@
   <!-- 1. Privacy check of the user's own recording -->
   <section class="panel" (dragover)="$event.preventDefault()" (drop)="onDrop($event)">
     <header>
-      <h2><i class="pi pi-shield" aria-hidden="true"></i> Verificați mesajul vocal înainte să-l trimiteți</h2>
-      <p class="sub">Aflați dacă propria înregistrare dezvăluie unde vă aflați. Fișierul nu se păstrează.</p>
+      <h2><i class="pi pi-shield" aria-hidden="true"></i> {{ 'Verificați mesajul vocal înainte să-l trimiteți' | ui }}</h2>
+      <p class="sub">{{ 'Aflați dacă propria înregistrare dezvăluie unde vă aflați. Fișierul nu se păstrează.' | ui }}</p>
     </header>
 
     <div class="engine">
-      <span class="engine-label">Motor de detecție</span>
+      <span class="engine-label">{{ 'Motor de detecție' | ui }}</span>
       <p-selectbutton
         [options]="engines"
         optionLabel="label"
@@ -24,47 +24,47 @@
     <div class="drop">
       <label class="pick">
         <i class="pi pi-upload" aria-hidden="true"></i>
-        <span>Alegeți un fișier audio</span>
+        <span>{{ 'Alegeți un fișier audio' | ui }}</span>
         <input type="file" accept="audio/*,video/mp4,.wav,.mp3,.m4a,.ogg,.webm" (change)="onFile($event)" />
       </label>
-      <span class="or">sau</span>
+      <span class="or">{{ 'sau' | ui }}</span>
       <p-button
-        [label]="recording() ? 'Opriți (' + recSeconds() + ' s)' : 'Înregistrați acum'"
+        [label]="recording() ? ('Opriți' | ui) + ' (' + recSeconds() + ' s)' : ('Înregistrați acum' | ui)"
         [icon]="recording() ? 'pi pi-stop-circle' : 'pi pi-microphone'"
         [severity]="recording() ? 'danger' : 'secondary'"
         [outlined]="!recording()"
         [disabled]="auditBusy()"
         (onClick)="toggleRecording()"
       />
-      <p class="hint">Puteți trage fișierul aici. Pentru un rezultat util, cel puțin 30 de secunde.</p>
+      <p class="hint">{{ 'Puteți trage fișierul aici. Pentru un rezultat util, cel puțin 30 de secunde.' | ui }}</p>
     </div>
 
     @if (auditBusy()) {
-      <div class="busy" role="status"><i class="pi pi-spin pi-spinner" aria-hidden="true"></i> Ascultăm înregistrarea „{{ fileName() }}”…</div>
+      <div class="busy" role="status"><i class="pi pi-spin pi-spinner" aria-hidden="true"></i> {{ 'Ascultăm înregistrarea' | ui }} „{{ fileName() }}”…</div>
     }
     @if (auditError(); as err) {
-      <div class="error" role="alert"><i class="pi pi-exclamation-triangle" aria-hidden="true"></i> {{ err }}</div>
+      <div class="error" role="alert"><i class="pi pi-exclamation-triangle" aria-hidden="true"></i> {{ err | ui }}</div>
     }
     @if (audit(); as a) {
       @if (risk(); as r) {
         <div class="risk" [class]="'risk ' + r.cls" role="status">
           <i [class]="r.icon" aria-hidden="true"></i>
           <div>
-            <div class="risk-title">{{ r.title }}</div>
-            <p>{{ r.text }}</p>
+            <div class="risk-title">{{ r.title | ui }}</div>
+            <p>{{ r.text | ui }}</p>
           </div>
         </div>
       }
       <dl class="facts">
-        <div><dt>Durată</dt><dd>{{ fmtDur(a.duration_s) }}</dd></div>
-        <div><dt>Avioane auzite</dt><dd>{{ a.flyovers }}</dd></div>
-        <div><dt>Fișier</dt><dd class="ellipsis">{{ fileName() }}</dd></div>
-        <div><dt>Motor</dt><dd>{{ a.engine === 'dopplergeist' ? 'DOPPLERGEIST' : 'Standard' }}</dd></div>
+        <div><dt>{{ 'Durată' | ui }}</dt><dd>{{ fmtDur(a.duration_s) }}</dd></div>
+        <div><dt>{{ 'Avioane auzite' | ui }}</dt><dd>{{ a.flyovers }}</dd></div>
+        <div><dt>{{ 'Fișier' | ui }}</dt><dd class="ellipsis">{{ fileName() }}</dd></div>
+        <div><dt>{{ 'Motor' | ui }}</dt><dd>{{ a.engine === 'dopplergeist' ? 'DOPPLERGEIST' : 'Standard' }}</dd></div>
         @for (e of a.events; track $index) {
           <div>
-            <dt>{{ a.engine === 'dopplergeist' ? 'Candidatul' : 'Avionul' }} {{ $index + 1 }}</dt>
+            <dt>{{ (a.engine === 'dopplergeist' ? 'Candidatul' : 'Avionul') | ui }} {{ $index + 1 }}</dt>
             @if (e.speed_kmh != null && e.distance_m != null) {
-              <dd>~{{ n(e.speed_kmh) }} km/h, la ~{{ n(e.distance_m) }} m de microfon</dd>
+              <dd>~{{ n(e.speed_kmh) }} km/h, {{ 'la' | ui }} ~{{ n(e.distance_m) }} m {{ 'de microfon' | ui }}</dd>
             } @else {
               <dd>{{ n(e.t0) }}–{{ n(e.t1) }} s, {{ n(e.fmin) }}–{{ n(e.fmax) }} Hz</dd>
             }
@@ -74,43 +74,37 @@
       @if (a.engine === 'dopplergeist' && a.flyovers > 0) {
         <p class="note">
           <i class="pi pi-info-circle" aria-hidden="true"></i>
-          DOPPLERGEIST raportează „candidați acustici”: sunete care se mișcă în frecvență. Nu verifică dacă sunt
-          într-adevăr avioane (vocea sau muzica pot apărea aici).
+          {{ 'DOPPLERGEIST raportează „candidați acustici”: sunete care se mișcă în frecvență. Nu verifică dacă sunt într-adevăr avioane (vocea sau muzica pot apărea aici).' | ui }}
         </p>
       }
       @if (a.limited && a.risk !== 'undetermined') {
         <p class="note">
           <i class="pi pi-info-circle" aria-hidden="true"></i>
-          Înregistrare scurtă: verificarea e orientativă. Peste 2 minute rezultatul e mai sigur.
+          {{ 'Înregistrare scurtă: verificarea e orientativă. Peste 2 minute rezultatul e mai sigur.' | ui }}
         </p>
       }
       @if (a.rejected > 0) {
         <p class="note">
           <i class="pi pi-filter" aria-hidden="true"></i>
           @if (a.rejected === 1) {
-            Un sunet semăna cu un avion, dar nu se potrivește cu felul în care se aude un avion care trece (de obicei
-            voce, pași, un ventilator sau o mașină pe stradă). L-am ignorat.
+            {{ 'Un sunet semăna cu un avion, dar nu se potrivește cu felul în care se aude un avion care trece (de obicei voce, pași, un ventilator sau o mașină pe stradă). L-am ignorat.' | ui }}
           } @else {
-            {{ a.rejected }} sunete semănau cu un avion, dar nu se potrivesc cu felul în care se aude un avion care trece
-            (de obicei voce, pași, un ventilator sau mașini pe stradă). Le-am ignorat.
+            {{ a.rejected }} {{ 'sunete semănau cu un avion, dar nu se potrivesc cu felul în care se aude un avion care trece (de obicei voce, pași, un ventilator sau mașini pe stradă). Le-am ignorat.' | ui }}
           }
         </p>
       }
       @if (a.flyovers > 0) {
         <details class="why">
-          <summary>De ce nu vă arătăm locul exact?</summary>
+          <summary>{{ 'De ce nu vă arătăm locul exact?' | ui }}</summary>
           <p>
-            Pentru locul exact ar trebui comparate curbele cu traseele tuturor avioanelor din acea zi (date publice
-            ADS-B, publicate abia a doua zi), pentru zona și ora înregistrării. Aplicația nu descarcă aceste date și
-            nu localizează persoane. Vă spune doar dacă înregistrarea <em>conține</em> indiciile din care altcineva
-            ar putea afla locul. Vedeți demonstrația din dreapta pentru cum arată asta.
+            {{ 'Pentru locul exact ar trebui comparate curbele cu traseele tuturor avioanelor din acea zi (date publice ADS-B, publicate abia a doua zi), pentru zona și ora înregistrării. Aplicația nu descarcă aceste date și nu localizează persoane. Vă spune doar dacă înregistrarea conține indiciile din care altcineva ar putea afla locul. Vedeți demonstrația din dreapta pentru cum arată asta.' | ui }}
           </p>
         </details>
       }
       @if (a.spectrogram) {
         <figure>
           <img [src]="a.spectrogram" alt="Spectrograma înregistrării; avioanele apar ca linii care coboară" />
-          <figcaption>Spectrograma: fiecare avion care trece apare ca o linie care coboară (încadrată cu albastru).</figcaption>
+          <figcaption>{{ 'Spectrograma: fiecare avion care trece apare ca o linie care coboară (încadrată cu albastru).' | ui }}</figcaption>
         </figure>
       }
     }
@@ -119,17 +113,16 @@
   <!-- 2. Synthetic demo of the full method -->
   <section class="panel">
     <header>
-      <h2><i class="pi pi-map-marker" aria-hidden="true"></i> Demonstrație: cum se află locul</h2>
+      <h2><i class="pi pi-map-marker" aria-hidden="true"></i> {{ 'Demonstrație: cum se află locul' | ui }}</h2>
       <p class="sub">
-        Pe 3 conversații reale din 3 locuri diferite, combinate cu treceri simulate a două avioane cu elice,
-        comparăm sunetul cu traseele a ~70 de zboruri și găsim locul microfonului. Nu localizăm nicio persoană reală.
+        {{ 'Pe 3 conversații reale din 3 locuri diferite, combinate cu treceri simulate a două avioane cu elice, comparăm sunetul cu traseele a ~70 de zboruri și găsim locul microfonului. Nu localizăm nicio persoană reală.' | ui }}
       </p>
     </header>
 
-    <div class="scenarios" role="group" aria-label="Alegeți locul demonstrației">
+    <div class="scenarios" role="group" [attr.aria-label]="'Alegeți locul demonstrației' | ui">
       @for (sc of scenarios; track sc.value) {
         <p-button
-          [label]="sc.flag + ' ' + sc.label"
+          [label]="sc.flag + ' ' + (sc.label | ui)"
           [severity]="scenario() === sc.value && (demo() || demoBusy()) ? undefined : 'secondary'"
           [outlined]="!(scenario() === sc.value && (demo() || demoBusy()))"
           size="large"
@@ -140,7 +133,7 @@
       }
     </div>
     @if (demoBusy()) {
-      <p class="hint">Calculăm… dacă serviciul abia a pornit, durează până la un minut.</p>
+      <p class="hint">{{ 'Calculăm… dacă serviciul abia a pornit, durează până la un minut.' | ui }}</p>
     }
     @if (demoError(); as err) {
       <div class="error" role="alert"><i class="pi pi-exclamation-triangle" aria-hidden="true"></i> {{ err }}</div>
@@ -157,18 +150,18 @@
       </h3>
       <div class="listen">
         <audio controls preload="none" [src]="recordingUrl(d.scenario)"></audio>
-        <a [href]="recordingUrl(d.scenario)" download><i class="pi pi-download" aria-hidden="true"></i> Descarcă înregistrarea</a>
+        <a [href]="recordingUrl(d.scenario)" download><i class="pi pi-download" aria-hidden="true"></i> {{ 'Descarcă înregistrarea' | ui }}</a>
       </div>
       <div class="result">
         <span class="big">{{ n(d.error_m) }} m</span>
-        <span>între locul găsit și locul real · zona de incertitudine ±{{ n(d.region_radius_m) }} m</span>
+        <span>{{ 'între locul găsit și locul real · zona de incertitudine ±' | ui }}{{ n(d.region_radius_m) }} m</span>
       </div>
 
       <div class="places">
         <a class="place found" [href]="mapUrl(d.estimate.lat, d.estimate.lon)" target="_blank" rel="noopener">
           <span class="x">✕</span>
           <span>
-            <strong>Locul găsit din sunet</strong>
+            <strong>{{ 'Locul găsit din sunet' | ui }}</strong>
             <small>{{ d.estimate.lat.toFixed(5) }}, {{ d.estimate.lon.toFixed(5) }}</small>
           </span>
           <i class="pi pi-external-link" aria-hidden="true"></i>
@@ -176,7 +169,7 @@
         <a class="place real" [href]="mapUrl(d.truth.lat, d.truth.lon)" target="_blank" rel="noopener">
           <span class="dot truth"></span>
           <span>
-            <strong>Locul real al microfonului (simulat)</strong>
+            <strong>{{ 'Locul real al microfonului (simulat)' | ui }}</strong>
             <small>{{ d.truth.lat.toFixed(5) }}, {{ d.truth.lon.toFixed(5) }}</small>
           </span>
           <i class="pi pi-external-link" aria-hidden="true"></i>
@@ -184,20 +177,19 @@
       </div>
       <p class="note">
         <i class="pi pi-info-circle" aria-hidden="true"></i>
-        Apăsați pe un loc ca să-l deschideți în OpenStreetMap. Tonul avioanelor e foarte slab: se vede în
-        spectrogramă mai bine decât se aude.
+        {{ 'Apăsați pe un loc ca să-l deschideți în OpenStreetMap. Tonul avioanelor e foarte slab: se vede în spectrogramă mai bine decât se aude.' | ui }}
       </p>
 
       <div class="maps">
         <figure>
           <app-flight-map [data]="d" />
-          <figcaption>Toate zborurile din zonă; cu albastru, cele două avioane auzite.</figcaption>
+          <figcaption>{{ 'Toate zborurile din zonă; cu albastru, cele două avioane auzite.' | ui }}</figcaption>
         </figure>
         <figure>
           <app-flight-map [data]="d" [zoomM]="700" />
           <figcaption>
-            Mărit: <span class="dot truth"></span> locul real · <span class="x">✕</span> locul găsit ·
-            cercul = zona de incertitudine.
+            {{ 'Mărit:' | ui }} <span class="dot truth"></span> {{ 'locul real' | ui }} · <span class="x">✕</span> {{ 'locul găsit' | ui }} ·
+            {{ 'cercul = zona de incertitudine.' | ui }}
           </figcaption>
         </figure>
       </div>
@@ -205,20 +197,20 @@
       <dl class="facts">
         @for (e of d.events; track $index) {
           <div>
-            <dt>Avionul {{ $index + 1 }} ({{ d.matched_flights[$index]?.type || '?' }})</dt>
-            <dd>{{ n(e.v_ms * 3.6) }} km/h, trece la {{ n(e.d_m) }} m</dd>
+            <dt>{{ 'Avionul' | ui }} {{ $index + 1 }} ({{ d.matched_flights[$index]?.type || '?' }})</dt>
+            <dd>{{ n(e.v_ms * 3.6) }} km/h, {{ 'trece la' | ui }} {{ n(e.d_m) }} m</dd>
           </div>
         }
-        <div><dt>Timp de calcul</dt><dd>{{ n(d.runtime_s) }} s</dd></div>
+        <div><dt>{{ 'Timp de calcul' | ui }}</dt><dd>{{ n(d.runtime_s) }} s</dd></div>
       </dl>
 
       <figure>
         <img [src]="d.spectrogram" alt="Spectrograma înregistrării simulate cu cele două curbe Doppler urmărite" />
-        <figcaption>Cele două curbe Doppler găsite în zgomot (verde = punctele urmărite).</figcaption>
+        <figcaption>{{ 'Cele două curbe Doppler găsite în zgomot (verde = punctele urmărite).' | ui }}</figcaption>
       </figure>
       <figure class="heat">
         <img [src]="d.heatmap" alt="Harta scorurilor în jurul locului găsit" />
-        <figcaption>Cât de bine explică fiecare loc din jur sunetul înregistrat.</figcaption>
+        <figcaption>{{ 'Cât de bine explică fiecare loc din jur sunetul înregistrat.' | ui }}</figcaption>
       </figure>
       <p class="credit">
         Metodă: colsto; implementare open-source „audio-flyover-geolocation” (licență MIT). Date simulate.

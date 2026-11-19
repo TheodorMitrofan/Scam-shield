@@ -49,7 +49,7 @@
       class="status"
       [class]="'status ' + status().kind"
       (click)="recheck()"
-      [pTooltip]="status().hint"
+      [pTooltip]="status().hint | ui"
       tooltipPosition="bottom"
     >
       <span class="dot" aria-hidden="true"></span>{{ status().label | ui }}

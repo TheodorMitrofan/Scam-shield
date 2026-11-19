@@ -13,6 +13,7 @@ import {
 } from '../../services/audio-api.service';
 import { FlightMap } from './flight-map';
 import { ClaimCheck } from '../claim-check/claim-check';
+import { UiPipe } from '../../services/ui.pipe';
 
 const RISK: Record<AuditRisk, { title: string; text: string; icon: string; cls: string }> = {
   high: {
@@ -48,7 +49,7 @@ const RISK: Record<AuditRisk, { title: string; text: string; icon: string; cls: 
  */
 @Component({
   selector: 'app-audio-page',
-  imports: [FormsModule, ButtonModule, SelectButtonModule, TagModule, FlightMap, ClaimCheck],
+  imports: [UiPipe, FormsModule, ButtonModule, SelectButtonModule, TagModule, FlightMap, ClaimCheck],
   templateUrl: './audio-page.html',
   styleUrl: './audio-page.scss',
 })
