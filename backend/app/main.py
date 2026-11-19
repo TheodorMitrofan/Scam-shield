@@ -3,13 +3,14 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.api import analyze, history, system
 from app.config import get_settings
 from app.db.session import Database
-from app.detector.client import DetectorClient
+from app.detector.client import DetectorClient, DetectorUnavailable
 
 logging.basicConfig(level=logging.INFO)
 
@@ -32,6 +33,11 @@ def create_app(db: Database | None = None, detector: DetectorClient | None = Non
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @app.exception_handler(DetectorUnavailable)
+    async def _detector_down(_: Request, exc: DetectorUnavailable) -> JSONResponse:
+        return JSONResponse(status_code=503, content={"detail": "Detectorul nu este disponibil momentan."})
+
     for r in (system.router, analyze.router, history.router):
         app.include_router(r, prefix="/api")
     return app

@@ -15,6 +15,9 @@ log = logging.getLogger(__name__)
 class Database:
     def __init__(self, url: str) -> None:
         kwargs: dict = {"pool_pre_ping": True}
+        if url.startswith("postgresql"):
+            # fail fast when Postgres is down (on Windows a closed port can otherwise hang for minutes)
+            kwargs["connect_args"] = {"connect_timeout": 3}
         if url.startswith("sqlite"):
             kwargs = {"connect_args": {"check_same_thread": False}}
             if ":memory:" in url or url == "sqlite://":

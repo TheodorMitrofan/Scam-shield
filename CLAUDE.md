@@ -84,14 +84,14 @@ Backend ↔ detector boundary is ONLY `scam_detector.load()` and `scam_detector.
 
 | Task | Command |
 |---|---|
-| Install | `cd frontend && npm install` · backend: `cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt` · detector: TODO (C) |
-| Run locally | `cd frontend && npm start` → http://localhost:4200 (demo shortcut: `/?load=validation&id=V04`) · DB: `docker compose -p scamshield up -d --wait postgres` · backend: `cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000` → http://localhost:8000/docs |
+| Install | `cd frontend && npm install` · backend: `cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt` · detector API: `pip install -r model_detector/requirements.txt` (+ torch/transformers for the model) |
+| Run locally | `cd frontend && npm start` → http://localhost:4200 (demo shortcut: `/?load=validation&id=V04`) · DB: `docker compose -p scamshield up -d --wait postgres` · backend: `cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000` → http://localhost:8000/docs · detector API: `python -m model_detector --port 8001` (from repo root), then start the backend with `DETECTOR_URL=http://127.0.0.1:8001` |
 | Run tests | backend: `cd backend && .venv/bin/python -m pytest -q` (SQLite in-memory, no Docker needed) · C: `pytest detector/` |
 | Lint / format | TODO |
 | Seed demo data | TODO |
 | Deploy | TODO |
 
-Local ports: frontend `4200`, backend `8000`, postgres `5544` (host; container uses 5432).
+Local ports: frontend `4200`, backend `8000`, model_detector `8001`, postgres `5544` (host; container uses 5432).
 
 ---
 
@@ -191,6 +191,7 @@ All env vars must be listed here **and** in `.env.example` (with dummy values). 
 | Variable | Used by | Purpose |
 |---|---|---|
 | `DATABASE_URL` | backend | `postgresql+psycopg://scam:scam@localhost:5544/scamshield` |
+| `DETECTOR_URL` | backend | `http://127.0.0.1:8001` → use the `model_detector` HTTP service; empty → in-process `scam_detector`, else stub |
 | `MODEL_DIR` | backend → detector | path to fine-tuned weights, default `models/scam-bert` |
 | `STORAGE_DIR` | backend | where audio files are stored (stage 5), default `data/` |
 | `CORS_ORIGINS` | backend | default `http://localhost:4200` (comma-separated) |
@@ -247,6 +248,7 @@ Append-only. Record anything another agent would otherwise get wrong or re-decid
 | 2026-11-19 | No cloud LLM anywhere in detection; training data generated locally (templates), validation set never used for training | Cloud LLM = disqualification; avoid leaking eval data | Giulio |
 | 2026-11-19 | `risk_score`/verdict/first_alert computed deterministically from flags, not predicted by the model | Official formula; repeatability | Giulio |
 | 2026-11-19 | Backend normalises detector output with the official formula instead of rejecting it; history is opt-in via `?save=true` + `X-Client-Id`, message text stored as JSONB only with consent | Demo must not 500 on a detector slip; privacy requirement | Giulio |
+| 2026-11-19 | Detector also runs as its own local HTTP service `model_detector/` (port 8001); backend picks it via `DETECTOR_URL`. Same `AnalysisResult` contract | Model loads once in its own process, backend restarts don't reload BERT; one env var to link | Giulio |
 | 2026-11-19 | DB = hybrid: relational applications→contacts→conversations→messages + EAV (`attribute_definitions`/`attribute_values`) only for app-specific fields | EAV for everything makes queries unreadable; hierarchy is the same for every app | Giulio |
 | 2026-11-19 | Consent = `?save=` query flag on every analyze endpoint (default false); same `AnalyzeResponse` shape either way | UI checkbox maps 1:1; FE handles one response type | Giulio |
 | 2026-11-19 | Roles A/B swapped: Theodor owns frontend, Giulio owns backend | Team decision | Theodor |

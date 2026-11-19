@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://scam:scam@localhost:5544/scamshield"
     cors_origins: str = "http://localhost:4200"
     model_dir: str = "models/scam-bert"
+    detector_url: str = ""  # e.g. http://127.0.0.1:8001 -> use the model_detector service; empty = in-process/stub
     storage_dir: str = "data"
     kit_dir: Path = REPO_ROOT / "Scam_Shield_Public_Kit"
 
