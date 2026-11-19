@@ -9,14 +9,21 @@ import threading
 import time
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from fastapi.concurrency import run_in_threadpool
 
 from app.config import get_settings
 from app.report import REPORT_MIN_SCORE, REPORT_RECIPIENT
 from app.report.builder import build_draft, render_email
+from app.report.pdf import render_pdf
 from app.report.mailer import MailFailed, MailNotConfigured, send_email
-from app.schemas.report import FraudReportDraft, ReportDraftRequest, ReportSendRequest, ReportSendResponse
+from app.schemas.report import (
+    FraudReportDraft,
+    ReportDraftRequest,
+    ReportPdfRequest,
+    ReportSendRequest,
+    ReportSendResponse,
+)
 
 from .deps import Detector
 
@@ -34,6 +41,19 @@ async def draft(body: ReportDraftRequest, detector: Detector) -> FraudReportDraf
     if result.risk_score < REPORT_MIN_SCORE:
         raise HTTPException(422, _NOT_A_SCAM)
     return build_draft(body.scenario, result)
+
+
+@router.post("/pdf", response_class=Response, responses={200: {"content": {"application/pdf": {}}}})
+async def pdf(body: ReportPdfRequest) -> Response:
+    """Download / preview the „Sesizare” PDF. Personal data optional: empty fields print as dotted lines."""
+    if body.report.incident.risk_score < REPORT_MIN_SCORE:
+        raise HTTPException(422, _NOT_A_SCAM)
+    data = await run_in_threadpool(render_pdf, body.report, body.personal_data)
+    return Response(
+        content=data,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="sesizare-{body.report.incident.scenario_id}.pdf"'},
+    )
 
 
 @router.post("/send", response_model=ReportSendResponse)

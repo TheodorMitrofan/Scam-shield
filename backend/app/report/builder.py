@@ -18,6 +18,7 @@ from app.schemas.report import (
 
 from . import REPORT_RECIPIENT
 from .indicators import defang_text, extract_indicators
+from .pdf import render_pdf
 from .labels import CHANNEL_LABEL, CHANNEL_PHRASE, FLAG_LABEL, SCAM_TYPE_LABEL, SCAM_TYPE_STORY
 
 
@@ -171,6 +172,7 @@ def render_email(draft: FraudReportDraft, personal: PersonalData, sender: str) -
         "report": draft.model_dump(mode="json", exclude={"personal_fields", "personal_data"}),
         "personal_data": personal.model_dump(mode="json"),
     }
+    msg.add_attachment(render_pdf(draft, personal), maintype="application", subtype="pdf", filename="sesizare.pdf")
     msg.add_attachment(
         json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8"),
         maintype="application",

@@ -119,13 +119,14 @@ All under `http://localhost:8000/api`. CORS allows `http://localhost:4200`.
 | GET | `/conversations/{id}` | header `X-Client-Id` | `ConversationDetail` (original Scenario + AnalysisResult + EAV attributes) | B | done |
 | DELETE | `/conversations/{id}` · `/contacts/{id}` · `/history` | header `X-Client-Id` | `{ deleted: number }` | B | done |
 | POST | `/report/draft` | `{ scenario: Scenario, result?: AnalysisResult }` | `FraudReportDraft` · 422 if `risk_score < 50` | B | done |
+| POST | `/report/pdf` | `{ report: FraudReportDraft, personal_data?: PersonalData }` | `application/pdf` („Sesizare”, empty fields as dotted lines) — for preview / „Descarcă PDF” | B | done |
 | POST | `/report/send` | `{ report: FraudReportDraft, personal_data: PersonalData }` | `{ sent, recipient, message_id, sent_at }` · 422 missing name/contact or bad CNP/e-mail · 409 already sent · 503 SMTP not configured · 502 SMTP error | B | done |
 
 **Fraud report (demo).** Only for SCAM (`risk_score ≥ 50`). `draft` returns the generated part (`incident`: summary,
 sender, numbered timeline with the first-alert message marked, red flags explained in Romanian, indicators —
 links/e-mails/phones/IBAN/amounts — **defanged** like `bancadunarea-securitate[.]com`) plus an EMPTY `personal_data` and
 `personal_fields` (key/label/type/required — render the form from it). The user fills it and presses „Trimite e-mail”
-→ `send` e-mails the report (+ `raport.json`) from Gmail to the **hardcoded demo inbox** (`app/report/__init__.py`,
+→ `send` e-mails the report (+ attachments `sesizare.pdf` and `raport.json`) from Gmail to the **hardcoded demo inbox** (`app/report/__init__.py`,
 `REPORT_RECIPIENT`). **Never** to Police/DNSC. Personal data is not stored or logged.
 
 **Consent checkbox = `save` flag.** Every analyze endpoint takes `?save=true|false` (default **false**) and
@@ -255,7 +256,7 @@ Rules: one row per task; only edit your own rows; when you pick a task set `doin
 | 10 | Audio upload + transcription + storage (stage 4/5) | backend | Giulio | todo | | after MVP |
 | 11 | Voice note view (stage 4) | frontend | Theodor | todo | | after MVP |
 | 13 | Fraud report: `/report/draft` + `/report/send` (Gmail SMTP → demo inbox) | backend | Giulio | review | giulio/fraud-report | |
-| 14 | „Generează raport de fraudă” button (risk ≥ 50) + dialog: personal-data form from `personal_fields`, read-only incident, „Trimite e-mail” | frontend | Theodor | todo | | contract §4.1 |
+| 14 | „Generează raport de fraudă” button (risk ≥ 50) + dialog: personal-data form from `personal_fields`, read-only incident, „Descarcă PDF” (`/report/pdf`), „Trimite e-mail” | frontend | Theodor | todo | | contract §4.1 |
 | 12 | Backend DTOs + DB (hybrid EAV) + analyze/history controllers with consent flag + docker-compose | backend | Giulio | review | giulio/backoffice | covers #3, #4, #9 (stub detector); ownership confirmed: Giulio = backend |
 | 13 | PrimeNG inbox redesign (top bar, search/filters, cards, detail panel, paste dialog) + FE↔BE wiring | frontend | Theodor | review | theodor/frontend-ui | FE calls `/scenarios/validation` + `/analyze/batch?save=`; history UI not built yet |
 
@@ -279,6 +280,7 @@ Append-only. Record anything another agent would otherwise get wrong or re-decid
 | 2026-11-19 | Roles A/B swapped: Theodor owns frontend, Giulio owns backend | Team decision | Theodor |
 | 2026-11-19 | Frontend UI = PrimeNG inbox layout: search + channel/verdict filters + cards on the left, scenario detail on the right (no icon sidebar) | Cleaner, consistent UI; verdict filter enables itself once `results` arrive | Theodor |
 | 2026-11-19 | Fraud report generated only at risk ≥ 50; e-mailed to a hardcoded DEMO inbox (teammate), never Police/DNSC; personal data not stored/logged; links defanged | Demo must not contact real authorities; privacy; brief: never offer the message's links | Giulio |
+| 2026-11-19 | Report PDF with `fpdf2` + bundled DejaVu Sans (`backend/app/report/fonts`, free license) | Romanian diacritics on any OS; no system libs (WeasyPrint/Chrome) | Giulio |
 | 2026-11-19 | Audio files on disk (`STORAGE_DIR`), only metadata in Postgres; model loaded once in FastAPI lifespan, 1 uvicorn worker | Memory + privacy (deletable) | Giulio |
 
 ---
