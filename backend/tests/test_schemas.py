@@ -1,17 +1,14 @@
 import csv
 import json
-import uuid
 from pathlib import Path
 
 import pytest
 
-from app.db.mappers import detail_from_record, record_from_dto
 from app.detector.client import DetectorClient
 from app.schemas import (
     AnalysisResult,
     AnalyzeTextRequest,
-    HistoryCreate,
-    SaveConsent,
+    SaveOptions,
     ScamType,
     Scenario,
     Verdict,
@@ -76,20 +73,5 @@ def test_stub_detector_returns_valid_result():
     assert res.id == sc.id and len(res.flags_by_message) == len(sc.messages)
 
 
-def test_consent_default_saves_nothing():
-    assert SaveConsent().should_save is False
-    assert SaveConsent(consent=True).should_save is False  # no client id → nothing stored
-    assert SaveConsent(consent=True, client_id=uuid.uuid4()).should_save is True
-
-
-def test_history_mapping_roundtrip():
-    sc = Scenario.model_validate(json.loads(FILES[0].read_text(encoding="utf-8")))
-    res = AnalysisResult.model_validate(
-        {"id": sc.id, "verdict": "SCAM", "scam_type": "BANK_IMPERSONATION", "risk_score": 70, "first_alert": 1,
-         "red_flags": ["RF_IMPERSONATION", "RF_THREAT", "RF_URGENCY", "RF_SUSPICIOUS_CONTACT"],
-         "warning": {"ro": "Atenție!"}}
-    )
-    rec = record_from_dto(HistoryCreate(client_id=uuid.uuid4(), scenario=sc, result=res))
-    rec.id, rec.created_at = uuid.uuid4(), rec.expires_at  # normally set by the DB
-    detail = detail_from_record(rec)
-    assert detail.scenario == sc and detail.result == res and detail.risk_score == 70
+def test_save_defaults_to_false():
+    assert SaveOptions().save is False

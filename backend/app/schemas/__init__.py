@@ -11,19 +11,23 @@ from .analysis import (
     verdict_for,
 )
 from .api import AnalyzeResponse, AnalyzeTextRequest, AudioAnalyzeResponse, HealthResponse
-from .history import (
+from .storage import (
+    ApplicationSummary,
+    ContactSummary,
+    ConversationDetail,
+    ConversationSummary,
     DeleteResponse,
-    HistoryCreate,
-    HistoryItemDetail,
-    HistoryItemSummary,
-    HistoryList,
-    SaveConsent,
+    SaveOptions,
 )
 from .scenario import AudioRef, Author, Channel, Message, Scenario, Sender, VoiceLocation
 
 __all__ = [
     "RED_FLAG_POINTS",
     "AnalysisResult",
+    "ApplicationSummary",
+    "ContactSummary",
+    "ConversationDetail",
+    "ConversationSummary",
     "AnalyzeResponse",
     "AnalyzeTextRequest",
     "AudioAnalyzeResponse",
@@ -33,14 +37,10 @@ __all__ = [
     "DeleteResponse",
     "Evidence",
     "HealthResponse",
-    "HistoryCreate",
-    "HistoryItemDetail",
-    "HistoryItemSummary",
-    "HistoryList",
     "Message",
     "MessageFlags",
     "RedFlag",
-    "SaveConsent",
+    "SaveOptions",
     "ScamType",
     "Scenario",
     "Sender",

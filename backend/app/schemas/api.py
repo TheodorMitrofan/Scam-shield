@@ -1,5 +1,7 @@
 """Request/response DTOs for the HTTP API (CLAUDE.md §4.1) that are not plain Scenario/AnalysisResult."""
 
+from uuid import UUID
+
 from pydantic import BaseModel, Field
 
 from .analysis import AnalysisResult
@@ -9,6 +11,7 @@ from .scenario import Channel, Scenario
 class HealthResponse(BaseModel):
     status: str = "ok"
     model_loaded: bool
+    detector_stub: bool
     db_connected: bool
 
 
@@ -30,15 +33,17 @@ class AnalyzeTextRequest(BaseModel):
 
 
 class AnalyzeResponse(BaseModel):
-    """Returned when the caller asked to save (consent): the result plus where it was stored."""
+    """Same shape whether or not the user consented to saving (the UI checkbox → `?save=true`)."""
 
     result: AnalysisResult
-    history_id: str | None = Field(default=None, description="set only if the user consented to saving")
+    saved: bool = False
+    conversation_id: UUID | None = Field(default=None, description="set only when saved")
+    client_id: UUID | None = Field(
+        default=None, description="set when saved; the browser must keep it and send it as X-Client-Id"
+    )
 
 
-class AudioAnalyzeResponse(BaseModel):
+class AudioAnalyzeResponse(AnalyzeResponse):
     """Stage 4: POST /audio → transcript as a call_transcript scenario + its analysis."""
 
     scenario: Scenario
-    result: AnalysisResult
-    history_id: str | None = None

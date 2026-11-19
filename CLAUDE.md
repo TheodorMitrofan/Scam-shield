@@ -84,9 +84,9 @@ Backend ↔ detector boundary is ONLY `scam_detector.load()` and `scam_detector.
 
 | Task | Command |
 |---|---|
-| Install | `cd frontend && npm install` · backend/detector: TODO (B/C) |
-| Run locally | `cd frontend && npm start` → http://localhost:4200 (demo shortcut: `/?load=validation&id=V04`) · backend: TODO (B) |
-| Run tests | backend: `cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/python -m pytest -q` · C: `pytest detector/` |
+| Install | `cd frontend && npm install` · backend: `cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt` · detector: TODO (C) |
+| Run locally | `cd frontend && npm start` → http://localhost:4200 (demo shortcut: `/?load=validation&id=V04`) · DB: `docker compose -p scamshield up -d --wait postgres` (port taken? `POSTGRES_PORT=5433` + matching `DATABASE_URL`) · backend: `cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000` → http://localhost:8000/docs |
+| Run tests | backend: `cd backend && .venv/bin/python -m pytest -q` (SQLite in-memory, no Docker needed) · C: `pytest detector/` |
 | Lint / format | TODO |
 | Seed demo data | TODO |
 | Deploy | TODO |
@@ -106,21 +106,26 @@ All under `http://localhost:8000/api`. CORS allows `http://localhost:4200`.
 
 | Method | Path | Request body | Response | Owner | Status |
 |---|---|---|---|---|---|
-| GET | `/health` | – | `{ status: "ok", model_loaded: bool }` | B | planned |
-| GET | `/scenarios/validation` | – | `Scenario[]` (from `Scam_Shield_Public_Kit/validation_set`, sorted by id) | B | planned |
-| POST | `/analyze` | `Scenario` | `AnalysisResult` | B (calls C) | planned |
-| POST | `/analyze/batch` | `Scenario[]` | `AnalysisResult[]` sorted by `id` | B (calls C) | planned |
-| POST | `/analyze/text` | `{ text: string, channel?: Channel }` | `AnalysisResult` (wrapped as 1-message scenario, id `"PASTE"`) | B | planned |
-| POST | `/audio` (stage 4) | multipart `file` (.wav/.mp3/.mp4/.m4a), `save: bool` | `{ scenario: Scenario, result: AnalysisResult }` | B | later |
+| GET | `/health` | – | `{ status, model_loaded, detector_stub, db_connected }` | B | done |
+| GET | `/scenarios/validation` | – | `Scenario[]` (from `Scam_Shield_Public_Kit/validation_set`, sorted by id) | B | done |
+| POST | `/analyze?save=` | `Scenario` | `AnalyzeResponse` | B (calls C) | done |
+| POST | `/analyze/batch?save=` | `Scenario[]` | `AnalyzeResponse[]` sorted by `result.id` | B (calls C) | done |
+| POST | `/analyze/text?save=` | `{ text: string, channel?: Channel }` | `AnalyzeResponse` (1-message scenario, id `"PASTE"`) | B | done |
+| POST | `/audio?save=` (stage 4) | multipart `file` (.wav/.mp3/.mp4/.m4a) | `AnalyzeResponse & { scenario }` | B | later |
 | GET | `/audio/{audio_id}` (stage 4) | – | audio bytes (for the player) | B | later |
-| GET | `/history` | header `X-Client-Id` | `HistoryList` (no message text) | B | planned |
-| GET | `/history/{id}` | header `X-Client-Id` | `HistoryItemDetail` | B | planned |
-| DELETE | `/history/{id}` · `/history` | header `X-Client-Id` | `{ deleted: number }` (also deletes audio file) | B | planned |
+| GET | `/apps` | header `X-Client-Id` | `ApplicationSummary[]` | B | done |
+| GET | `/apps/{channel}/contacts` | header `X-Client-Id` | `ContactSummary[]` | B | done |
+| GET | `/contacts/{id}/conversations` | header `X-Client-Id` | `ConversationSummary[]` (no message text) | B | done |
+| GET | `/conversations/{id}` | header `X-Client-Id` | `ConversationDetail` (original Scenario + AnalysisResult + EAV attributes) | B | done |
+| DELETE | `/conversations/{id}` · `/contacts/{id}` · `/history` | header `X-Client-Id` | `{ deleted: number }` | B | done |
 
-**Saving = opt-in.** Any analyze/audio endpoint stores NOTHING by default. To save, the caller adds
-query `?save=true&retention_hours=24` **and** header `X-Client-Id: <uuid>` (random UUID the browser keeps in
-localStorage; no accounts). Then the response is `AnalyzeResponse { result, history_id }`; without consent it's
-the plain `AnalysisResult`. Records expire (`expires_at`) and are deleted by a cleanup job.
+**Consent checkbox = `save` flag.** Every analyze endpoint takes `?save=true|false` (default **false**) and
+optional `&retention_hours=24` (1–720). `save=false` → the DB is never touched (analysis works even if Postgres is down).
+`save=true` → stored under header `X-Client-Id: <uuid>` (anonymous id the browser keeps in localStorage; if missing,
+the backend generates one and returns it as `client_id` — keep it). Response shape is the same either way:
+`AnalyzeResponse { result: AnalysisResult; saved: boolean; conversation_id: uuid|null; client_id: uuid|null }`.
+`save=true` with the DB down → HTTP 503. Expired conversations are purged at startup and before every listing.
+Saving the same scenario id for the same contact again replaces it (no duplicates).
 DTO source of truth (Pydantic): `backend/app/schemas/` · DB tables: `backend/app/db/models.py`.
 
 ### 4.2 Data models
@@ -157,10 +162,27 @@ AnalysisResult {
 // non-SAFE with "NONE" ⇒ "OTHER". The detector only has to get flags / type / first_alert right.
 
 // Opt-in history (only with consent)
-HistoryItemSummary { id: uuid; created_at: ISO; expires_at: ISO; scenario_id: string; channel: Channel;
-                     verdict: Verdict; scam_type: string; risk_score: number; first_alert: number | null }
-HistoryItemDetail  extends HistoryItemSummary { scenario: Scenario; result: AnalysisResult; audio_id?: uuid }
-HistoryList        { items: HistoryItemSummary[]; total: number }
+ApplicationSummary  { code: Channel; display_name: string; view_kind: "chat"|"email"|"call";
+                      contacts: number; conversations: number; scams: number }
+ContactSummary      { id: uuid; application: Channel; address: string; display_name: string|null; known_contact: boolean;
+                      conversations: number; last_verdict: Verdict|null; last_risk_score: number|null; last_updated: ISO|null }
+ConversationSummary { id: uuid; application: Channel; contact_id: uuid; external_id: string; created_at: ISO;
+                      updated_at: ISO; expires_at: ISO; verdict: Verdict; scam_type: string; risk_score: number;
+                      first_alert: number|null; message_count: number }
+ConversationDetail  extends ConversationSummary { scenario: Scenario; result: AnalysisResult; attributes: Record<string, any> }
+```
+
+### 4.2.1 Database (PostgreSQL, hybrid relational + EAV) — `backend/app/db/models.py`
+```
+applications (sms | whatsapp | email | chat | call_transcript; seeded)
+  └─ contacts        (client_id, application, address, display_name, known_contact)   unique per client+app+address+name
+       └─ conversations (external_id = scenario id, verdict, scam_type, risk_score, first_alert, red_flags, warning, expires_at)
+            └─ messages  (n, author, text, flags, score_after, is_first_alert)
+attribute_definitions (application|NULL=all, entity: contact|conversation|message, name, data_type)   ← EAV schema
+attribute_values      (attribute, entity_id, value_text|value_number|value_json)                     ← EAV values
+  seeded: email.conversation.subject · *.message.start_s/end_s · call_transcript.conversation.audio_id/audio_mime/
+          audio_duration_s/voice_region/voice_confidence
+audio_files (metadata only; bytes on disk under STORAGE_DIR)
 ```
 
 ### 4.3 Environment variables
@@ -171,7 +193,8 @@ All env vars must be listed here **and** in `.env.example` (with dummy values). 
 | `DATABASE_URL` | backend | `postgresql+psycopg://scam:scam@localhost:5432/scamshield` |
 | `MODEL_DIR` | backend → detector | path to fine-tuned weights, default `models/scam-bert` |
 | `STORAGE_DIR` | backend | where audio files are stored (stage 5), default `data/` |
-| `CORS_ORIGINS` | backend | default `http://localhost:4200` |
+| `CORS_ORIGINS` | backend | default `http://localhost:4200` (comma-separated) |
+| `POSTGRES_PORT` | docker-compose | host port for Postgres, default `5432` |
 
 ---
 
@@ -208,7 +231,7 @@ Rules: one row per task; only edit your own rows; when you pick a task set `doin
 | 9 | Model kept in memory (lifespan) | backend | Theodor | todo | | PLAN 5.1–5.2 |
 | 10 | Audio upload + transcription + storage (stage 4/5) | backend | Theodor | todo | | after MVP |
 | 11 | Voice note view (stage 4) | frontend | Giulio | todo | | after MVP |
-| 12 | Backend DTOs (Pydantic) + DB models + detector client adapter | backend | Giulio | review | giulio/backoffice | helping B; Theodor to confirm ownership |
+| 12 | Backend DTOs + DB (hybrid EAV) + analyze/history controllers with consent flag + docker-compose | backend | Giulio | review | giulio/backoffice | covers #3, #4, #9 (stub detector); Theodor to confirm ownership |
 
 ---
 
@@ -223,6 +246,8 @@ Append-only. Record anything another agent would otherwise get wrong or re-decid
 | 2026-11-19 | No cloud LLM anywhere in detection; training data generated locally (templates), validation set never used for training | Cloud LLM = disqualification; avoid leaking eval data | Giulio |
 | 2026-11-19 | `risk_score`/verdict/first_alert computed deterministically from flags, not predicted by the model | Official formula; repeatability | Giulio |
 | 2026-11-19 | Backend normalises detector output with the official formula instead of rejecting it; history is opt-in via `?save=true` + `X-Client-Id`, message text stored as JSONB only with consent | Demo must not 500 on a detector slip; privacy requirement | Giulio |
+| 2026-11-19 | DB = hybrid: relational applications→contacts→conversations→messages + EAV (`attribute_definitions`/`attribute_values`) only for app-specific fields | EAV for everything makes queries unreadable; hierarchy is the same for every app | Giulio |
+| 2026-11-19 | Consent = `?save=` query flag on every analyze endpoint (default false); same `AnalyzeResponse` shape either way | UI checkbox maps 1:1; FE handles one response type | Giulio |
 | 2026-11-19 | Audio files on disk (`STORAGE_DIR`), only metadata in Postgres; model loaded once in FastAPI lifespan, 1 uvicorn worker | Memory + privacy (deletable) | Giulio |
 
 ---

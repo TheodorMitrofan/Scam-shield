@@ -5,8 +5,9 @@ Field names must match the JSON files exactly; do not rename. Parsing is lenient
 """
 
 from enum import StrEnum
+from typing import ClassVar
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_serializer
 
 
 class Channel(StrEnum):
@@ -27,13 +28,30 @@ class _Dto(BaseModel):
     model_config = ConfigDict(extra="ignore", str_strip_whitespace=False)
 
 
+class _DropUnsetExtensions(BaseModel):
+    """Our stage-4 extension fields are omitted from JSON when unset, so every output (API, detector
+    input, DB) stays byte-for-byte the official format. Official nulls like `sender.name` are kept."""
+
+    _extensions: ClassVar[tuple[str, ...]] = ()
+
+    @model_serializer(mode="wrap")
+    def _drop(self, handler):
+        d = handler(self)
+        for k in self._extensions:
+            if d.get(k) is None:
+                d.pop(k, None)
+        return d
+
+
 class Sender(_Dto):
     name: str | None = None
     address: str | None = None
     known_contact: bool = False
 
 
-class Message(_Dto):
+class Message(_DropUnsetExtensions):
+    _extensions = ("start_s", "end_s")
+
     n: int = Field(ge=1, description="1-based position in the thread, reader replies included")
     from_: Author = Field(alias="from")
     text: str = ""
@@ -49,8 +67,10 @@ class VoiceLocation(_Dto):
     confidence: float = Field(ge=0, le=1)
 
 
-class AudioRef(_Dto):
+class AudioRef(_DropUnsetExtensions):
     """Stage 4 extension: links a scenario to an uploaded audio file (stored on disk, see db.models.AudioFile)."""
+
+    _extensions = ("location",)
 
     audio_id: str
     mime: str
@@ -58,7 +78,10 @@ class AudioRef(_Dto):
     location: VoiceLocation | None = None
 
 
-class Scenario(_Dto):
+class Scenario(_DropUnsetExtensions):
+    _extensions = ("audio",)
+    model_config = ConfigDict(extra="ignore")
+
     id: str = Field(min_length=1)
     channel: Channel
     sender: Sender = Field(default_factory=Sender)
@@ -66,15 +89,5 @@ class Scenario(_Dto):
     audio: AudioRef | None = None
 
     def to_detector_input(self) -> dict:
-        """Plain dict in the official JSON shape — what `scam_detector.analyze()` receives.
-
-        Official nulls (e.g. `sender.name: null`) are kept; our optional extensions are dropped when unset.
-        """
-        d = self.model_dump(mode="json", by_alias=True)
-        if d.get("audio") is None:
-            d.pop("audio", None)
-        for m in d["messages"]:
-            for k in ("start_s", "end_s"):
-                if m.get(k) is None:
-                    m.pop(k, None)
-        return d
+        """Plain dict in the official JSON shape — what `scam_detector.analyze()` receives."""
+        return self.model_dump(mode="json", by_alias=True)
