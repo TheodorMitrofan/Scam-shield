@@ -2,14 +2,16 @@ import { Component, inject, signal } from '@angular/core';
 import { AudioPage } from './components/audio-page/audio-page';
 import { DashboardView } from './components/dashboard-view/dashboard-view';
 import { InboxList } from './components/inbox-list/inbox-list';
+import { LoginView } from './components/login-view/login-view';
 import { PasteDialog } from './components/paste-dialog/paste-dialog';
 import { ScenarioDetail } from './components/scenario-detail/scenario-detail';
 import { TopBar } from './components/top-bar/top-bar';
+import { AuthService } from './services/auth.service';
 import { ScenarioStore } from './services/scenario-store';
 
 @Component({
   selector: 'app-root',
-  imports: [TopBar, InboxList, DashboardView, ScenarioDetail, PasteDialog, AudioPage],
+  imports: [TopBar, InboxList, DashboardView, ScenarioDetail, PasteDialog, AudioPage, LoginView],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   host: {
@@ -18,6 +20,7 @@ import { ScenarioStore } from './services/scenario-store';
   },
 })
 export class App {
+  protected readonly auth = inject(AuthService);
   protected readonly store = inject(ScenarioStore);
   protected readonly pasteOpen = signal(false);
   /** Mobile only: whether the detail panel replaces the list. */
@@ -31,13 +34,28 @@ export class App {
   );
 
   constructor() {
-    // Demo shortcut: /?load=validation&id=V04 opens the validation set directly.
-    const q = new URLSearchParams(location.search);
-    if (q.get('load') === 'validation') {
-      void this.store
-        .loadValidationSet()
-        .then(() => q.get('id') && this.store.select(q.get('id')!));
+    if (this.auth.isLoggedIn()) {
+      void this.onAuthenticated();
     }
+  }
+
+  protected async onAuthenticated(): Promise<void> {
+    this.showDetail.set(false);
+    await this.store.loadTenantHistory();
+    const q = new URLSearchParams(location.search);
+    if (q.get('load') === 'validation' && this.auth.isAdmin()) {
+      await this.store.loadValidationSet();
+      if (q.get('id')) this.store.select(q.get('id')!);
+    } else if (q.get('id')) {
+      this.store.select(q.get('id')!);
+    }
+  }
+
+  protected onLogout(): void {
+    this.auth.logout();
+    this.store.clear();
+    this.showDetail.set(false);
+    this.view.set('messages');
   }
 
   protected openFromDashboard(): void {

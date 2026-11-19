@@ -183,7 +183,31 @@ class AudioFile(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
 
 
+class User(Base):
+    """Minimalist user + role table for cross-tenant isolation (admin | user)."""
+
+    __tablename__ = "users"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    username: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    password: Mapped[str] = mapped_column(String(128))
+    role: Mapped[str] = mapped_column(String(16), default="user")
+    display_name: Mapped[str] = mapped_column(String(128))
+    created_at: Mapped[datetime] = _now()
+
+
+def user_uuid(username: str) -> uuid.UUID:
+    """Deterministic tenant UUID for seeded users so admin/demo rows keep stable ownership."""
+    return uuid.uuid5(uuid.NAMESPACE_DNS, f"scamshield.user.{username}")
+
+
 # Seed data -------------------------------------------------------------------------------------
+
+SEED_USERS = [
+    ("admin", "admin", "admin", "Administrator"),
+    ("user", "user", "user", "Utilizator Demo"),
+    ("maria", "maria123", "user", "Maria Popescu"),
+]
 
 APPLICATIONS = [
     ("sms", "SMS", "chat"),

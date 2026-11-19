@@ -7,7 +7,7 @@ from sqlalchemy import Engine, create_engine, event, select, text
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from .models import APPLICATIONS, ATTRIBUTES, Application, AttributeDefinition, Base
+from .models import APPLICATIONS, ATTRIBUTES, SEED_USERS, Application, AttributeDefinition, Base, User, user_uuid
 
 log = logging.getLogger(__name__)
 
@@ -72,3 +72,15 @@ def _seed(s: Session) -> None:
         app_id = existing[app_code].id if app_code else None
         if (app_id, entity, name) not in have:
             s.add(AttributeDefinition(application_id=app_id, entity=entity, name=name, data_type=dtype))
+    existing_users = set(s.scalars(select(User.username)))
+    for username, password, role, display_name in SEED_USERS:
+        if username not in existing_users:
+            s.add(
+                User(
+                    id=user_uuid(username),
+                    username=username,
+                    password=password,
+                    role=role,
+                    display_name=display_name,
+                )
+            )

@@ -1,0 +1,108 @@
+<div class="wrap">
+  <section class="card" aria-label="Autentificare">
+    <div class="head">
+      <span class="logo" aria-hidden="true"><i class="pi pi-shield"></i></span>
+      <div>
+        <h1>Scam Shield</h1>
+        <p>Autentificați-vă pentru a accesa mesajele și verificările</p>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button
+        type="button"
+        [class.active]="mode() === 'login'"
+        (click)="mode.set('login'); error.set(null)"
+      >
+        Autentificare
+      </button>
+      <button
+        type="button"
+        [class.active]="mode() === 'register'"
+        (click)="mode.set('register'); error.set(null)"
+      >
+        Cont nou (User)
+      </button>
+    </div>
+
+    <form class="form" (ngSubmit)="submit()">
+      <label class="field">
+        <span>Utilizator</span>
+        <input
+          pInputText
+          type="text"
+          name="username"
+          autocomplete="username"
+          placeholder="ex. admin, user, maria"
+          [ngModel]="username()"
+          (ngModelChange)="username.set($event)"
+        />
+      </label>
+
+      @if (mode() === 'register') {
+        <label class="field">
+          <span>Nume afișat (opțional)</span>
+          <input
+            pInputText
+            type="text"
+            name="displayName"
+            placeholder="ex. Ion Ionescu"
+            [ngModel]="displayName()"
+            (ngModelChange)="displayName.set($event)"
+          />
+        </label>
+      }
+
+      <label class="field">
+        <span>Parolă</span>
+        <input
+          pInputText
+          type="password"
+          name="password"
+          autocomplete="current-password"
+          placeholder="••••••••"
+          [ngModel]="password()"
+          (ngModelChange)="password.set($event)"
+        />
+      </label>
+
+      @if (error(); as err) {
+        <p-message severity="error" [text]="err" />
+      }
+
+      <p-button
+        type="submit"
+        [label]="mode() === 'login' ? 'Intră în cont' : 'Creează cont User'"
+        icon="pi pi-sign-in"
+        [loading]="busy()"
+        [disabled]="!username().trim() || !password()"
+        [fluid]="true"
+      />
+    </form>
+
+    <div class="demo">
+      <div class="demo-title">Conturi demo din baza de date (click pentru acces rapid):</div>
+      <div class="demo-list">
+        @for (acc of demoAccounts; track acc.username) {
+          <button
+            type="button"
+            class="demo-btn"
+            [disabled]="busy()"
+            (click)="quickLogin(acc.username, acc.password)"
+          >
+            <p-tag
+              [value]="acc.role.toUpperCase()"
+              [severity]="acc.role === 'admin' ? 'warn' : 'info'"
+              [rounded]="true"
+            />
+            <span class="demo-info">
+              <strong>{{ acc.username }}</strong>
+              <small>{{ acc.label }} · parola: <code>{{ acc.password }}</code></small>
+            </span>
+            <i class="pi pi-arrow-right" aria-hidden="true"></i>
+          </button>
+        }
+      </div>
+    </div>
+  </section>
+</div>

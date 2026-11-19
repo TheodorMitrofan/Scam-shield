@@ -14,8 +14,12 @@ venv/
 /models/*
 !/models/scam-bert/
 /data/
+/backend/data/
+*.db
 /ml/runs/
-/ml/data/*.jsonl
+/ml/data/
+/backend/data/
+*.db*.jsonl
 *.wav
 *.mp4
 *.mp3

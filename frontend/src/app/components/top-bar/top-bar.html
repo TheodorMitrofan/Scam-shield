@@ -29,14 +29,6 @@
     >
       <span class="dot" aria-hidden="true"></span>{{ status().label }}
     </button>
-    <label class="consent" pTooltip="Doar dacă bifați, conversațiile verificate se păstrează (le puteți șterge oricând)." tooltipPosition="bottom">
-      <p-toggleswitch
-        [ngModel]="store.saveHistory()"
-        (ngModelChange)="store.saveHistory.set($event)"
-        inputId="consent"
-      />
-      <span>Salvează în istoric</span>
-    </label>
     }
     <p-button
       [icon]="dark() ? 'pi pi-moon' : 'pi pi-sun'"
@@ -48,23 +40,78 @@
       tooltipPosition="bottom"
     />
     @if (view() !== 'audio') {
-    <p-button
-      label="Setul de validare"
-      icon="pi pi-folder-open"
-      severity="secondary"
-      [outlined]="true"
-      [loading]="store.loading()"
-      (onClick)="store.loadValidationSet()"
-    />
-    <label class="file-btn">
-      <i class="pi pi-file" aria-hidden="true"></i> Fișiere JSON
-      <input type="file" accept=".json,application/json" multiple (change)="onFiles($event)" />
-    </label>
-    <label class="file-btn">
-      <i class="pi pi-folder" aria-hidden="true"></i> Folder
-      <input type="file" webkitdirectory multiple (change)="onFiles($event)" />
-    </label>
-    <p-button label="Lipește mesaj" icon="pi pi-clipboard" (onClick)="paste.emit()" />
+      <p-button
+        label="Adaugă / Verifică"
+        icon="pi pi-plus"
+        [loading]="store.loading()"
+        (onClick)="actionsOpen.set(true)"
+      />
+    }
+    @if (auth.user(); as u) {
+      <p-button
+        icon="pi pi-sign-out"
+        severity="secondary"
+        [outlined]="true"
+        [ariaLabel]="'Ieșire (' + u.username + ')'"
+        [pTooltip]="'Ieșire (' + u.username + ' · ' + u.role + ')'"
+        tooltipPosition="bottom"
+        (onClick)="logout.emit()"
+      />
     }
   </div>
 </header>
+
+<p-dialog
+  header="Adaugă și configurează verificarea"
+  [modal]="true"
+  [(visible)]="actionsOpen"
+  [style]="{ width: 'min(420px, 94vw)' }"
+>
+  <div class="modal-body">
+    <p-button
+      label="Lipește mesaj sau conversație"
+      icon="pi pi-clipboard"
+      [fluid]="true"
+      (onClick)="openPaste()"
+    />
+
+    <div class="modal-grid">
+      <label class="file-btn modal-file">
+        <i class="pi pi-file" aria-hidden="true"></i>
+        <span>Fișiere JSON</span>
+        <input type="file" accept=".json,application/json" multiple (change)="onFiles($event)" />
+      </label>
+      <label class="file-btn modal-file">
+        <i class="pi pi-folder" aria-hidden="true"></i>
+        <span>Folder JSON</span>
+        <input type="file" webkitdirectory multiple (change)="onFiles($event)" />
+      </label>
+    </div>
+
+    @if (auth.isAdmin()) {
+      <p-button
+        label="Încarcă setul de validare (Admin)"
+        icon="pi pi-folder-open"
+        severity="secondary"
+        [outlined]="true"
+        [fluid]="true"
+        [loading]="store.loading()"
+        (onClick)="loadValidation()"
+      />
+    }
+
+    <div class="modal-consent" (click)="store.saveHistory.set(!store.saveHistory())">
+      <div class="consent-info">
+        <strong>Salvează în istoric</strong>
+        <small>Conversațiile verificate se păstrează în baza de date pentru contul dvs.</small>
+      </div>
+      <div class="consent-switch" (click)="$event.stopPropagation()">
+        <p-toggleswitch
+          [ngModel]="store.saveHistory()"
+          (ngModelChange)="store.saveHistory.set($event)"
+          inputId="consent"
+        />
+      </div>
+    </div>
+  </div>
+</p-dialog>

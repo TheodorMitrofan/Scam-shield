@@ -62,6 +62,8 @@ class ConversationSummary(BaseModel):
     risk_score: int
     first_alert: int | None
     message_count: int
+    owner_username: str | None = None
+    owner_role: str | None = None
 
 
 class ConversationDetail(ConversationSummary):

@@ -127,3 +127,45 @@ def test_save_with_db_down_returns_503_but_analysis_works(cid):
     with TestClient(create_app(db=down, detector=DetectorClient(AnswerKeyDetector()))) as c:
         assert c.post("/api/analyze", json=SCENARIOS["V01"]).status_code == 200
         assert c.post("/api/analyze?save=true", json=SCENARIOS["V01"], headers=cid).status_code == 503
+
+
+def test_login_and_cross_tenant_roles(client):
+    assert client.post("/api/auth/login", json={"username": "admin", "password": "wrong"}).status_code == 401
+
+    admin = client.post("/api/auth/login", json={"username": "admin", "password": "admin"}).json()
+    user = client.post("/api/auth/login", json={"username": "user", "password": "user"}).json()
+    maria = client.post("/api/auth/login", json={"username": "maria", "password": "maria123"}).json()
+    assert admin["role"] == "admin" and user["role"] == "user" and maria["role"] == "user"
+
+    # Registering a new user works and defaults to role "user"; duplicate fails with 409.
+    ion = client.post("/api/auth/register", json={"username": "ion", "password": "secret"}).json()
+    assert ion["role"] == "user"
+    assert client.post("/api/auth/register", json={"username": "ion", "password": "secret"}).status_code == 409
+
+    h_admin = {"X-User-Id": admin["id"]}
+    h_user = {"X-User-Id": user["id"]}
+    h_maria = {"X-User-Id": maria["id"]}
+
+    # Validation set is attributed to admin: user gets 403, admin gets 200.
+    assert client.get("/api/scenarios/validation", headers=h_user).status_code == 403
+    assert len(client.get("/api/scenarios/validation", headers=h_admin).json()) == 11
+
+    # Admin saves V01; user saves PASTE-U; maria saves PASTE-M.
+    r_adm = client.post("/api/analyze?save=true", json=SCENARIOS["V01"], headers=h_admin).json()
+    r_usr = client.post("/api/analyze?save=true", json={**SCENARIOS["V02"], "id": "PASTE-U"}, headers=h_user).json()
+    r_mar = client.post("/api/analyze?save=true", json={**SCENARIOS["V03"], "id": "PASTE-M"}, headers=h_maria).json()
+
+    # Cross-tenant isolation: user sees ONLY PASTE-U; maria sees ONLY PASTE-M.
+    user_convs = client.get("/api/history/conversations", headers=h_user).json()
+    maria_convs = client.get("/api/history/conversations", headers=h_maria).json()
+    assert [c["external_id"] for c in user_convs] == ["PASTE-U"]
+    assert [c["external_id"] for c in maria_convs] == ["PASTE-M"]
+    assert client.get(f"/api/conversations/{r_mar['conversation_id']}", headers=h_user).status_code == 404
+    assert client.get(f"/api/conversations/{r_adm['conversation_id']}", headers=h_user).status_code == 404
+
+    # Admin sees ALL tenants' conversations with owner metadata.
+    admin_convs = client.get("/api/history/conversations", headers=h_admin).json()
+    by_ext = {c["external_id"]: c["owner_username"] for c in admin_convs}
+    assert by_ext == {"V01": "admin", "PASTE-U": "user", "PASTE-M": "maria"}
+    assert client.get(f"/api/conversations/{r_usr['conversation_id']}", headers=h_admin).status_code == 200
+    assert client.get(f"/api/conversations/{r_mar['conversation_id']}", headers=h_admin).status_code == 200
