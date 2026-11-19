@@ -9,7 +9,7 @@ import re
 from .catalog import get_catalog
 
 _OPEN = {
-    "SCAM": ("Atenție, pare o țeapă!", "Warning, this looks like a scam!"),
+    "SCAM": ("Atenție, pare un scam!", "Warning, this looks like a scam!"),
     "SUSPICIOUS": ("Atenție, verificați înainte să răspundeți.", "Careful, check before you reply."),
     "SAFE": ("Pare în regulă.", "This looks fine."),
 }

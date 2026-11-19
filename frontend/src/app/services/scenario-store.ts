@@ -16,7 +16,7 @@ export interface ScenarioGroup {
 }
 
 const VERDICT_GROUP: Record<Verdict, string> = {
-  SCAM: 'Țeapă',
+  SCAM: 'Scam',
   SUSPICIOUS: 'Suspect',
   SAFE: 'Sigur',
 };

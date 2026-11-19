@@ -42,7 +42,7 @@ export class InboxList {
   ];
   protected readonly verdictOptions: { label: string; value: VerdictFilter }[] = [
     { label: 'Toate', value: 'all' },
-    { label: 'Țeapă', value: 'SCAM' },
+    { label: 'Scam', value: 'SCAM' },
     { label: 'Suspect', value: 'SUSPICIOUS' },
     { label: 'Sigur', value: 'SAFE' },
   ];

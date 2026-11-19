@@ -3,7 +3,7 @@ import { AnalysisResult, CHANNEL_LABEL, Scenario, Verdict } from '../models/scen
 export type TagSeverity = 'success' | 'warn' | 'danger' | 'info' | 'secondary';
 
 export const VERDICT_LABEL: Record<Verdict, string> = {
-  SCAM: 'Pare o țeapă',
+  SCAM: 'Pare un scam',
   SUSPICIOUS: 'Atenție',
   SAFE: 'Pare în regulă',
 };
