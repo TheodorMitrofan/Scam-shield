@@ -207,7 +207,7 @@ class RedFlagDetector:
             r"\b(?:trimiteti|trimite|trimiti|trimitei|trimite-mi|trimiteti-mi|trimiteti-ne|trimite-ne|depuneti|virati|"
             r"vireaza|transferati|transfera-mi|platiti|achitati|alimentati|baga|bagati|pune|puneti|da-mi|dati-mi|"
             r"fa-mi\s+un\s+transfer|faceti(?:-mi)?\s+un\s+transfer)\b"
-            r"(?:[^.!?]{0,60}?\b[1-9]\d*(?:[.,]\d+)*\s*(?:de\s+)?(?:lei|ron|euro|eur)\b"
+            r"(?:[^.!?]{0,60}?\b[1-9]\d*(?:[.,]\d+)*\s*(?:de\s+)?(?:lei|ron|euro|eur|dolari|dolar|usd|lire|lira|gbp|franci|chf|bitcoin|btc|usdt|crypto)\b"
             r"|[^.!?]{0,60}?[1-9]\d*(?:[.,]\d+)*\s*(?:€|\$)"
             r"|[^.!?]{0,60}?\b(?:in|pe|catre|la)\s+(?:contul|contu|cont|iban(?:-ul)?|revolut)\b)",
             text_norm,
@@ -216,7 +216,8 @@ class RedFlagDetector:
         # identity; the specific phrase list above still covers known-contact scams.
         if asks_transfer and not known_contact:
             asks_payment = True
-        has_amount = bool(re.search(r"\b[1-9]\d*(?:[.,]\d+)?\s*(?:lei\b|ron\b|euro\b|eur\b|€|\$)", text_norm))
+        has_amount = bool(re.search(
+            r"\b[1-9]\d*(?:[.,]\d+)?\s*(?:de\s+)?(?:lei|ron|euro|eur|dolari|dolar|usd|lire|lira|gbp|franci|chf|bitcoin|btc|usdt|crypto)\b|\b[1-9]\d*(?:[.,]\d+)?\s*(?:€|\$|£)", text_norm))
         has_pay_verb = bool(re.search(
             r"\b(?:platit[ae]?|platiti|platim|platesc|platesti|achitat[ae]?|achitati|achita|achitam|"
             r"transferat[ae]?|transferati|transfera|transferi|virat[ae]?|virati|vireaza|"
