@@ -145,3 +145,15 @@ def test_typo_correction_leaves_ordinary_words_alone():
     from scam_detector.text_utils import correct_typos
     text = "in cadrul programului am platit deja, politica, cardul a expirat, l-am instalat, v-am transferat"
     assert correct_typos(text) == text
+
+
+def test_general_money_request_and_deadline():
+    # "send <amount> to account X" + "N hours left" must be caught without listing exact phrases
+    unknown = {"name": None, "address": None, "known_contact": False}
+    r = sd.analyze(_sc("ORDER", "sms", unknown, ("sender",
+        "am primit comanda dvs de calculatoare, pentru confirmare trimiteti 1000 RON in contul REV1123. Mai aveti 5 ore")))
+    assert {"RF_PAYMENT_REQUEST", "RF_URGENCY"} <= set(r["red_flags"]) and r["verdict"] != "SAFE", r["red_flags"]
+    # past tense / delivery info stays harmless
+    for text in ["V-am trimis 1000 lei in contul dvs, verificati cand puteti.",
+                 "Coletul va fi livrat in 2 zile lucratoare. Ramburs: 0 lei."]:
+        assert sd.analyze(_sc("OK", "sms", unknown, ("sender", text)))["verdict"] == "SAFE", text

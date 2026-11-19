@@ -200,6 +200,18 @@ class RedFlagDetector:
             r"\b(?:trimit|vine)\s+(?:un\s+)?(?:om|coleg|curier)\s+sa(?:-i)?\s+(?:ia|ridice|preia)\s+(?:banii|chiar\s+acum)",
             text_norm,
         ))
+        # General money request: an IMPERATIVE "send / pay / deposit / transfer" verb followed by an amount with a
+        # currency, or by a destination account/IBAN — e.g. "trimiteti 1000 RON in contul REV1123". Past forms
+        # ("v-am trimis 1000 lei", "am platit") deliberately do not match.
+        asks_transfer = bool(re.search(
+            r"\b(?:trimiteti|trimite|trimiti|trimitei|trimite-mi|trimiteti-ne|trimite-ne|depuneti|virati|"
+            r"transferati|platiti|achitati|alimentati)\b"
+            r"(?:[^.!?]{0,60}?\b[1-9]\d*(?:[.,]\d+)*\s*(?:lei|ron|euro|eur)\b|[^.!?]{0,60}?[1-9]\d*\s*(?:€|\$)"
+            r"|[^.!?]{0,60}?\b(?:in|pe|catre)\s+(?:contul|iban(?:-ul)?)\b)",
+            text_norm,
+        ))
+        if asks_transfer:
+            asks_payment = True
         has_amount = bool(re.search(r"\b[1-9]\d*(?:[.,]\d+)?\s*(?:lei\b|ron\b|euro\b|eur\b|€|\$)", text_norm))
         has_pay_verb = bool(re.search(
             r"\b(?:platit[ae]?|platiti|platim|platesc|platesti|achitat[ae]?|achitati|achita|achitam|"
@@ -280,7 +292,11 @@ class RedFlagDetector:
             "prea tarziu", "pana maine", "diseara", "pana diseara", "repede", "rpede",
             "nu amanati", "nu amana",
         ]) or bool(re.search(
-            r"\bin\s+\d+\s*(?:h|de\s+)?ore\b|\bincepeti\b[^.!?]{0,20}\bde\s+maine\b",
+            r"\bin\s+\d+\s*(?:h|de\s+)?ore\b|\bincepeti\b[^.!?]{0,20}\bde\s+maine\b|"
+            # General deadlines: "mai aveti 5 ore", "aveti doar 2 zile", "in urmatoarele 30 de minute"
+            r"\b(?:mai\s+(?:aveti|ai|avem)|(?:aveti|ai)\s+(?:doar|numai))\s+(?:doar\s+|numai\s+)?"
+            r"(?:\d+|o|un|doua|trei)\s*(?:de\s+)?(?:h|ore|ora|minute|min|zile|zi)\b|"
+            r"\bin\s+(?:urmatoarele|maxim|cel\s+mult)\s+\d+\s*(?:de\s+)?(?:h|ore|ora|minute|min|zile)\b",
             text_norm,
         ))
         if has_action_urgency and not is_safety_or_branch_notice:
