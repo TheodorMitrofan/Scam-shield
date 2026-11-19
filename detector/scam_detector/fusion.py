@@ -50,7 +50,7 @@ def _sender_name_claim(sender: dict):
     for rx, key in R.GENERIC_CLAIMS:
         m = rx.search(name)
         if m and m.start() == 0:
-            return key or "generic"
+            return key or "_generic"
     return None
 
 
@@ -214,7 +214,7 @@ _TYPE_KW = {
     "ACCOUNT_TAKEOVER": r"din\s+greseala|trimis\s+(?:\w+\s+){0,3}cod|cod\s+de\s+\d+\s+cifre|contul\s+(?:meu\s+)?de\s+whatsapp|"
                         r"ti-a\s+venit\s+(?:\w+\s+){0,3}cod",
     "AUTHORITY_IMPERSONATION": r"\banaf\b|fisc|contribuabil|impozit|casa\s+de\s+pensii|pensi|politi|primari|ghiseul|"
-                               r"minister|guvern|amenda|dosar|indexare|cnas|tribunal|instanta",
+                               r"minister|guvern|amenda|dosar|indexare|cnas|tribunal|instanta|comisar|ancheta|procuror|parchet",
     "COURIER_FEE": r"colet|awb|livrar|curier|posta|expeditie|reprogramare|vama|depozit(?:ul)?\s+curier",
     "INVESTMENT": r"investi|crypto|bitcoin|randament|trading|bursa|actiuni|platforma\s+de|profit|broker|portofoliu",
     "ROMANCE": r"iubit|iubito|iubitule|te\s+iubesc|draga\s+mea|dragul\s+meu|ne-am\s+cunoscut|sa\s+ne\s+vedem|"
@@ -243,8 +243,14 @@ def type_scores(flags: set, ntext: str, claim_orgs: set, known: bool):
     if "RF_TOO_GOOD" in flags:
         s["PRIZE_LOTTERY"] += 1
         s["INVESTMENT"] += 1
-    if "anaf" in claim_orgs:
+    if claim_orgs & {"anaf", "_police", "_pension", "_gov"}:
         s["AUTHORITY_IMPERSONATION"] += 3
+    if "_tech" in claim_orgs:
+        s["TECH_SUPPORT"] += 2
+    if "_bank" in claim_orgs:
+        s["BANK_IMPERSONATION"] += 2
+    if "_courier" in claim_orgs:
+        s["COURIER_FEE"] += 2
     if "bancadunarea" in claim_orgs:
         s["BANK_IMPERSONATION"] += 3
     if "curierexpres" in claim_orgs:

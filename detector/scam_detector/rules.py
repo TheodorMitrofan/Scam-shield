@@ -108,9 +108,9 @@ FAMILY = re.compile(r"\b(?:mami|mama|mamico|tati|tata|tataie|bunico|bunicule|bun
 # ---------------------------------------------------------------- RF_SECRECY
 SECRECY = _c(
     r"\bnu\s*-?\s*(?:ii|i|le|lui|ei)?\s*-?\s*(?:spune|spuneti|zice|ziceti|zi|povesti|povestiti)\s+(?:nimic\s+)?"
-    r"(?:lui|nimanui|la\s+nimeni|celorlalti|familiei|tatalui|mamei|sotului|sotiei|copiilor|bancii)",
+    r"(?:lui|nimanui|la\s+nimeni|la\s+banca|celorlalti|familiei|tatalui|mamei|sotului|sotiei|copiilor|bancii)",
     r"\bnu-i\s+(?:spune|zice|zi|spuneti)\b", r"\bnu\s+le\s+(?:spune|spuneti|zice)\b",
-    r"\b(?:sa\s+)?ramana\s+(?:doar\s+)?intre\s+noi\b", r"\bintre\s+noi\b", r"\b(?:e|este)\s+(?:un\s+)?secret\b",
+    r"\b(?:sa\s+)?ramana\s+(?:doar\s+)?intre\s+noi\b", r"\bintre\s+noi\b", r"\b(?:e|este)\s+(?:un\s+|o\s+)?(?:\w+\s+)?secret(?:a|e)?\b",
     r"\bsecret(?:ul)?\s+(?:nostru|total)\b", r"\bstrict\s+confidential\b", r"\bconfidential(?:a|itate)?\b",
     r"\bnu\s+(?:vorbiti|vorbi|discutati|discuta)\s+(?:\w+\s+)?cu\s+(?:nimeni|altcineva|familia|banca|copiii)",
     r"\bnu\s+(?:anuntati|anunta|sunati|suna|contactati)\s+(?:\w+\s+)?(?:banca|politia|pe\s+nimeni|familia|copiii)",
@@ -151,7 +151,7 @@ THREAT = _c(
     r"\bpenalitat", r"\bexecutare\s+silita\b", r"\bpoprire\b", r"\bdosar\s+penal\b", r"\binchisoare\b",
     r"\bmandat\s+de\b", r"\bsanctiun", r"\bvirus(?:i|ul|uri|urile)?\b", r"\binfectat", r"\bpiratat",
     r"\b(?:cont|calculator|telefon)(?:ul)?\s+(?:\S+\s+){0,3}(?:spart|compromis|hackuit|atacat)",
-    r"\bactivitate\s+suspecta\b", r"\btranzacti(?:e|i)\s+(?:\w+\s+)?suspect", r"\bacces\s+neautorizat\b",
+    r"\bactivitate\s+suspecta\b", r"\b(?:tranzacti(?:e|i)|plat(?:a|i)|operatiun(?:e|i)|retrager(?:e|i)|transfer)\s+(?:\S+\s+){0,2}suspect", r"\bacces\s+neautorizat\b",
     r"\bveti\s+pierde\b", r"\bva\s+fi\s+(?:sters|anulat|inchis|blocat|suspendat)", r"\bfurat\s+bani",
     r"\bv-au\s+furat\b", r"\b(?:goleasca|golit|goli)\s+(?:\w+\s+)?contul\b", r"\bplangere\s+penala\b", r"\bin\s+instanta\b",
 )
@@ -183,16 +183,20 @@ GENERIC_CLAIMS = [
     (r"\bpiata\s*mea\b", "piatamea"),
     (r"\bmega\s*shop\b", "megashop"),
     (r"\banaf\b|\bagentia\s+nationala\s+de\s+administrare\s+fiscala\b|\bfiscul?\b", "anaf"),
-    (r"\bcasa\s+(?:nationala\s+)?de\s+pensii\b|\bcnpp\b|\bcasa\s+de\s+asigurari\b", None),
-    (r"\bpolitia\b|\bpolitist(?:ul)?\b|\bagent(?:ul)?\s+de\s+politie\b|\bdiicot\b|\bparchet(?:ul)?\b|\bjandarmeri", None),
-    (r"\bsuport(?:ul)?\s+tehnic\b|\bdepartamentul\s+(?:tehnic|de\s+securitate|de\s+fraude|antifrauda)\b|\bmicrosoft\b|"
-     r"\bwindows\b|\bapple\b|\bgoogle\b", None),
+    # generic claims carry a category key (starts with "_") used for the scam type
+    (r"\bcasa\s+(?:nationala\s+)?de\s+pensii\b|\bcnpp\b|\bcasa\s+de\s+asigurari\b", "_pension"),
+    (r"\bpolitia\b|\bpolitist(?:ul)?\b|\bagent(?:ul)?\s+de\s+politie\b|\bdiicot\b|\bparchet(?:ul)?\b|\bjandarmeri|"
+     r"\bcomisar(?:ul)?\b|\bprocuror(?:ul)?\b", "_police"),
+    (r"\bsuport(?:ul)?\s+tehnic\b|\bdepartamentul\s+tehnic\b|\bmicrosoft\b|\bwindows\b|\bapple\b|\bgoogle\b", "_tech"),
     (r"\b(?:de\s+la|din\s+partea|reprezentant(?:ul)?|angajat(?:ul)?)\s+(?:\w+\s+)?(?:bancii|banca|bancii\s+dvs)\b|"
-     r"\bbanca\s+(?:dvs|dumneavoastra|ta)\b|\bserviciul\s+clienti\b", None),
-    (r"\bprimari(?:a|ei)\b|\bministerul\b|\bguvern(?:ul)?\b|\bghiseul(?:\.ro)?\b|\bdgaspc\b|\bcnas\b|\bmedic(?:ul)?\s+de\s+familie\b", None),
-    (r"\bposta(?:\s+romana)?\b|\bfirma\s+de\s+curierat\b|\bfan\s*courier\b|\bsameday\b|\bdhl\b|\bcargus\b|\bgls\b|\bdpd\b|\bvama\b|\bautoritatea\s+vamala\b", None),
+     r"\bbanca\s+(?:dvs|dumneavoastra|ta)\b|\bserviciul\s+clienti\b|\bdepartamentul\s+(?:de\s+securitate|de\s+fraude|antifrauda)\b",
+     "_bank"),
+    (r"\bprimari(?:a|ei)\b|\bministerul\b|\bguvern(?:ul)?\b|\bghiseul(?:\.ro)?\b|\bdgaspc\b|\bcnas\b|\bmedic(?:ul)?\s+de\s+familie\b",
+     "_gov"),
+    (r"\bposta(?:\s+romana)?\b|\bfirma\s+de\s+curierat\b|\bfan\s*courier\b|\bsameday\b|\bdhl\b|\bcargus\b|\bgls\b|\bdpd\b|"
+     r"\bvama\b|\bautoritatea\s+vamala\b", "_courier"),
     (r"\bnetflix\b|\bemag\b|\bolx\b|\brevolut\b|\bbcr\b|\bbrd\b|\bing\s+bank\b|\bbanca\s+transilvania\b|\braiffeisen\b|"
-     r"\bcec\s+bank\b|\benel\b|\be-?on\b|\bdigi\b|\borange\b|\bvodafone\b", None),
+     r"\bcec\s+bank\b|\benel\b|\be-?on\b|\bdigi\b|\borange\b|\bvodafone\b", "_brand"),
 ]
 GENERIC_CLAIMS = [(re.compile(p), k) for p, k in GENERIC_CLAIMS]
 # "X:" at the very start of an SMS is a sender-style header claim, e.g. "CurierExpres: ..."
