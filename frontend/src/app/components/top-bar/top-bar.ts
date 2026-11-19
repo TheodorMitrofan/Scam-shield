@@ -5,6 +5,7 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TooltipModule } from 'primeng/tooltip';
 import { ScenarioStore } from '../../services/scenario-store';
+import { UiLang } from '../../services/ui-lang';
 
 /** Header: brand on the left; backend status, consent switch, theme toggle and load actions on the right. */
 @Component({
@@ -15,6 +16,11 @@ import { ScenarioStore } from '../../services/scenario-store';
 })
 export class TopBar {
   protected readonly store = inject(ScenarioStore);
+  protected readonly lang = inject(UiLang);
+  protected readonly langs = [
+    { label: 'RO', value: 'ro' },
+    { label: 'EN', value: 'en' },
+  ];
   readonly paste = output<void>();
   /** Which part of the app is shown: the scam-check inbox, the results dashboard, or the audio feature. */
   readonly view = model<'messages' | 'dashboard' | 'audio'>('messages');

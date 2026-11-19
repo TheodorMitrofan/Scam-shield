@@ -38,6 +38,18 @@
       <span>Salvează în istoric</span>
     </label>
     }
+    <p-selectbutton
+      [options]="langs"
+      optionLabel="label"
+      optionValue="value"
+      [allowEmpty]="false"
+      [ngModel]="lang.lang()"
+      (ngModelChange)="lang.set($event)"
+      class="langs"
+      ariaLabel="Limba avertismentelor / Warning language"
+      pTooltip="Limba avertismentelor · Warning language"
+      tooltipPosition="bottom"
+    />
     <p-button
       [icon]="dark() ? 'pi pi-moon' : 'pi pi-sun'"
       severity="secondary"

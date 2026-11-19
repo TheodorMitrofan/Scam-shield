@@ -14,16 +14,19 @@ import {
 import { ScenarioStore } from '../../services/scenario-store';
 import { Conversation } from '../conversation/conversation';
 import { ReportDialog } from '../report-dialog/report-dialog';
+import { TrustedCall } from '../trusted-call/trusted-call';
+import { UiLang } from '../../services/ui-lang';
 
 /** Right panel: header with position + actions, then the scenario rendered like its original app. */
 @Component({
   selector: 'app-scenario-detail',
-  imports: [ButtonModule, TagModule, TooltipModule, Conversation, ReportDialog],
+  imports: [ButtonModule, TagModule, TooltipModule, Conversation, ReportDialog, TrustedCall],
   templateUrl: './scenario-detail.html',
   styleUrl: './scenario-detail.scss',
 })
 export class ScenarioDetail {
   protected readonly store = inject(ScenarioStore);
+  protected readonly lang = inject(UiLang);
   /** Mobile only: go back to the list. */
   readonly back = output<void>();
 

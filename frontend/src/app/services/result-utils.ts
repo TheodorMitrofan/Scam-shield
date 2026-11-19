@@ -59,6 +59,45 @@ export const FLAG_LABEL: Record<string, string> = {
   RF_CHANNEL_SWITCH: 'Vă mută pe altă aplicație',
 };
 
+export interface TextSegment {
+  text: string;
+  /** Red flag that made this piece dangerous, or null for ordinary text. */
+  flag: string | null;
+}
+
+/**
+ * Splits a message into ordinary and dangerous pieces, using the detector's evidence spans
+ * ([start, end) character offsets into the ORIGINAL message text). Overlapping spans are merged;
+ * out-of-range spans are clipped, so bad offsets can never break the text.
+ */
+export function evidenceSegments(
+  result: AnalysisResult | null | undefined,
+  n: number,
+  text: string,
+): TextSegment[] {
+  const spans = (result?.evidence ?? [])
+    .filter((e) => e.n === n && Array.isArray(e.span))
+    .map((e) => ({
+      start: Math.max(0, Math.min(text.length, e.span[0])),
+      end: Math.max(0, Math.min(text.length, e.span[1])),
+      flag: e.flag,
+    }))
+    .filter((s) => s.end > s.start)
+    .sort((a, b) => a.start - b.start);
+  if (!spans.length) return [{ text, flag: null }];
+  const out: TextSegment[] = [];
+  let pos = 0;
+  for (const s of spans) {
+    if (s.end <= pos) continue; // fully inside an earlier span
+    const start = Math.max(s.start, pos);
+    if (start > pos) out.push({ text: text.slice(pos, start), flag: null });
+    out.push({ text: text.slice(start, s.end), flag: s.flag });
+    pos = s.end;
+  }
+  if (pos < text.length) out.push({ text: text.slice(pos), flag: null });
+  return out;
+}
+
 export function flagLabel(code: string): string {
   return FLAG_LABEL[code] ?? code;
 }
