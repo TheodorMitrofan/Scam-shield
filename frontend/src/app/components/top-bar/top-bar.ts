@@ -1,6 +1,7 @@
-import { Component, computed, inject, output, signal } from '@angular/core';
+import { Component, computed, inject, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TooltipModule } from 'primeng/tooltip';
 import { ScenarioStore } from '../../services/scenario-store';
@@ -8,13 +9,19 @@ import { ScenarioStore } from '../../services/scenario-store';
 /** Header: brand on the left; backend status, consent switch, theme toggle and load actions on the right. */
 @Component({
   selector: 'app-top-bar',
-  imports: [FormsModule, ButtonModule, ToggleSwitchModule, TooltipModule],
+  imports: [FormsModule, ButtonModule, SelectButtonModule, ToggleSwitchModule, TooltipModule],
   templateUrl: './top-bar.html',
   styleUrl: './top-bar.scss',
 })
 export class TopBar {
   protected readonly store = inject(ScenarioStore);
   readonly paste = output<void>();
+  /** Which part of the app is shown: the scam-check inbox or the separate audio feature. */
+  readonly view = model<'messages' | 'audio'>('messages');
+  protected readonly views = [
+    { label: 'Mesaje', value: 'messages', icon: 'pi pi-inbox' },
+    { label: 'Audio', value: 'audio', icon: 'pi pi-volume-up' },
+  ];
   protected readonly dark = signal(false);
 
   protected readonly status = computed(() => {
