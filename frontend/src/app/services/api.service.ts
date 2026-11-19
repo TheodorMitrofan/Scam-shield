@@ -57,6 +57,11 @@ export class ApiService {
     return this.request('GET', '/scenarios/validation');
   }
 
+  /** Deletes one saved conversation from the database (its messages and EAV values go with it). */
+  deleteConversation(id: string): Promise<{ deleted: number }> {
+    return this.request('DELETE', `/conversations/${encodeURIComponent(id)}`);
+  }
+
   historyConversations(): Promise<SavedConversationDto[]> {
     return this.request('GET', '/history/conversations');
   }

@@ -140,8 +140,33 @@ export class ScenarioStore {
   }
 
   /** Removes scenarios from memory (privacy: the user can drop anything they loaded). */
-  remove(ids: Iterable<string>): void {
-    const drop = new Set(ids);
+  /** Scenario id shown in the UI → id of its saved conversation in the database (opt-in history). */
+  private readonly savedConversationIds = new Map<string, string>();
+
+  /**
+   * Removes scenarios from the list AND, for conversations saved in the history, deletes them from the database
+   * (DELETE /api/conversations/{id}) so they do not come back after a reload. If the database delete fails, that
+   * scenario stays in the list and an error is shown.
+   */
+  async remove(ids: Iterable<string>): Promise<void> {
+    const wanted = [...ids];
+    const failed = new Set<string>();
+    await Promise.all(
+      wanted.map(async (id) => {
+        const convId = this.savedConversationIds.get(id);
+        if (!convId) return;
+        try {
+          await this.api.deleteConversation(convId);
+          this.savedConversationIds.delete(id);
+        } catch {
+          failed.add(id);
+        }
+      }),
+    );
+    if (failed.size) {
+      this.apiError.set(`Nu am putut șterge din istoric: ${[...failed].join(', ')}. Încercați din nou.`);
+    }
+    const drop = new Set(wanted.filter((id) => !failed.has(id)));
     this.scenarios.update((all) => all.filter((s) => !drop.has(s.id)));
     this.checkedIds.update((c) => new Set([...c].filter((x) => !drop.has(x))));
     this.readIds.update((r) => new Set([...r].filter((x) => !drop.has(x))));
@@ -177,18 +202,21 @@ export class ScenarioStore {
     if (!u) return;
     this.loading.set(true);
     try {
-      const saved = await this.api.historyConversations();
+      const rows = await this.api.historyConversations();
+      const saved: [string, string][] = [];
       const seen = new Map<string, number>();
       const scenarios: Scenario[] = [];
       const results: Record<string, AnalysisResult> = {};
-      for (const row of saved) {
+      for (const row of rows) {
         const count = (seen.get(row.external_id) ?? 0) + 1;
         seen.set(row.external_id, count);
         const displayId = count > 1 ? `${row.external_id}-${count}` : row.external_id;
         scenarios.push({ ...row.scenario, id: displayId });
         results[displayId] = { ...row.result, id: displayId };
+        saved.push([displayId, row.id]);
       }
       this.replace(scenarios, []);
+      for (const [displayId, convId] of saved) this.savedConversationIds.set(displayId, convId);
       this.results.set(results);
       this.apiError.set(null);
     } catch (e) {
@@ -299,6 +327,9 @@ export class ScenarioStore {
         for (const { result } of responses) if (loaded.has(result.id)) next[result.id] = result;
         return next;
       });
+      for (const x of responses) {
+        if (x.saved && x.conversation_id) this.savedConversationIds.set(x.result.id, x.conversation_id);
+      }
       if (!save || responses.every((x) => x.saved)) this.apiError.set(null);
     } catch (e) {
       this.apiError.set(e instanceof Error ? e.message : 'Analiza nu a reușit.');
@@ -316,6 +347,7 @@ export class ScenarioStore {
     scenarios.sort(byId);
     this.scenarios.set(scenarios);
     this.errors.set(errors);
+    this.savedConversationIds.clear();
     this.results.set({});
     this.readIds.set(new Set());
     this.checkedIds.set(new Set());
