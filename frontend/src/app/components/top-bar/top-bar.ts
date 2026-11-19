@@ -6,11 +6,12 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TooltipModule } from 'primeng/tooltip';
 import { ScenarioStore } from '../../services/scenario-store';
 import { UiLang } from '../../services/ui-lang';
+import { UiPipe } from '../../services/ui.pipe';
 
 /** Header: brand on the left; backend status, consent switch, theme toggle and load actions on the right. */
 @Component({
   selector: 'app-top-bar',
-  imports: [FormsModule, ButtonModule, SelectButtonModule, ToggleSwitchModule, TooltipModule],
+  imports: [UiPipe, FormsModule, ButtonModule, SelectButtonModule, ToggleSwitchModule, TooltipModule],
   templateUrl: './top-bar.html',
   styleUrl: './top-bar.scss',
 })

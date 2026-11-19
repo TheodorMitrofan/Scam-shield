@@ -95,6 +95,11 @@ export class UiLang {
     }
   }
 
+  /** Inline pair for any UI text: lang.tr('Romanian', 'English'). */
+  tr(ro: string, en: string): string {
+    return this.lang() === 'en' ? en : ro;
+  }
+
   t(key: TextKey): string {
     return TEXT[key][this.lang()];
   }

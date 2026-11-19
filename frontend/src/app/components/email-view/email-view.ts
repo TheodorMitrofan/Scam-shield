@@ -2,10 +2,12 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { AnalysisResult, Scenario } from '../../models/scenario';
 import { evidenceSegments, flagsAt, isFirstAlert } from '../../services/result-utils';
 import { UiLang } from '../../services/ui-lang';
+import { UiPipe } from '../../services/ui.pipe';
 
 /** Renders an `email` scenario like a mail client; each message is one e-mail in the thread. */
 @Component({
   selector: 'app-email-view',
+  imports: [UiPipe],
   templateUrl: './email-view.html',
   styleUrl: './email-view.scss',
 })

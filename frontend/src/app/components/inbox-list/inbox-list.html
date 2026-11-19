@@ -4,8 +4,8 @@
     <input
       pInputText
       type="search"
-      placeholder="Caută..."
-      aria-label="Caută în mesaje"
+      [placeholder]="'Caută...' | ui"
+      [attr.aria-label]="'Caută în mesaje' | ui"
       [ngModel]="store.search()"
       (ngModelChange)="store.search.set($event)"
     />
@@ -13,26 +13,26 @@
 
   <div class="right">
     <p-select
-      [options]="channelOptions"
+      [options]="channelOptions()"
       optionLabel="label"
       optionValue="value"
       [ngModel]="store.channelFilter()"
       (ngModelChange)="store.channelFilter.set($event)"
-      ariaLabel="Filtrează după canal"
+      [ariaLabel]="'Filtrează după canal' | ui"
       class="channel"
     >
       <ng-template #dropdownicon><i class="pi pi-chevron-down"></i></ng-template>
       <ng-template #selectedItem let-item>
-        <span class="sel"><i class="pi pi-filter" aria-hidden="true"></i> {{ item?.label }}</span>
+        <span class="sel"><i class="pi pi-filter" aria-hidden="true"></i> {{ item?.label | ui }}</span>
       </ng-template>
     </p-select>
 
     <span
-      [pTooltip]="store.hasResults() ? undefined : 'Disponibil după analiză'"
+      [pTooltip]="store.hasResults() ? undefined : ('Disponibil după analiză' | ui)"
       tooltipPosition="bottom"
     >
       <p-selectbutton
-        [options]="verdictOptions"
+        [options]="verdictOptions()"
         optionLabel="label"
         optionValue="value"
         [allowEmpty]="false"
@@ -53,10 +53,10 @@
       [disabled]="!store.filtered().length"
       inputId="select-all"
     />
-    <span>Selectează toate</span>
+    <span>{{ 'Selectează toate' | ui }}</span>
   </label>
   <p-button
-    label="Marchează ca citite"
+    [label]="'Marchează ca citite' | ui"
     severity="secondary"
     [disabled]="!store.checkedIds().size"
     (onClick)="markCheckedRead()"
@@ -64,8 +64,8 @@
   <p-button
     icon="pi pi-trash"
     severity="secondary"
-    ariaLabel="Șterge selecția din listă"
-    pTooltip="Șterge din listă"
+    [ariaLabel]="'Șterge selecția din listă' | ui"
+    [pTooltip]="'Șterge din listă' | ui"
     tooltipPosition="bottom"
     [disabled]="!store.checkedIds().size"
     (onClick)="removeChecked()"
@@ -76,7 +76,7 @@
   <div class="errors api" role="alert">
     <div>
       <i class="pi pi-wifi" aria-hidden="true"></i> {{ err }}
-      <p-button label="Reîncearcă" size="small" [text]="true" (onClick)="store.reanalyzeAll()" />
+      <p-button [label]="'Reîncearcă' | ui" size="small" [text]="true" (onClick)="store.reanalyzeAll()" />
     </div>
   </div>
 }
@@ -90,7 +90,7 @@
 }
 
 @for (g of store.groups(); track g.label) {
-  <div class="group-head">{{ g.label }} – {{ g.items.length }}</div>
+  <div class="group-head">{{ g.label | ui }} – {{ g.items.length }}</div>
   <ul class="cards">
     @for (s of g.items; track s.id) {
       <li>
@@ -114,9 +114,9 @@
                 [ariaLabel]="'Selectează ' + s.id"
               />
             </span>
-            <p-tag [value]="tag(s).label" [severity]="tag(s).severity" [rounded]="true" />
+            <p-tag [value]="tag(s).label | ui" [severity]="tag(s).severity" [rounded]="true" />
             @if (store.isAnalyzing(s.id)) {
-              <i class="pi pi-spin pi-spinner busy" aria-label="Se analizează"></i>
+              <i class="pi pi-spin pi-spinner busy" [attr.aria-label]="'Se analizează' | ui"></i>
             } @else if (store.results()[s.id]; as r) {
               <span class="score" [class]="'score v-' + r.verdict">{{ r.risk_score }}</span>
             }
@@ -124,7 +124,7 @@
           </div>
           <div class="title">
             @if (!store.isRead(s.id)) {
-              <span class="dot" aria-label="necitit"></span>
+              <span class="dot" [attr.aria-label]="'necitit' | ui"></span>
             }
             {{ senderOf(s) }}
           </div>
@@ -137,11 +137,11 @@
   <div class="empty">
     @if (store.scenarios().length) {
       <i class="pi pi-search" aria-hidden="true"></i>
-      <p>Niciun scenariu nu se potrivește filtrelor.</p>
+      <p>{{ 'Niciun scenariu nu se potrivește filtrelor.' | ui }}</p>
     } @else {
       <i class="pi pi-inbox" aria-hidden="true"></i>
-      <p>Încărcați setul de validare, fișiere JSON sau lipiți un mesaj.</p>
-      <p class="hint">Puteți trage fișierele direct în pagină.</p>
+      <p>{{ 'Încărcați setul de validare, fișiere JSON sau lipiți un mesaj.' | ui }}</p>
+      <p class="hint">{{ 'Puteți trage fișierele direct în pagină.' | ui }}</p>
     }
   </div>
 }
