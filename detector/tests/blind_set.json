@@ -1,0 +1,435 @@
+[
+ {
+  "category": "blind",
+  "note": "electricity supplier cut-off threat with fake link",
+  "expected": {
+   "verdict": "SCAM",
+   "scam_type": "OTHER",
+   "first_alert": 1
+  },
+  "id": "B01",
+  "channel": "sms",
+  "sender": {
+   "name": null,
+   "address": "+40 7xx xxx 111",
+   "known_contact": false
+  },
+  "messages": [
+   {
+    "n": 1,
+    "from": "sender",
+    "text": "Enel: Aveti o factura restanta de 87,40 lei. Curentul va fi oprit astazi la ora 18. Achitati pe enel-plati.info"
+   }
+  ]
+ },
+ {
+  "category": "blind",
+  "note": "real pharmacy pickup notice",
+  "expected": {
+   "verdict": "SAFE",
+   "scam_type": "NONE",
+   "first_alert": null
+  },
+  "id": "B02",
+  "channel": "sms",
+  "sender": {
+   "name": "Farmacia",
+   "address": "Farmacia",
+   "known_contact": false
+  },
+  "messages": [
+   {
+    "n": 1,
+    "from": "sender",
+    "text": "Comanda dvs. de la farmacie este pregatita. O puteti ridica pana vineri, intre 8 si 20."
+   }
+  ]
+ },
+ {
+  "category": "blind",
+  "note": "grandson in jail, lawyer calls, cash courier",
+  "expected": {
+   "verdict": "SCAM",
+   "scam_type": "FAMILY_EMERGENCY",
+   "first_alert": 3
+  },
+  "id": "B03",
+  "channel": "call_transcript",
+  "sender": {
+   "name": null,
+   "address": "+40 2xx xxx 222",
+   "known_contact": false
+  },
+  "messages": [
+   {
+    "n": 1,
+    "from": "sender",
+    "text": "Bună ziua, sunt avocatul nepotului dumneavoastră, Mihai."
+   },
+   {
+    "n": 2,
+    "from": "reader",
+    "text": "Ce s-a întâmplat cu Mihai?"
+   },
+   {
+    "n": 3,
+    "from": "sender",
+    "text": "A lovit o femeie cu mașina și e la poliție. Ca să nu intre la închisoare, trebuie dați 10.000 lei familiei victimei."
+   },
+   {
+    "n": 4,
+    "from": "reader",
+    "text": "Doamne! Nu am atâția bani."
+   },
+   {
+    "n": 5,
+    "from": "sender",
+    "text": "Cât aveți acasă? Trimit un om să-i ia chiar acum. Nu sunați pe nimeni, îi faceți mai rău."
+   }
+  ]
+ },
+ {
+  "category": "blind",
+  "note": "OLX-style buyer asks seller to pay 'courier insurance'",
+  "expected": {
+   "verdict": "SCAM",
+   "scam_type": "MARKETPLACE",
+   "first_alert": 3
+  },
+  "id": "B04",
+  "channel": "chat",
+  "sender": {
+   "name": "Cumpărător PiațaMea",
+   "address": "buyer_7001",
+   "known_contact": false
+  },
+  "messages": [
+   {
+    "n": 1,
+    "from": "sender",
+    "text": "Bună, îmi trimiteți fotoliul prin curier?"
+   },
+   {
+    "n": 2,
+    "from": "reader",
+    "text": "Da, se poate."
+   },
+   {
+    "n": 3,
+    "from": "sender",
+    "text": "Super. Curierul cere doar o asigurare de 49 lei, pe care o plătiți dvs. și v-o returnez cu tot cu preț. Linkul: livrare-piatamea.site"
+   }
+  ]
+ },
+ {
+  "category": "blind",
+  "note": "neighbour asks to borrow a drill",
+  "expected": {
+   "verdict": "SAFE",
+   "scam_type": "NONE",
+   "first_alert": null
+  },
+  "id": "B05",
+  "channel": "whatsapp",
+  "sender": {
+   "name": "Dl. Popa (vecin)",
+   "address": "+40 7xx xxx 333",
+   "known_contact": true
+  },
+  "messages": [
+   {
+    "n": 1,
+    "from": "sender",
+    "text": "Bună seara! Îmi puteți împrumuta bormașina mâine dimineață? V-o aduc înapoi până la prânz."
+   }
+  ]
+ },
+ {
+  "category": "blind",
+  "note": "Revolut-style 'safe account' transfer",
+  "expected": {
+   "verdict": "SCAM",
+   "scam_type": "BANK_IMPERSONATION",
+   "first_alert": 3
+  },
+  "id": "B06",
+  "channel": "call_transcript",
+  "sender": {
+   "name": null,
+   "address": "+40 3xx xxx 444",
+   "known_contact": false
+  },
+  "messages": [
+   {
+    "n": 1,
+    "from": "sender",
+    "text": "Bună ziua, vă sunăm de la Banca Dunărea, departamentul de securitate."
+   },
+   {
+    "n": 2,
+    "from": "reader",
+    "text": "Da?"
+   },
+   {
+    "n": 3,
+    "from": "sender",
+    "text": "Contul dumneavoastră a fost compromis. Trebuie să mutați urgent toți banii într-un cont de siguranță pe care vi-l dăm noi."
+   }
+  ]
+ },
+ {
+  "category": "blind",
+  "note": "crypto 'withdrawal fee' after fake gains",
+  "expected": {
+   "verdict": "SCAM",
+   "scam_type": "INVESTMENT",
+   "first_alert": 1
+  },
+  "id": "B07",
+  "channel": "email",
+  "sender": {
+   "name": "CryptoMax Support",
+   "address": "support@cryptomax-ro.com",
+   "known_contact": false
+  },
+  "messages": [
+   {
+    "n": 1,
+    "from": "sender",
+    "text": "Felicitări, contul dvs. a ajuns la 12.450 €! Pentru a retrage profitul, plătiți taxa de deblocare de 650 € în 48 de ore."
+   }
+  ]
+ },
+ {
+  "category": "blind",
+  "note": "real school message about a trip payment",
+  "expected": {
+   "verdict": "SAFE",
+   "scam_type": "NONE",
+   "first_alert": null
+  },
+  "id": "B08",
+  "channel": "whatsapp",
+  "sender": {
+   "name": "Doamna dirigintă",
+   "address": "+40 7xx xxx 555",
+   "known_contact": true
+  },
+  "messages": [
+   {
+    "n": 1,
+    "from": "sender",
+    "text": "Bună ziua, părinți! Excursia la Sinaia costă 150 lei, banii se strâng la școală, la mine, până joi."
+   }
+  ]
+ },
+ {
+  "category": "blind",
+  "note": "Telegram task scam, payment later (formula: 20+25=45)",
+  "expected": {
+   "verdict": "SUSPICIOUS",
+   "scam_type": "JOB_OFFER",
+   "first_alert": 4
+  },
+  "id": "B09",
+  "channel": "whatsapp",
+  "sender": {
+   "name": null,
+   "address": "+62 8xx xxx 666",
+   "known_contact": false
+  },
+  "messages": [
+   {
+    "n": 1,
+    "from": "sender",
+    "text": "Bună ziua! Sunt Elena de la o agenție de marketing. Aveți 10 minute pe zi?"
+   },
+   {
+    "n": 2,
+    "from": "reader",
+    "text": "Pentru ce?"
+   },
+   {
+    "n": 3,
+    "from": "sender",
+    "text": "Abonați-vă la canale YouTube și primiți 25 lei pentru fiecare. Plata în aceeași zi, bani ușor."
+   },
+   {
+    "n": 4,
+    "from": "sender",
+    "text": "Pentru sarcinile VIP trebuie să depuneți 400 lei, îi primiți înapoi cu 30% în plus."
+   }
+  ]
+ },
+ {
+  "category": "blind",
+  "note": "unknown number 'is this you in the video?' + link",
+  "expected": {
+   "verdict": "SUSPICIOUS",
+   "scam_type": "OTHER",
+   "first_alert": 1
+  },
+  "id": "B10",
+  "channel": "whatsapp",
+  "sender": {
+   "name": null,
+   "address": "+40 7xx xxx 777",
+   "known_contact": false
+  },
+  "messages": [
+   {
+    "n": 1,
+    "from": "sender",
+    "text": "Tu ești în videoclipul ăsta?? 😱 video-viral.click/v=8823"
+   }
+  ]
+ },
+ {
+  "category": "blind",
+  "note": "real bank 2FA confirm in the app, nothing to send",
+  "expected": {
+   "verdict": "SAFE",
+   "scam_type": "NONE",
+   "first_alert": null
+  },
+  "id": "B11",
+  "channel": "sms",
+  "sender": {
+   "name": "BancaDunarea",
+   "address": "BancaDunarea",
+   "known_contact": false
+  },
+  "messages": [
+   {
+    "n": 1,
+    "from": "sender",
+    "text": "Banca Dunarea: Ati initiat autentificarea pe un dispozitiv nou. Confirmati doar din aplicatia oficiala. Daca nu ati fost dvs., sunati la 0800 100 200."
+   }
+  ]
+ },
+ {
+  "category": "blind",
+  "note": "fake ghiseul fine payment",
+  "expected": {
+   "verdict": "SCAM",
+   "scam_type": "AUTHORITY_IMPERSONATION",
+   "first_alert": 1
+  },
+  "id": "B12",
+  "channel": "sms",
+  "sender": {
+   "name": null,
+   "address": "+40 7xx xxx 888",
+   "known_contact": false
+  },
+  "messages": [
+   {
+    "n": 1,
+    "from": "sender",
+    "text": "Ghiseul.ro: Aveti o amenda neachitata de 290 lei. Evitati executarea silita, platiti acum pe ghiseul-amenzi.com"
+   }
+  ]
+ },
+ {
+  "category": "blind",
+  "note": "known contact but asks for card details for a 'gift' (formula: data request only = 30)",
+  "expected": {
+   "verdict": "SUSPICIOUS",
+   "scam_type": [
+    "ACCOUNT_TAKEOVER",
+    "OTHER"
+   ],
+   "first_alert": 1
+  },
+  "id": "B13",
+  "channel": "whatsapp",
+  "sender": {
+   "name": "Liliana",
+   "address": "+40 7xx xxx 999",
+   "known_contact": true
+  },
+  "messages": [
+   {
+    "n": 1,
+    "from": "sender",
+    "text": "Draga, vreau să-ți trimit un cadou pe card de ziua ta 🎁 Îmi dai numărul cardului și data expirării?"
+   }
+  ]
+ },
+ {
+  "category": "blind",
+  "note": "courier calls, real, confirms address",
+  "expected": {
+   "verdict": "SAFE",
+   "scam_type": "NONE",
+   "first_alert": null
+  },
+  "id": "B14",
+  "channel": "call_transcript",
+  "sender": {
+   "name": null,
+   "address": "+40 7xx xxx 121",
+   "known_contact": false
+  },
+  "messages": [
+   {
+    "n": 1,
+    "from": "sender",
+    "text": "Bună ziua, sunt curierul de la CurierExpres, am un colet pentru dumneavoastră."
+   },
+   {
+    "n": 2,
+    "from": "reader",
+    "text": "Da, sunt acasă."
+   },
+   {
+    "n": 3,
+    "from": "sender",
+    "text": "Perfect, ajung în 10 minute. Nu aveți nimic de plată."
+   }
+  ]
+ },
+ {
+  "category": "blind",
+  "note": "romance asks for money for customs on a gift parcel (formula: payment 25 + emotional 10 = 35; nobody claims to BE customs)",
+  "expected": {
+   "verdict": "SUSPICIOUS",
+   "scam_type": "ROMANCE",
+   "first_alert": 5
+  },
+  "id": "B15",
+  "channel": "chat",
+  "sender": {
+   "name": "Daniel",
+   "address": "daniel_uk",
+   "known_contact": false
+  },
+  "messages": [
+   {
+    "n": 1,
+    "from": "sender",
+    "text": "Draga mea, ți-am trimis un colet cu un cadou special din Londra ❤️"
+   },
+   {
+    "n": 2,
+    "from": "reader",
+    "text": "Ce drăguț!"
+   },
+   {
+    "n": 3,
+    "from": "sender",
+    "text": "Abia aștept să-l deschizi. Te iubesc."
+   },
+   {
+    "n": 4,
+    "from": "reader",
+    "text": "Și eu."
+   },
+   {
+    "n": 5,
+    "from": "sender",
+    "text": "Vama l-a oprit și cere o taxă de 1.200 lei. Poți plăti tu? Eu nu pot din străinătate."
+   }
+  ]
+ }
+]

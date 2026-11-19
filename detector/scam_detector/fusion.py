@@ -6,10 +6,12 @@ from . import rules as R
 from .catalog import FLAG_ORDER, get_catalog
 from .normalize import compact, norm
 
-# Flags the model is allowed to add on top of rules (contact/identity flags stay deterministic).
+# Flags the model is allowed to add on top of rules: only the low-stakes "context" flags.
+# Request flags (code/data/payment/remote, 25-35 points) and contact/identity flags need explicit rule
+# evidence: on the stress test the model fired CODE/DATA at p>0.96 on "codul de reducere" / "contul dvs."
+# (it learned surface words from the synthetic templates), creating false alarms on genuine messages.
 MODEL_ADDABLE = {
-    "RF_CODE_REQUEST", "RF_REMOTE_ACCESS", "RF_DATA_REQUEST", "RF_PAYMENT_REQUEST", "RF_SECRECY",
-    "RF_TOO_GOOD", "RF_URGENCY", "RF_THREAT", "RF_EMOTIONAL_PRESSURE", "RF_CHANNEL_SWITCH",
+    "RF_SECRECY", "RF_TOO_GOOD", "RF_URGENCY", "RF_THREAT", "RF_EMOTIONAL_PRESSURE", "RF_CHANNEL_SWITCH",
 }
 # Requests a real organisation never makes; everything else is tolerated from a verified official sender.
 NEVER_OFFICIAL = {"RF_CODE_REQUEST", "RF_REMOTE_ACCESS", "RF_DATA_REQUEST", "RF_SECRECY",
@@ -123,7 +125,9 @@ def analyze_core(scenario: dict, model=None) -> dict:
             flag_probs, model_type_probs = model.predict(scenario)
         except Exception:  # never let the model break the demo
             flag_probs, model_type_probs = None, None
-        if flag_probs:
+        # amplifier, never the sole source of an alarm: only threads where rules/contacts already found risk
+        rule_risk = any(r["flags"] for r in per_msg)
+        if flag_probs and rule_risk:
             for rec in per_msg:
                 if rec["from"] != "sender":
                     continue
@@ -195,6 +199,7 @@ def analyze_core(scenario: dict, model=None) -> dict:
         "id": sid, "verdict": verdict, "scam_type": scam_type, "risk_score": risk,
         "first_alert": first_alert if verdict != "SAFE" else None, "red_flags": red_flags,
         "flags_by_message": flags_by_message, "evidence": evidence,
+        "model_type": max(model_type_probs, key=model_type_probs.get) if model_type_probs else None,
         "_claim_orgs": sorted(k for k in claim_orgs if k), "_sender_org": sender_org,
     }
 
@@ -223,7 +228,8 @@ _TYPE_KW = {
     "AUTHORITY_IMPERSONATION": r"\banaf\b|fisc|contribuabil|impozit|casa\s+de\s+pensii|pensi|politi|primari|ghiseul|"
                                r"minister|guvern|amenda|dosar|indexare|cnas|tribunal|instanta|comisar|ancheta|procuror|parchet",
     "COURIER_FEE": r"colet|awb|livrar|curier|posta|expeditie|reprogramare|vama|depozit(?:ul)?\s+curier",
-    "INVESTMENT": r"investi|crypto|bitcoin|randament|trading|bursa|actiuni|platforma\s+de|profit|broker|portofoliu",
+    "INVESTMENT": r"investi|crypto|bitcoin|randament|trading|bursa|actiuni|platforma\s+de|profit|broker|portofoliu|"
+                  r"retrage(?:ti)?\s+(?:\w+\s+)?(?:profitul|castig)|contul\s+(?:\S+\s+){0,2}a\s+ajuns\s+la",
     "ROMANCE": r"iubit|iubito|iubitule|iubire|te\s+iubesc|draga\s+mea|dragul\s+meu|ne-am\s+cunoscut|sa\s+ne\s+vedem|"
                r"bilet\s+de\s+avion|dor\s+de\s+tine|inima|militar|misiune|frumoas|ma\s+gandesc\s+la\s+tine|"
                r"platforma\s+petroliera|suflet(?:ul)?\s+(?:meu\s+)?pereche",
@@ -248,6 +254,9 @@ def type_scores(flags: set, ntext: str, claim_orgs: set, known: bool):
         s["FAMILY_EMERGENCY"] += 4
     if "RF_CODE_REQUEST" in flags and "RF_IMPERSONATION" not in flags:
         s["ACCOUNT_TAKEOVER"] += 4
+    if known and "RF_IMPERSONATION" not in flags and flags & {"RF_DATA_REQUEST", "RF_CODE_REQUEST"}:
+        s["ACCOUNT_TAKEOVER"] += 3   # a saved contact asking for card data / codes = hijacked account
+    s["ROMANCE"] += s["ROMANCE"]     # romance words are very specific -> double weight
     if "RF_TOO_GOOD" in flags:
         s["PRIZE_LOTTERY"] += 1
         s["INVESTMENT"] += 1
@@ -272,9 +281,10 @@ def type_scores(flags: set, ntext: str, claim_orgs: set, known: bool):
 
 def choose_type(flags, ntext, claim_orgs, known, model_type_probs=None):
     s = type_scores(flags, ntext, claim_orgs, known)
-    if model_type_probs:
-        for t, p in model_type_probs.items():
-            if t in s:
-                s[t] += 2.5 * float(p)   # model acts as a soft vote / tiebreaker
-    best = max(_PRIORITY, key=lambda t: (s[t], -_PRIORITY.index(t)))
-    return best if s[best] > 0 else "OTHER"
+    # The model's type head is NOT used for the decision: trained on synthetic templates it was confidently
+    # wrong on new wording in the blind test (types 14/15 rules-only vs 12/15 with it). Reported as
+    # `model_type` for transparency only. Ties go to the fixed priority order.
+    top = max(s.values())
+    if top <= 0:
+        return "OTHER"
+    return next(t for t in _PRIORITY if s[t] == top)

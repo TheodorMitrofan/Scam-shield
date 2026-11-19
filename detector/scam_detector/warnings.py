@@ -100,13 +100,21 @@ def build(result: dict, scenario: dict) -> dict:
             who_ro, who_en = "Poliția", "the police"
             act_ro = "Nu dați bani sau date; închideți și sunați la 112 dacă vă simțiți în pericol."
             act_en = "Do not give money or data; hang up and call 112 if you feel in danger."
+        elif "anaf" not in orgs and "contribuabil" not in txt and "fisc" not in txt:
+            who_ro, who_en = "o instituție a statului", "a public institution"
+            act_ro = "Nu dați bani sau date; închideți și verificați direct la instituție, la ghișeu, sau întrebați pe cineva apropiat."
+            act_en = "Do not give money or data; hang up and check with the institution in person."
         else:
             who_ro, who_en = "ANAF", "the tax office (ANAF)"
             a = _official("anaf")
             act_ro = f"Nu completați nimic; verificați doar pe {a['website']} sau la {a['phone']}."
             act_en = f"Do not fill anything in; check only on {a['website']} or call {a['phone']}."
-        why_ro = f"Cineva se dă drept {who_ro} și vă cere date personale sau ale cardului."
-        why_en = f"Someone pretends to be {who_en} and asks for your personal or card data."
+        if flags & {"RF_DATA_REQUEST", "RF_CODE_REQUEST"}:
+            why_ro = f"Cineva se dă drept {who_ro} și vă cere date personale, ale cardului sau coduri."
+            why_en = f"Someone pretends to be {who_en} and asks for your personal data, card data or codes."
+        else:
+            why_ro = f"Cineva se dă drept {who_ro} și vă cere bani, punându-vă presiune."
+            why_en = f"Someone pretends to be {who_en} and pressures you for money."
     elif t == "FAMILY_EMERGENCY":
         name = _family_name(texts)
         why_ro = "Cineva de pe un număr nou se dă drept copilul sau nepotul dumneavoastră și cere bani"

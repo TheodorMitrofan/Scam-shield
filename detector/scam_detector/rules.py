@@ -89,7 +89,8 @@ PAYMENT = _c(
     r"(?:\S+\s+){0,3}(?:bani|banii|suma|lei|euro|eur|ron|dolari|€|\d[\d.,]*\s*(?:lei|ron|euro|eur|€))\b",
     r"\b(?:imprumut|un\s+imprumut)\b", r"\b(?:depui|depune|investesti|investeste|alimentezi)\s+(?:doar\s+|numai\s+)?\d",
     r"\b(?:pay|send|transfer)\s+(?:the\s+|a\s+|us\s+)?(?:\S+\s+){0,3}(?:fee|eur|euro|usd|\$|€|money|payment)",
-    r"\b(?:customs|delivery|shipping)\s+fee\b", r"\b(?:poti|puteti)\s+(?:sa\s+)?(?:\w+\s+)?(?:imprumuta|trimite\s+bani|plati)\b",
+    r"\b(?:customs|delivery|shipping)\s+fee\b",
+    r"\b(?:mutati|muta|mutam|transferati|puneti)\s+(?:\S+\s+){0,3}banii\b", r"\bcont(?:ul)?\s+(?:de\s+)?(?:siguranta|sigur|securizat|protejat)\b", r"\b(?:poti|puteti)\s+(?:sa\s+)?(?:\w+\s+)?(?:imprumuta|trimite\s+bani|plati)\b",
     r"\b(?:western\s+union|moneygram|paysafe|card(?:uri)?\s+cadou|gift\s?card)\b",
     r"\bcumparati\s+(?:\w+\s+)?(?:voucher|card|cupon)",
     r"\b(?:o\s+)?(?:taxa|comision|garantie|avans|depozit|cautiune)\s+(?:\w+\s+){0,3}de\s+\d[\d.,]*\s*(?:lei|ron|euro|eur|€)",
@@ -145,13 +146,13 @@ TOO_GOOD = _c(
 # ---------------------------------------------------------------- RF_URGENCY
 URGENCY = _c(
     r"\burgent(?:a|e)?\b", r"\bimediat\b", r"\bchiar\s+acum\b", r"\bcat\s+mai\s+(?:repede|curand)\b",
-    r"\bin\s+(?:cel\s+mult\s+|maxim\s+|urmatoarele\s+)?\d+\s*(?:h|ore|ora|minute|min|zile)\b", r"\b\d+\s*h\b",
+    r"\bin\s+(?:cel\s+mult\s+|maxim\s+|urmatoarele\s+)?\d+\s*(?:de\s+)?(?:h|ore|ora|minute|min|zile)\b", r"\b\d+\s*h\b",
     r"\bintr-o\s+(?:ora|zi)\b", r"\bpana\s+(?:azi|astazi|diseara|maine|la\s+ora|la\s+sfarsitul\s+zilei|la\s+\d|in\s+\d)",
     r"\btermen(?:ul)?\s+(?:limita|de\s+\d)", r"\bexpira\b", r"\bexpirat?\b\s+in\b", r"\bultima\s+(?:zi|sansa|ocazie|notificare)\b",
     r"\bgrabiti(?:-va)?\b", r"\bgrabeste(?:-te)?\b", r"\brepede\b", r"\bnu\s+mai\s+(?:amanati|asteptati)\b",
     r"\btrebuie\s+(?:\S+\s+){0,4}(?:azi|astazi|acum)\b", r"\b(?:azi|astazi)\s+(?:\S+\s+){0,2}(?:trebuie|ultima)\b",
     r"\bin\s+(?:aceasta|seara\s+asta|ziua\s+de\s+azi)\b", r"\bdoar\s+azi\b", r"\bastazi\s+este\s+ultima\b",
-    r"\bin\s+cateva\s+(?:minute|ore)\b",
+    r"\bin\s+cateva\s+(?:minute|ore)\b", r"\b(?:azi|astazi|diseara|maine)\s+(?:pana\s+)?la\s+ora\b",
     r"\b(?:immediately|asap|within\s+\d+\s*(?:h|hours|minutes))\b", r"\bexpires?\b",
 )
 
@@ -206,7 +207,7 @@ GENERIC_CLAIMS = [
     (r"\bprimari(?:a|ei)\b|\bministerul\b|\bguvern(?:ul)?\b|\bghiseul(?:\.ro)?\b|\bdgaspc\b|\bcnas\b|\bmedic(?:ul)?\s+de\s+familie\b",
      "_gov"),
     (r"\bposta(?:\s+romana)?\b|\bfirma\s+de\s+curierat\b|\bfan\s*courier\b|\bsameday\b|\bdhl\b|\bcargus\b|\bgls\b|\bdpd\b|"
-     r"\bvama\b|\bautoritatea\s+vamala\b", "_courier"),
+     r"\b(?:de\s+la|din\s+partea)\s+vam(?:a|ii)\b|\bautoritatea\s+vamala\b", "_courier"),
     (r"\bnetflix\b|\bemag\b|\bolx\b|\brevolut\b|\bbcr\b|\bbrd\b|\bing\s+bank\b|\bbanca\s+transilvania\b|\braiffeisen\b|"
      r"\bcec\s+bank\b|\benel\b|\be-?on\b|\bdigi\b|\borange\b|\bvodafone\b", "_brand"),
 ]
@@ -301,6 +302,8 @@ def detect(ntext: str, known_contact: bool = False, prev_ntext: str = ""):
         sent = _sentence_of(ntext, m.start())
         if re.search(r"\bnu\s+pierdeti\b", sent) and not re.search(r"urgent|imediat|azi|ore|expira", sent):
             continue
+        if re.search(r"\b(?:ajung|ajungem|vin|venim|sosesc|sosim|revin)\s+(?:\S+\s+){0,2}$", ntext[max(0, m.start() - 25):m.start()]):
+            continue  # "ajung in 10 minute" = the courier announcing arrival, not pressure
         out.append(("RF_URGENCY", (m.start(), m.end())))
     out += _spans(THREAT, ntext, "RF_THREAT")
     for m in EMOTIONAL.finditer(ntext):
