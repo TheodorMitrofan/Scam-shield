@@ -153,6 +153,30 @@
         <span>între locul găsit și locul real · zona de incertitudine ±{{ n(d.region_radius_m) }} m</span>
       </div>
 
+      <div class="places">
+        <a class="place found" [href]="mapUrl(d.estimate.lat, d.estimate.lon)" target="_blank" rel="noopener">
+          <span class="x">✕</span>
+          <span>
+            <strong>Locul găsit din sunet</strong>
+            <small>{{ d.estimate.lat.toFixed(5) }}, {{ d.estimate.lon.toFixed(5) }}</small>
+          </span>
+          <i class="pi pi-external-link" aria-hidden="true"></i>
+        </a>
+        <a class="place real" [href]="mapUrl(d.truth.lat, d.truth.lon)" target="_blank" rel="noopener">
+          <span class="dot truth"></span>
+          <span>
+            <strong>Locul real al microfonului</strong>
+            <small>{{ d.truth.lat.toFixed(5) }}, {{ d.truth.lon.toFixed(5) }}</small>
+          </span>
+          <i class="pi pi-external-link" aria-hidden="true"></i>
+        </a>
+      </div>
+      <p class="note">
+        <i class="pi pi-info-circle" aria-hidden="true"></i>
+        Scenariu simulat lângă Kansas City (SUA): acolo sunt traseele de zbor folosite în simulare. Apăsați pe un
+        loc ca să-l deschideți în OpenStreetMap.
+      </p>
+
       <div class="maps">
         <figure>
           <app-flight-map [data]="d" />

@@ -86,6 +86,13 @@ export class AudioPage implements OnDestroy {
     if (new URLSearchParams(location.search).get('demo') === '1') void this.runDemo();
   }
 
+  /** OpenStreetMap link with a marker (no API key, no tracking parameters). */
+  protected mapUrl(lat: number, lon: number): string {
+    const la = lat.toFixed(5);
+    const lo = lon.toFixed(5);
+    return `https://www.openstreetmap.org/?mlat=${la}&mlon=${lo}#map=16/${la}/${lo}`;
+  }
+
   /** Romanian number format: 1.304 (no decimals). */
   protected n(v: number): string {
     return Math.round(v).toLocaleString('ro-RO');
