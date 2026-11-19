@@ -25,25 +25,26 @@
 |---|---|
 | Name | `cel-mai-tare-hack` |
 | Repo | `git@github.com:TheodorMitrofan/cel-mai-tare-hack.git` |
-| Event | Hackathon — deadline: **TODO (date + time + timezone)** |
-| One-line pitch | **TODO** |
-| Problem | **TODO** — who has the problem and why it matters |
-| Solution / demo story | **TODO** — the 2-minute demo flow, step by step |
-| Judging criteria | **TODO** |
+| Event | Scam Shield — R Systems side challenge @ EESTEC LC Bucharest. **Code freeze 2026-11-19 17:00 (Europe/Bucharest)** |
+| One-line pitch | A calm friend that reads a message/conversation and tells a grandparent, in plain Romanian, "stop, this is a scam, do this instead". |
+| Problem | Older, non-technical people in Romania get fake bank/courier/ANAF/"new number" messages. See `Scam_Shield_Public_Kit/Scam_Shield_Participant_Brief.docx`. |
+| Solution / demo story | Load a folder of scenario JSONs → dashboard (verdict, type, score, first alert, red flags) → open a scenario rendered like the original app (chat / e-mail / call) with the alert message highlighted and a ≤3-sentence warning → paste a new message live. |
+| Judging criteria | Test-set accuracy 30, ease of use 20, warning quality 25, pitch 15, innovation 10. **+10% bonus for tier 6 (local model + rules ensemble). Sending messages to a cloud LLM = disqualified.** |
+| Full plan | **`PLAN.md`** (stages, tasks per person, timeline) |
 
 ### Scope
-- **MVP (must work for the demo):** TODO
-- **Nice to have (only after MVP works end-to-end):** TODO
+- **MVP (must work for the demo):** brief requirements M1–M9: open JSON/folder/paste, red flags per message, score+verdict, scam type, first alert, Romanian warning, friendly GUI, dashboard, scenario detail. Detector = local only.
+- **Nice to have (only after MVP works end-to-end):** audio input (.wav/.mp4 → local transcription → `call_transcript`), voice location detection (open-source repo), CSV export, EN toggle, read-aloud.
 - **Out of scope (do NOT build):** auth flows beyond what the demo needs, admin panels, i18n, exhaustive tests, perfect error handling.
 
 ### Tech stack
 | Layer | Choice | Notes |
 |---|---|---|
-| Frontend | TODO | |
-| Backend | TODO | |
-| Database / storage | TODO | |
-| AI / external APIs | TODO | |
-| Hosting / deploy | TODO | |
+| Frontend | Angular 21 (standalone components, signals) | `frontend/` |
+| Backend | FastAPI, Python 3.12 | `backend/` |
+| Database / storage | PostgreSQL 16 (docker-compose); audio files on disk, metadata in DB | opt-in history only |
+| AI / external APIs | **Local only.** Rules + fine-tuned Romanian BERT / XLM-R (`detector/`, `ml/`); faster-whisper for audio later | **NO cloud LLM APIs** |
+| Hosting / deploy | Local laptops (demo runs on our machine) | |
 
 Do not introduce a new framework, language or major dependency without adding it here and noting it in §7 Decisions.
 
@@ -56,10 +57,12 @@ someone else's area, (a) change the contract in §4 via a small PR and tell the 
 
 | Person | Area / role | Owns paths | Contact |
 |---|---|---|---|
-| Theodor | TODO | TODO | TODO |
-| TODO | TODO | TODO | TODO |
-| TODO | TODO | TODO | TODO |
-| TODO | TODO | TODO | TODO |
+| Giulio | A — Frontend | `frontend/**` | |
+| Theodor | B — Backend / DB / infra / audio pipeline | `backend/**`, `db/**`, `docker-compose.yml` | |
+| Francesco | C — ML / detector / warnings text | `detector/**`, `ml/**`, `models/` | |
+
+_(Assignment is a proposal from `PLAN.md` — swap names here if the team decides otherwise.)_
+`Scam_Shield_Public_Kit/` is **read-only** official data.
 
 Shared files (anyone may edit, keep diffs small, pull right before editing): `CLAUDE.md`, `README.md`,
 `.env.example`, `.gitignore`, root config files.
@@ -69,23 +72,26 @@ Shared files (anyone may edit, keep diffs small, pull right before editing): `CL
 ## 3. Repo layout & commands
 
 ```
-TODO — fill in once scaffolded, e.g.
-/frontend      UI
-/backend       API server
-/shared        types/schemas shared by frontend + backend (source of truth for §4)
-/scripts       seed data, demo helpers
+/frontend                Angular app                                (A)
+/backend                 FastAPI app; imports `scam_detector`       (B)
+/detector                Python package `scam_detector` (rules, model inference, scoring, warnings)  (C)
+/ml                      training scripts + synthetic dataset       (C)
+/models                  trained weights (gitignored)               (C)
+/db                      SQL init / migrations                      (B)
+/Scam_Shield_Public_Kit  official kit (read-only)
 ```
+Backend ↔ detector boundary is ONLY `scam_detector.load()` and `scam_detector.analyze(scenario: dict) -> dict` (see §4.2).
 
 | Task | Command |
 |---|---|
-| Install | TODO |
-| Run locally | TODO |
-| Run tests | TODO |
+| Install | `cd frontend && npm install` · backend/detector: TODO (B/C) |
+| Run locally | `cd frontend && npm start` → http://localhost:4200 (demo shortcut: `/?load=validation&id=V04`) · backend: TODO (B) |
+| Run tests | TODO (C: `pytest detector/`) |
 | Lint / format | TODO |
 | Seed demo data | TODO |
 | Deploy | TODO |
 
-Local ports: frontend `TODO`, backend `TODO`.
+Local ports: frontend `4200`, backend `8000`, postgres `5432`.
 
 ---
 
@@ -96,14 +102,47 @@ against what's written here, not against what they guess the other side does. Ch
 update this section in the same PR and notify the affected owner.
 
 ### 4.1 API endpoints
+All under `http://localhost:8000/api`. CORS allows `http://localhost:4200`.
+
 | Method | Path | Request body | Response | Owner | Status |
 |---|---|---|---|---|---|
-| TODO | TODO | TODO | TODO | TODO | planned |
+| GET | `/health` | – | `{ status: "ok", model_loaded: bool }` | B | planned |
+| GET | `/scenarios/validation` | – | `Scenario[]` (from `Scam_Shield_Public_Kit/validation_set`, sorted by id) | B | planned |
+| POST | `/analyze` | `Scenario` | `AnalysisResult` | B (calls C) | planned |
+| POST | `/analyze/batch` | `Scenario[]` | `AnalysisResult[]` sorted by `id` | B (calls C) | planned |
+| POST | `/analyze/text` | `{ text: string, channel?: Channel }` | `AnalysisResult` (wrapped as 1-message scenario, id `"PASTE"`) | B | planned |
+| POST | `/audio` (stage 4) | multipart `file` (.wav/.mp3/.mp4/.m4a), `save: bool` | `{ scenario: Scenario, result: AnalysisResult }` | B | later |
+| GET | `/audio/{audio_id}` (stage 4) | – | audio bytes (for the player) | B | later |
 
 ### 4.2 Data models
-```
-TODO — e.g.
-User   { id: string, name: string, createdAt: ISO string }
+```ts
+// Input — official format from the brief. Do not rename fields.
+type Channel = "sms" | "whatsapp" | "email" | "chat" | "call_transcript";
+Scenario {
+  id: string;                         // "V04", "T05", "PASTE"
+  channel: Channel;
+  sender: { name: string | null; address: string | null; known_contact: boolean };
+  messages: Message[];                // single message = thread of length 1
+  audio?: AudioRef;                   // OUR extension, stage 4 only
+}
+Message { n: number; from: "sender" | "reader"; text: string;
+          start_s?: number; end_s?: number }   // OUR extension: audio timestamps
+AudioRef { audio_id: string; mime: string; duration_s: number;
+           location?: { region: string; confidence: number } }
+
+// Output — produced by scam_detector.analyze()
+type Verdict = "SAFE" | "SUSPICIOUS" | "SCAM";
+AnalysisResult {
+  id: string;
+  verdict: Verdict;
+  scam_type: string;                  // one of official_catalog.json scam_types; "NONE" if SAFE
+  risk_score: number;                 // 0..100 = sum of unique flag points, capped
+  first_alert: number | null;         // message n; null if SAFE
+  red_flags: string[];                // unique RF_* codes for the whole thread
+  flags_by_message: { n: number; flags: string[]; score_after: number }[];  // score_after = cumulative score of prefix 1..n
+  warning: { ro: string; en?: string };          // ≤3 short sentences, no links/numbers from the message
+  evidence?: { n: number; flag: string; span: [number, number] }[];  // char offsets for "why" highlighting (optional)
+}
 ```
 
 ### 4.3 Environment variables
@@ -111,7 +150,10 @@ All env vars must be listed here **and** in `.env.example` (with dummy values). 
 
 | Variable | Used by | Purpose |
 |---|---|---|
-| TODO | TODO | TODO |
+| `DATABASE_URL` | backend | `postgresql+psycopg://scam:scam@localhost:5432/scamshield` |
+| `MODEL_DIR` | backend → detector | path to fine-tuned weights, default `models/scam-bert` |
+| `STORAGE_DIR` | backend | where audio files are stored (stage 5), default `data/` |
+| `CORS_ORIGINS` | backend | default `http://localhost:4200` |
 
 ---
 
@@ -137,10 +179,17 @@ Rules: one row per task; only edit your own rows; when you pick a task set `doin
 
 | # | Task | Area | Owner | Status | Branch / PR | Notes |
 |---|---|---|---|---|---|---|
-| 1 | Scaffold repo structure + fill §3 | shared | TODO | todo | | |
-| 2 | Fill in §1 project definition | shared | Theodor | todo | | |
-| 3 | Define first contracts in §4 | shared | TODO | todo | | |
-| 4 | TODO | | | todo | | |
+| 1 | Plan (`PLAN.md`) + fill §1–§4 | shared | Giulio | review | giulio/plan-and-viewer | all 3 confirm §4 |
+| 2 | Angular scaffold + scenario import + channel viewers (chat/email/call) | frontend | Giulio | review | giulio/plan-and-viewer | PLAN 1.2, 2.1–2.4 |
+| 3 | FastAPI scaffold + docker-compose Postgres + `/health` | backend | Theodor | todo | | PLAN 1.3 |
+| 4 | `/scenarios/validation`, `/analyze`, `/analyze/batch`, `/analyze/text` | backend | Theodor | todo | | PLAN 2.5, 2.6 |
+| 5 | `scam_detector` package + rules + scoring + first_alert (11/11 on validation) | detector | Francesco | todo | | PLAN 1.4, 3.1–3.3, 3.11 |
+| 6 | Warning templates RO/EN | detector | Francesco | todo | | PLAN 3.7 |
+| 7 | Synthetic dataset + fine-tune + ensemble | ml | Francesco | todo | | PLAN 3.4–3.6 |
+| 8 | Dashboard + scenario detail + paste screen | frontend | Giulio | todo | | PLAN 3.8–3.10 |
+| 9 | Model kept in memory (lifespan) | backend | Theodor | todo | | PLAN 5.1–5.2 |
+| 10 | Audio upload + transcription + storage (stage 4/5) | backend | Theodor | todo | | after MVP |
+| 11 | Voice note view (stage 4) | frontend | Giulio | todo | | after MVP |
 
 ---
 
@@ -151,6 +200,10 @@ Append-only. Record anything another agent would otherwise get wrong or re-decid
 | When (UTC) | Decision | Why | By |
 |---|---|---|---|
 | 2026-11-19 | `CLAUDE.md` is the shared coordination file for all agents | Agents on different machines sync only through git | Theodor |
+| 2026-11-19 | Stack: Angular + FastAPI + PostgreSQL; detector is a separate Python package `scam_detector` | Keeps the 3 owners in separate folders | Giulio |
+| 2026-11-19 | No cloud LLM anywhere in detection; training data generated locally (templates), validation set never used for training | Cloud LLM = disqualification; avoid leaking eval data | Giulio |
+| 2026-11-19 | `risk_score`/verdict/first_alert computed deterministically from flags, not predicted by the model | Official formula; repeatability | Giulio |
+| 2026-11-19 | Audio files on disk (`STORAGE_DIR`), only metadata in Postgres; model loaded once in FastAPI lifespan, 1 uvicorn worker | Memory + privacy (deletable) | Giulio |
 
 ---
 

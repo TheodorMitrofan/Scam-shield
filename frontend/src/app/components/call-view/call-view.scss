@@ -1,0 +1,33 @@
+:host { display: block; }
+.call {
+  max-width: 460px; margin: 0 auto; border-radius: 28px; overflow: hidden; border: 10px solid #1c1c1e;
+  background: linear-gradient(#2b3a4a, #121821); color: #fff; box-shadow: 0 10px 30px rgb(0 0 0 / 0.25);
+  min-height: 520px;
+}
+.screen { text-align: center; padding: 28px 16px 18px; }
+.avatar {
+  width: 76px; height: 76px; margin: 0 auto 10px; border-radius: 50%; background: #3d4f63;
+  display: grid; place-items: center; font-size: 34px;
+}
+.caller { font-size: 24px; font-weight: 700; overflow-wrap: anywhere; }
+.number { font-size: 17px; opacity: 0.85; }
+.status { font-size: 16px; opacity: 0.85; margin-top: 6px; }
+.voice {
+  margin: 0 16px 8px; padding: 10px 12px; border-radius: 16px; background: rgb(255 255 255 / 0.1);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 22px;
+  audio { flex: 1; min-width: 200px; }
+}
+.loc { width: 100%; font-size: 15px; }
+.captions { list-style: none; margin: 0; padding: 8px 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+.line { background: rgb(255 255 255 / 0.08); border-radius: 14px; padding: 10px 14px; }
+.line.me { background: rgb(80 160 255 / 0.22); margin-left: 32px; }
+.line.alert { outline: 4px solid #ff5252; outline-offset: 2px; }
+.who { font-size: 15px; opacity: 0.9; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.n {
+  min-width: 24px; height: 24px; border-radius: 12px; background: #fff; color: #111; font-size: 13px;
+  display: grid; place-items: center;
+}
+.ts { margin-left: auto; font-variant-numeric: tabular-nums; }
+.text { margin: 0; font-size: 18px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.flags { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 4px;
+  li { font-size: 12px; background: #ff5252; color: #111; border-radius: 4px; padding: 2px 6px; } }

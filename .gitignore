@@ -1,0 +1,17 @@
+.DS_Store
+.idea/
+.vscode/
+node_modules/
+dist/
+.angular/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+/models/
+/data/
+*.wav
+*.mp4
+*.mp3
+*.m4a
