@@ -7,8 +7,13 @@ export interface AuditResult {
   duration_s: number;
   risk: AuditRisk;
   flyovers: number;
-  events: { t0: number; t1: number; fmin: number; fmax: number; trend: string; drop_pct: number }[];
+  /** Only candidates that passed the Doppler physics check (real aircraft). */
+  events: { t0: number; t1: number; fmin: number; fmax: number; speed_kmh: number; distance_m: number }[];
+  /** Candidates that looked tonal but failed the physics check (speech, music, hum). */
+  rejected: number;
   status: string;
+  /** Short or mostly gated recording: the check is only indicative. */
+  limited: boolean;
   reasons: string[];
   spectrogram: string | null; // data:image/png;base64
 }

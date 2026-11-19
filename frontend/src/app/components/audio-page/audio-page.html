@@ -51,7 +51,42 @@
         <div><dt>Durată</dt><dd>{{ fmtDur(a.duration_s) }}</dd></div>
         <div><dt>Avioane auzite</dt><dd>{{ a.flyovers }}</dd></div>
         <div><dt>Fișier</dt><dd class="ellipsis">{{ fileName() }}</dd></div>
+        @for (e of a.events; track $index) {
+          <div>
+            <dt>Avionul {{ $index + 1 }}</dt>
+            <dd>~{{ n(e.speed_kmh) }} km/h, la ~{{ n(e.distance_m) }} m de microfon</dd>
+          </div>
+        }
       </dl>
+      @if (a.limited && a.risk !== 'undetermined') {
+        <p class="note">
+          <i class="pi pi-info-circle" aria-hidden="true"></i>
+          Înregistrare scurtă: verificarea e orientativă. Peste 2 minute rezultatul e mai sigur.
+        </p>
+      }
+      @if (a.rejected > 0) {
+        <p class="note">
+          <i class="pi pi-filter" aria-hidden="true"></i>
+          @if (a.rejected === 1) {
+            Un sunet semăna cu un avion, dar nu se potrivește cu felul în care se aude un avion care trece (de obicei
+            voce sau zgomot din cameră). L-am ignorat.
+          } @else {
+            {{ a.rejected }} sunete semănau cu un avion, dar nu se potrivesc cu felul în care se aude un avion care trece
+            (de obicei voce sau zgomot din cameră). Le-am ignorat.
+          }
+        </p>
+      }
+      @if (a.flyovers > 0) {
+        <details class="why">
+          <summary>De ce nu vă arătăm locul exact?</summary>
+          <p>
+            Pentru locul exact ar trebui comparate curbele cu traseele tuturor avioanelor din acea zi (date publice
+            ADS-B, publicate abia a doua zi), pentru zona și ora înregistrării. Aplicația nu descarcă aceste date și
+            nu localizează persoane. Vă spune doar dacă înregistrarea <em>conține</em> indiciile din care altcineva
+            ar putea afla locul. Vedeți demonstrația din dreapta pentru cum arată asta.
+          </p>
+        </details>
+      }
       @if (a.spectrogram) {
         <figure>
           <img [src]="a.spectrogram" alt="Spectrograma înregistrării; avioanele apar ca linii care coboară" />

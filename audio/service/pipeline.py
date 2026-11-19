@@ -42,7 +42,7 @@ def _png(fig) -> str:
     return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
-def _spectrogram_png(spec, boxes=(), traces=(), title="") -> str:
+def _spectrogram_png(spec, boxes=(), traces=(), title="", rejected=()) -> str:
     t, f, W = spec["t"], spec["f"], spec["W"]
     sel = (f >= 20) & (f <= 500)
     img = W[sel]
@@ -54,6 +54,10 @@ def _spectrogram_png(spec, boxes=(), traces=(), title="") -> str:
         ax.add_patch(plt.Rectangle((b["t0"], b["fmin"]), b["t1"] - b["t0"], b["fmax"] - b["fmin"],
                                    fill=False, ec="#38bdf8", lw=1.6))
         ax.text(b["t0"], b["fmax"] + 6, f"avion {i + 1}", color="#38bdf8", fontsize=9)
+    for b in rejected:
+        ax.add_patch(plt.Rectangle((b["t0"], b["fmin"]), b["t1"] - b["t0"], b["fmax"] - b["fmin"],
+                                   fill=False, ec="#9ca3af", lw=1.0, ls="--"))
+        ax.text(b["t0"], b["fmin"] - 14, "nu e avion", color="#9ca3af", fontsize=8)
     for tt, ff in traces:
         ax.plot(tt, ff, ".", color="#4ade80", ms=2.5)
     ax.set_xlabel("timp (s)")
@@ -65,37 +69,70 @@ def _spectrogram_png(spec, boxes=(), traces=(), title="") -> str:
 
 # ----------------------------------------------------------------------------- audit (own recording)
 
+def _confirm(spec, e) -> dict | None:
+    """Physics check: trace the candidate's ridge and fit the Doppler model. Real fly-overs give a
+    plausible pass (props: < 150 m/s, within ~15 km, well constrained); speech, music and room noise
+    either fail the fit or give impossible values. Returns the fit summary, or None if not an aircraft."""
+    try:
+        t, f, _ = audio.trace_curve(spec, e["t0"], e["t1"], e["fmin"], e["fmax"], n_harm=3)
+        if len(t) < 20:
+            return None
+        fit = physics.fit_linear(t, f, c=C, corr_factor=np.sqrt(1.0 / 0.2))
+    except (ValueError, RuntimeError, np.linalg.LinAlgError):
+        return None
+    if physics.plausibility(fit):
+        return None
+    return {"v_ms": float(fit["v"]), "d_m": float(fit["d"]), "f0_hz": float(fit["f0"]), "trace": (t, f)}
+
+
 def audit(wav_path: str) -> dict:
-    """Privacy self-check of the user's own recording (mirrors `afg_cli.py audit`)."""
+    """Privacy self-check of the user's own recording (based on `afg_cli.py audit`).
+
+    Stricter than upstream on purpose: the raw detector flags speech in short clips (status 'limited')
+    as fly-overs, and a false alarm on an ordinary voice message teaches people to ignore warnings.
+    So every candidate must also pass the Doppler physics check before it counts as an aircraft."""
     x, fs, _ = audio.load_audio(wav_path, fs=FS)
     dur = len(x) / fs
     if dur < 1.0:
-        return {"duration_s": dur, "risk": "undetermined", "flyovers": 0, "events": [], "status": "insufficient",
-                "reasons": ["Înregistrarea e mai scurtă de o secundă."], "spectrogram": None}
+        return {"duration_s": dur, "risk": "undetermined", "flyovers": 0, "events": [], "rejected": 0,
+                "status": "insufficient", "limited": True, "reasons": ["Înregistrarea e mai scurtă de o secundă."],
+                "spectrogram": None}
     spec = audio.compute_spectrogram(x, fs, 1.0, 0.2, 20, 600, 120)
     ev, info = audio.detect_events(spec, 40, 400, 1, 0.8, 12.0, return_info=True)
-    falling = [e for e in ev if e["trend"] == "descending"]
-    n_pass = sum(2 if e["warnings"] else 1 for e in falling)
-    flat = [e for e in ev if e["trend"] == "flat"]
-    hidden = [e for e in info["rejected"] if e["warnings"]]
-    if n_pass >= 2:
+
+    confirmed, rejected = [], []
+    for e in ev:
+        if e["trend"] != "descending":
+            rejected.append(e)
+            continue
+        fit = _confirm(spec, e)
+        (confirmed if fit else rejected).append(dict(e, fit=fit) if fit else e)
+
+    n = len(confirmed)
+    status = info["status"]
+    if n >= 2:
         risk = "high"
-    elif n_pass == 1:
+    elif n == 1:
         risk = "medium"
-    elif flat or hidden or info["status"] == "insufficient" or info["short_hits"]:
+    elif status == "insufficient":
         risk = "undetermined"
     else:
         risk = "low"
+
     events = [{"t0": float(e["t0"]), "t1": float(e["t1"]), "fmin": float(e["fmin"]), "fmax": float(e["fmax"]),
-               "trend": e["trend"], "drop_pct": float(e.get("drop_pct") or 0.0)} for e in ev]
+               "speed_kmh": e["fit"]["v_ms"] * 3.6, "distance_m": e["fit"]["d_m"]} for e in confirmed]
     return {
         "duration_s": dur,
         "risk": risk,
-        "flyovers": n_pass,
+        "flyovers": n,
         "events": events,
-        "status": info["status"],
+        "rejected": len(rejected),
+        "status": status,
+        "limited": status != "ok",
         "reasons": [str(r) for r in info.get("reasons", [])],
-        "spectrogram": _spectrogram_png(spec, falling, title="Căutăm curbe care coboară (avioane care trec)"),
+        "spectrogram": _spectrogram_png(
+            spec, confirmed, [e["fit"]["trace"] for e in confirmed], rejected=rejected,
+            title="Căutăm curbe care coboară (avioane care trec)"),
     }
 
 
