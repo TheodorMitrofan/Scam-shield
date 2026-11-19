@@ -15,6 +15,7 @@ import { useScamShield } from '../store/ScamShieldContext';
 import { AnalysisResult, Scenario } from '../types';
 import { ChannelConversation } from './ChannelConversation';
 import { ReportModal } from './ReportModal';
+import { TrustedCall } from './TrustedCall';
 import { VerdictBadge } from './VerdictBadge';
 
 export function ScenarioDetailView({
@@ -122,6 +123,8 @@ export function ScenarioDetailView({
                 </Text>
               </Pressable>
             </View>
+
+            {result.verdict !== 'SAFE' ? <TrustedCall /> : null}
 
             <View style={styles.factsGrid}>
               <View style={styles.factCard}>

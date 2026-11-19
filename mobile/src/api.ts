@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { currentUser } from './auth';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import {
@@ -80,8 +81,15 @@ export async function setStoredApiUrls(apiBase: string, audioBase: string): Prom
 async function request<T>(base: string, method: string, path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = {};
   if (body !== undefined) headers['Content-Type'] = 'application/json';
-  const cid = await AsyncStorage.getItem(CLIENT_ID_KEY);
-  if (cid) headers['X-Client-Id'] = cid;
+  // Same as the web app: a logged-in user's id scopes history and saved conversations.
+  const user = currentUser();
+  if (user) {
+    headers['X-User-Id'] = user.id;
+    headers['X-Client-Id'] = user.id;
+  } else {
+    const cid = await AsyncStorage.getItem(CLIENT_ID_KEY);
+    if (cid) headers['X-Client-Id'] = cid;
+  }
 
   let res: Response;
   try {
