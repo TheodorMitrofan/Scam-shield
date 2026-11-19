@@ -12,17 +12,18 @@ Approach **Tier 6** (ensemble / multi-signal):
 ```bash
 pip install -e detector
 
-python -m scam_detector.cli Scam_Shield_Public_Kit/validation_set
-python -m scam_detector.evaluate Scam_Shield_Public_Kit/validation_set Scam_Shield_Public_Kit/validation_expected_results.csv
-python detector/tests/stress_test.py --with-challenge
-python ml/adversarial_stress.py
-python ml/final_boss_stress.py
+python3 -m detector.api --port 8001   # local HTTP API
+python3 detector/api/tests/test_api.py
+PYTHONPATH=detector python3 -m scam_detector.evaluate Scam_Shield_Public_Kit/validation_set Scam_Shield_Public_Kit/validation_expected_results.csv
+PYTHONPATH=detector python3 detector/tests/stress_test.py --with-challenge
+PYTHONPATH=detector:. python3 -m detector.ml.adversarial_stress
+PYTHONPATH=detector:. python3 -m detector.ml.final_boss_stress
 ```
 
 ## Rebuild weights
 Weights live directly in `detector/scam_detector/trained_model.joblib` (3.9 MB, no Git LFS or GPU needed):
 ```bash
-PYTHONPATH=detector python3 -m ml.train_model
+PYTHONPATH=detector:. python3 -m detector.ml.train_model
 ```
 
 ## API (CLAUDE.md §4.2)

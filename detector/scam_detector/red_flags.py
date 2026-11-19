@@ -6,7 +6,7 @@ from .contact_verifier import ContactVerifier
 from .semantic_nli import SemanticNLIEnsemble
 
 _WORD_BOUNDARY_ORG_RX = re.compile(
-    r"\b(?:banc(?:a|ii)\s+dunarea|bancadunarea|curier\s*expres|anaf|megashop|mega\s*shop|"
+    r"\bbanca(?=:|\s+(?:dvs|dumneavoastra)\b)|\b(?:banc(?:a|ii)\s+dunarea|bancadunarea|curier\s*expres|anaf|megashop|mega\s*shop|"
     r"suport(?:ul)?\s+tehnic|departament(?:ul)?\s+(?:de\s+)?(?:antifraud[ae]|fraud[ae]|securitate)|"
     r"siguranta\s+financiara\s+a\s+bancii|casa\s+(?:nationala\s+)?de\s+pensii|posta\s+romana|"
     r"banc(?:a|ii)\s+transilvania|bcr|brd|ing|raiffeisen|revolut|unicredit|"
@@ -146,7 +146,7 @@ class RedFlagDetector:
             "sechestrul", "sechestru", "frauda pe cont", "eroare grava", "va sista furnizarea",
         ]
         has_regex_threat = bool(re.search(
-            r"\b(?:cont(?:ul)?\s+(?:dvs\.?\s+|dumneavoastra\s+)?a\s+fost\s+compromis|citatie|mandat\s+de|retinu[t]|inchisoare|goleasca\s+contul)\b",
+            r"\b(?:(?:card|cont)(?:ul)?\s+(?:dvs\.?\s+|dumneavoastra\s+)?a\s+fost\s+(?:blocat|suspendat|restrictionat|compromis)|citatie|mandat\s+de|retinu[t]|inchisoare|goleasca\s+contul)\b",
             text_norm,
         ))
         if (any(p in text_norm for p in threat_patterns) or has_regex_threat) and not is_safety_or_branch_notice:

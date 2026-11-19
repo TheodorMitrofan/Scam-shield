@@ -43,7 +43,7 @@
 | Frontend | Angular 21 (standalone components, signals) + **PrimeNG 21** (Aura preset, `primeicons`) | `frontend/`; use PrimeNG components, not hand-rolled widgets |
 | Backend | FastAPI, Python 3.12 | `backend/` |
 | Database / storage | PostgreSQL 16 (docker-compose); audio files on disk, metadata in DB | opt-in history only |
-| AI / external APIs | **Local only.** Rules + fine-tuned Romanian BERT / XLM-R (`detector/`, `ml/`); faster-whisper for audio later | **NO cloud LLM APIs** |
+| AI / external APIs | **Local only.** Tier 6 SOTA hybrid Neural-SVD+Linear + Semantic + Rules + Whitelist (`detector/`) | **NO cloud LLM APIs** |
 | Hosting / deploy | Local laptops (demo runs on our machine) | |
 
 Do not introduce a new framework, language or major dependency without adding it here and noting it in §7 Decisions.
@@ -59,7 +59,7 @@ someone else's area, (a) change the contract in §4 via a small PR and tell the 
 |---|---|---|---|
 | Theodor | A — Frontend | `frontend/**` | |
 | Giulio | B — Backend / DB / infra / audio pipeline | `backend/**`, `db/**`, `docker-compose.yml` | |
-| Francesco | C — ML / detector / warnings text | `detector/**`, `ml/**`, `models/` | |
+| Francesco | C — ML / detector / API / warnings text | `detector/**` | |
 
 _(Assignment is a proposal from `PLAN.md` — swap names here if the team decides otherwise.)_
 `Scam_Shield_Public_Kit/` is **read-only** official data.
@@ -72,21 +72,19 @@ Shared files (anyone may edit, keep diffs small, pull right before editing): `CL
 ## 3. Repo layout & commands
 
 ```
-/frontend                Angular app                                (A)
-/backend                 FastAPI app; imports `scam_detector`       (B)
-/detector                Python package `scam_detector` (rules, model inference, scoring, warnings)  (C)
-/ml                      training scripts + synthetic dataset       (C)
-/models                  trained weights; models/scam-bert is in Git LFS (`git lfs install && git lfs pull`)  (C)
-/db                      SQL init / migrations                      (B)
+/frontend                Angular app                                                              (A)
+/backend                 FastAPI app; imports `scam_detector` or calls `DETECTOR_URL`             (B)
+/detector                Unified classification folder: `scam_detector/`, `api/`, `ml/`, `tests/` (C)
+/db                      SQL init / migrations                                                    (B)
 /Scam_Shield_Public_Kit  official kit (read-only)
 ```
 Backend ↔ detector boundary is ONLY `scam_detector.load()` and `scam_detector.analyze(scenario: dict) -> dict` (see §4.2).
 
 | Task | Command |
 |---|---|
-| Install | `cd frontend && npm install` · backend: `cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt` · detector API: `pip install -r model_detector/requirements.txt` (+ torch/transformers for the model) |
-| Run locally | `cd frontend && npm start` → http://localhost:4200 (demo shortcut: `/?load=validation&id=V04`) · DB: `docker compose -p scamshield up -d --wait postgres` · backend: `cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000` → http://localhost:8000/docs · detector API: `python -m model_detector --port 8001` (from repo root), then start the backend with `DETECTOR_URL=http://127.0.0.1:8001` |
-| Run tests | backend: `cd backend && .venv/bin/python -m pytest -q` (SQLite in-memory, no Docker needed) · C: `pytest detector/` |
+| Install | `cd frontend && npm install` · backend: `cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt` · detector API: `pip install -r detector/api/requirements.txt` (or `pip install -e detector`) |
+| Run locally | `cd frontend && npm start` → http://localhost:4200 (demo shortcut: `/?load=validation&id=V04`) · DB: `docker compose -p scamshield up -d --wait postgres` · backend: `cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000` → http://localhost:8000/docs · detector API: `python3 -m detector.api --port 8001` (from repo root), then start the backend with `DETECTOR_URL=http://127.0.0.1:8001` |
+| Run tests | backend: `cd backend && .venv/bin/python -m pytest -q` · C: `python3 detector/api/tests/test_api.py` & `PYTHONPATH=detector python3 detector/tests/stress_test.py --with-challenge` |
 | Lint / format | TODO |
 | Seed demo data | TODO |
 | Deploy | TODO |
