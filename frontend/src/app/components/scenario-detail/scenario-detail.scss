@@ -23,6 +23,41 @@
   &.v-SAFE { background: var(--p-green-50); color: var(--p-green-900); }
 }
 
+.warning .verdict { font-size: 20px; font-weight: 700; margin-bottom: 2px; }
+:host-context(.app-dark) .warning {
+  &.v-SCAM { background: color-mix(in srgb, var(--p-red-500) 18%, transparent); color: var(--p-red-200); }
+  &.v-SUSPICIOUS { background: color-mix(in srgb, var(--p-amber-500) 18%, transparent); color: var(--p-amber-200); }
+  &.v-SAFE { background: color-mix(in srgb, var(--p-green-500) 18%, transparent); color: var(--p-green-200); }
+}
+
+.analyzing {
+  display: flex; align-items: center; gap: 10px; padding: 14px 16px; margin-bottom: 18px; border-radius: 12px;
+  background: var(--app-hover); color: var(--app-muted); font-size: 17px;
+  &.offline { color: var(--app-text); }
+}
+
+.facts {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0 0 14px;
+  > div { background: var(--app-hover); border: 1px solid var(--app-border); border-radius: 12px; padding: 10px 14px; }
+  dt { font-size: 14px; color: var(--app-muted); margin-bottom: 4px; }
+  dd { margin: 0; font-size: 17px; font-weight: 600; overflow-wrap: anywhere; }
+}
+.score { font-size: 22px; font-weight: 700;
+  small { font-size: 14px; color: var(--app-muted); font-weight: 500; } }
+.bar {
+  display: block; height: 6px; border-radius: 3px; background: var(--app-border); margin-top: 6px; overflow: hidden;
+  > span { display: block; height: 100%; border-radius: 3px; }
+  &.v-SCAM > span { background: var(--p-red-500); }
+  &.v-SUSPICIOUS > span { background: var(--p-amber-500); }
+  &.v-SAFE > span { background: var(--p-green-500); }
+}
+.flags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 18px; }
+.flags-title { font-weight: 600; margin-right: 4px; }
+
+@media (max-width: 600px) {
+  .facts { grid-template-columns: 1fr; }
+}
+
 .empty {
   min-height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center;
   color: var(--app-muted); text-align: center;

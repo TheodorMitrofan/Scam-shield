@@ -6,6 +6,24 @@
   </div>
 
   <div class="actions">
+    <button
+      type="button"
+      class="status"
+      [class]="'status ' + status().kind"
+      (click)="recheck()"
+      [pTooltip]="status().hint"
+      tooltipPosition="bottom"
+    >
+      <span class="dot" aria-hidden="true"></span>{{ status().label }}
+    </button>
+    <label class="consent" pTooltip="Doar dacă bifați, conversațiile verificate se păstrează (le puteți șterge oricând)." tooltipPosition="bottom">
+      <p-toggleswitch
+        [ngModel]="store.saveHistory()"
+        (ngModelChange)="store.saveHistory.set($event)"
+        inputId="consent"
+      />
+      <span>Salvează în istoric</span>
+    </label>
     <p-button
       [icon]="dark() ? 'pi pi-moon' : 'pi pi-sun'"
       severity="secondary"

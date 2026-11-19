@@ -3,7 +3,13 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { CHANNEL_LABEL } from '../../models/scenario';
-import { senderOf, tagOf } from '../../services/result-utils';
+import {
+  VERDICT_LABEL,
+  flagLabel,
+  scamTypeLabel,
+  senderOf,
+  tagOf,
+} from '../../services/result-utils';
 import { ScenarioStore } from '../../services/scenario-store';
 import { Conversation } from '../conversation/conversation';
 
@@ -20,6 +26,9 @@ export class ScenarioDetail {
   readonly back = output<void>();
 
   protected readonly channelLabel = CHANNEL_LABEL;
+  protected readonly verdictLabel = VERDICT_LABEL;
+  protected readonly flagLabel = flagLabel;
+  protected readonly scamTypeLabel = scamTypeLabel;
   protected readonly tag = computed(() => {
     const s = this.store.selected();
     return s ? tagOf(s, this.store.selectedResult()) : null;

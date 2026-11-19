@@ -1,7 +1,7 @@
 import { Component, computed, input } from '@angular/core';
 import { API_BASE } from '../../api.config';
 import { AnalysisResult, Scenario } from '../../models/scenario';
-import { flagsAt, isFirstAlert } from '../../services/result-utils';
+import { flagLabel, flagsAt, isFirstAlert } from '../../services/result-utils';
 
 /**
  * Renders `call_transcript` scenarios as a phone call with live captions.
@@ -32,5 +32,6 @@ export class CallView {
   }
 
   protected readonly flagsAt = flagsAt;
+  protected readonly flagLabel = flagLabel;
   protected readonly isFirstAlert = isFirstAlert;
 }

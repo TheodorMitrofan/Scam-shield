@@ -44,6 +44,14 @@
 }
 .row1 { display: flex; align-items: center; gap: 12px; }
 .cb { display: inline-flex; }
+.busy { color: var(--app-muted); }
+.score {
+  font-size: 14px; font-weight: 700; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor;
+  &.v-SCAM { color: var(--p-red-600); }
+  &.v-SUSPICIOUS { color: var(--p-amber-600); }
+  &.v-SAFE { color: var(--p-green-600); }
+}
+.errors.api div { flex-wrap: wrap; }
 .id { margin-left: auto; font-size: 15px; font-weight: 600; color: var(--app-text); }
 .title {
   display: flex; align-items: center; gap: 8px; margin: 10px 0 4px 34px;

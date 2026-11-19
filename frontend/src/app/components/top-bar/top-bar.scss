@@ -17,6 +17,17 @@
 
 .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 
+.status {
+  display: inline-flex; align-items: center; gap: 8px; padding: 0.4rem 0.75rem; border-radius: 999px;
+  border: 1px solid var(--app-border); background: var(--app-surface); color: var(--app-text);
+  font: inherit; font-size: 14px; font-weight: 500; cursor: pointer;
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--app-muted); }
+  &.on .dot { background: var(--p-green-500); }
+  &.stub .dot { background: var(--p-amber-500); }
+  &.off .dot { background: var(--p-red-500); }
+}
+.consent { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500; cursor: pointer; padding: 0 4px; }
+
 /* Native file inputs styled like PrimeNG secondary outlined buttons. */
 .file-btn {
   position: relative; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;

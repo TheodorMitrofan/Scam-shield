@@ -1,5 +1,6 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { AnalysisResult, CHANNEL_LABEL, Channel, Scenario, Verdict } from '../models/scenario';
+import { ApiError, ApiService, HealthResponse } from './api.service';
 import { byId, parseScenario, scenarioFromText } from './scenario-parser';
 
 // HACK: until backend GET /api/scenarios/validation exists, the validation JSONs are served
@@ -28,13 +29,22 @@ export function normalize(s: string): string {
 /** Holds the scenarios loaded in the UI. Messages stay in memory only (privacy: nothing is persisted). */
 @Injectable({ providedIn: 'root' })
 export class ScenarioStore {
+  private readonly api = inject(ApiService);
+
   readonly scenarios = signal<Scenario[]>([]);
   readonly selectedId = signal<string | null>(null);
   readonly errors = signal<string[]>([]);
   readonly loading = signal(false);
 
-  /** Detector output per scenario id; empty until the backend is wired in. */
+  /** Detector output per scenario id (from the backend). */
   readonly results = signal<Record<string, AnalysisResult>>({});
+  /** Ids currently being analysed (spinner on the card / detail). */
+  readonly analyzing = signal<ReadonlySet<string>>(new Set());
+  /** Last backend problem, shown as a banner; null when everything works. */
+  readonly apiError = signal<string | null>(null);
+  readonly health = signal<HealthResponse | null>(null);
+  /** Consent checkbox: only when true does the backend store the conversation (?save=true). */
+  readonly saveHistory = signal(false);
 
   // Inbox UI state
   readonly search = signal('');
@@ -157,9 +167,25 @@ export class ScenarioStore {
     );
     if (list.length === 0) errors.push('Nu am găsit niciun fișier .json.');
     this.replace(parsed, errors);
+    await this.analyze(parsed);
   }
 
   async loadValidationSet(): Promise<void> {
+    this.loading.set(true);
+    try {
+      const fromApi = await this.api.validationSet();
+      this.replace(fromApi.map((raw, i) => parseScenario(raw, VALIDATION_IDS[i] ?? `V${i + 1}`)), []);
+      await this.analyze(this.scenarios());
+      return;
+    } catch {
+      // HACK: backend down → fall back to the static copy so the UI still shows the conversations.
+    } finally {
+      this.loading.set(false);
+    }
+    await this.loadValidationSetStatic();
+  }
+
+  private async loadValidationSetStatic(): Promise<void> {
     this.loading.set(true);
     const errors: string[] = [];
     const parsed: Scenario[] = [];
@@ -176,6 +202,7 @@ export class ScenarioStore {
     );
     this.replace(parsed, errors);
     this.loading.set(false);
+    await this.analyze(parsed);
   }
 
   /** Next free id for a pasted scenario: PASTE, PASTE-2, PASTE-3… */
@@ -193,6 +220,58 @@ export class ScenarioStore {
     s.id = this.nextPasteId();
     this.scenarios.update((all) => [...all, s].sort(byId));
     this.select(s.id);
+    void this.analyze([s]);
+  }
+
+  isAnalyzing(id: string): boolean {
+    return this.analyzing().has(id);
+  }
+
+  async refreshHealth(): Promise<void> {
+    try {
+      this.health.set(await this.api.health());
+    } catch {
+      this.health.set(null);
+    }
+  }
+
+  /** Re-runs the detector on everything loaded (e.g. after the backend comes back). */
+  reanalyzeAll(): Promise<void> {
+    return this.analyze(this.scenarios());
+  }
+
+  /**
+   * Sends scenarios to the backend (one batch call) and stores the results by id.
+   * If saving was requested but the DB is down (503), retries without saving so the user still
+   * gets the analysis.
+   */
+  async analyze(list: Scenario[]): Promise<void> {
+    if (!list.length) return;
+    const ids = list.map((s) => s.id);
+    this.analyzing.update((a) => new Set([...a, ...ids]));
+    const save = this.saveHistory();
+    try {
+      let responses;
+      try {
+        responses = await this.api.analyzeBatch(list, save);
+      } catch (e) {
+        if (!(save && e instanceof ApiError && e.status === 503)) throw e;
+        responses = await this.api.analyzeBatch(list, false);
+        this.apiError.set('Istoricul nu este disponibil acum; mesajele au fost verificate fără a fi salvate.');
+      }
+      const loaded = new Set(this.scenarios().map((s) => s.id));
+      this.results.update((r) => {
+        const next = { ...r };
+        for (const { result } of responses) if (loaded.has(result.id)) next[result.id] = result;
+        return next;
+      });
+      if (!save || responses.every((x) => x.saved)) this.apiError.set(null);
+    } catch (e) {
+      this.apiError.set(e instanceof Error ? e.message : 'Analiza nu a reușit.');
+    } finally {
+      this.analyzing.update((a) => new Set([...a].filter((x) => !ids.includes(x))));
+      void this.refreshHealth();
+    }
   }
 
   clear(): void {

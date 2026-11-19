@@ -72,6 +72,15 @@
   />
 </div>
 
+@if (store.apiError(); as err) {
+  <div class="errors api" role="alert">
+    <div>
+      <i class="pi pi-wifi" aria-hidden="true"></i> {{ err }}
+      <p-button label="Reîncearcă" size="small" [text]="true" (onClick)="store.reanalyzeAll()" />
+    </div>
+  </div>
+}
+
 @if (store.errors().length) {
   <div class="errors" role="alert">
     @for (e of store.errors(); track e) {
@@ -106,6 +115,11 @@
               />
             </span>
             <p-tag [value]="tag(s).label" [severity]="tag(s).severity" [rounded]="true" />
+            @if (store.isAnalyzing(s.id)) {
+              <i class="pi pi-spin pi-spinner busy" aria-label="Se analizează"></i>
+            } @else if (store.results()[s.id]; as r) {
+              <span class="score" [class]="'score v-' + r.verdict">{{ r.risk_score }}</span>
+            }
             <span class="id">{{ s.id }}</span>
           </div>
           <div class="title">

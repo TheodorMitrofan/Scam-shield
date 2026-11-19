@@ -1,6 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { AnalysisResult, CHANNEL_LABEL, Scenario } from '../../models/scenario';
-import { flagsAt, isFirstAlert } from '../../services/result-utils';
+import { flagLabel, flagsAt, isFirstAlert } from '../../services/result-utils';
 
 /** Renders sms / whatsapp / chat scenarios as a phone messaging app. */
 @Component({
@@ -26,5 +26,6 @@ export class ChatView {
   );
 
   protected readonly flagsAt = flagsAt;
+  protected readonly flagLabel = flagLabel;
   protected readonly isFirstAlert = isFirstAlert;
 }

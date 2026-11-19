@@ -232,7 +232,7 @@ Rules: one row per task; only edit your own rows; when you pick a task set `doin
 | 10 | Audio upload + transcription + storage (stage 4/5) | backend | Giulio | todo | | after MVP |
 | 11 | Voice note view (stage 4) | frontend | Theodor | todo | | after MVP |
 | 12 | Backend DTOs + DB (hybrid EAV) + analyze/history controllers with consent flag + docker-compose | backend | Giulio | review | giulio/backoffice | covers #3, #4, #9 (stub detector); ownership confirmed: Giulio = backend |
-| 13 | PrimeNG inbox redesign (top bar, search/filters, cards, detail panel, paste dialog) + FE↔BE wiring | frontend | Theodor | doing | theodor/frontend-ui | |
+| 13 | PrimeNG inbox redesign (top bar, search/filters, cards, detail panel, paste dialog) + FE↔BE wiring | frontend | Theodor | review | theodor/frontend-ui | FE calls `/scenarios/validation` + `/analyze/batch?save=`; history UI not built yet |
 
 ---
 
@@ -271,7 +271,8 @@ Append-only. Record anything another agent would otherwise get wrong or re-decid
 
 Things that cost someone time — write them down so the next agent doesn't repeat it.
 
-- _(none yet)_
+- Default `python3` on the Macs is 3.14; create the backend venv with `uv venv --python 3.12 backend/.venv` then `uv pip install --python backend/.venv/bin/python -r backend/requirements.txt`.
+- Frontend sends every analysis (files, folder, validation set, pasted conversation) through `POST /analyze/batch`; if the backend is down it still shows the conversations (validation set falls back to the static copy in `frontend/public/validation`).
 
 ---
 

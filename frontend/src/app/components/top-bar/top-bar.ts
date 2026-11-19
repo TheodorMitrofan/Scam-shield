@@ -1,12 +1,14 @@
-import { Component, inject, output, signal } from '@angular/core';
+import { Component, computed, inject, output, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TooltipModule } from 'primeng/tooltip';
 import { ScenarioStore } from '../../services/scenario-store';
 
-/** Header: brand on the left, theme toggle + load actions on the right. */
+/** Header: brand on the left; backend status, consent switch, theme toggle and load actions on the right. */
 @Component({
   selector: 'app-top-bar',
-  imports: [ButtonModule, TooltipModule],
+  imports: [FormsModule, ButtonModule, ToggleSwitchModule, TooltipModule],
   templateUrl: './top-bar.html',
   styleUrl: './top-bar.scss',
 })
@@ -15,7 +17,24 @@ export class TopBar {
   readonly paste = output<void>();
   protected readonly dark = signal(false);
 
+  protected readonly status = computed(() => {
+    const h = this.store.health();
+    if (!h) {
+      return { kind: 'off', label: 'Server oprit', hint: 'Backend-ul nu răspunde pe portul 8000. Apăsați ca să reîncercați.' };
+    }
+    if (h.detector_stub) {
+      return { kind: 'stub', label: 'Detector demo', hint: 'Backend pornit, dar detectorul real nu e instalat încă (răspunde mereu „Sigur”).' };
+    }
+    return { kind: 'on', label: 'Detector activ', hint: h.db_connected ? 'Totul funcționează.' : 'Detector activ; istoricul (baza de date) nu e disponibil.' };
+  });
+
+  protected async recheck(): Promise<void> {
+    await this.store.refreshHealth();
+    if (this.store.health()) void this.store.reanalyzeAll();
+  }
+
   constructor() {
+    void this.store.refreshHealth();
     // ?theme=dark|light wins (demo links), then the remembered choice.
     const fromUrl = new URLSearchParams(location.search).get('theme');
     let saved: string | null = null;
