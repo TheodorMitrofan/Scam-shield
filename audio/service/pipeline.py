@@ -18,6 +18,9 @@ import time
 from pathlib import Path
 
 import numpy as np
+import soundfile as sf
+from scipy import signal
+from scipy.io import wavfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "vendor"))
 
@@ -32,6 +35,7 @@ from afg.dem import ElevationModel  # noqa: E402
 from afg.geo import haversine_m  # noqa: E402
 
 FS = 4000  # the pipeline works on 4 kHz mono
+FS_PLAYBACK = 16000  # crisp 16 kHz mono WAV for playable/downloadable conversation recordings
 C = 343.0
 MIN_AIRCRAFT_SPEED_MS = 30.0  # ≈ 108 km/h
 MIN_AIRCRAFT_DISTANCE_M = 200.0
@@ -201,21 +205,78 @@ def audit_dopplergeist(wav_path: str) -> dict:
 
 # ----------------------------------------------------------------------------- demo (synthetic)
 
-# Simulated scenarios placed at REAL places near small-aircraft airfields (the flights and the sound are
-# synthetic; only the area is real, so the map links open somewhere meaningful). The microphone is placed
-# by the simulator up to ~6 km from the centre.
+# Scenarios placed at 3 distinct real areas near small-aircraft airfields, each paired with its own
+# real spoken conversation (in `audio/conversations/`) and distinct simulation seed so the recordings,
+# flyovers, and localised coordinates are all different.
 SCENARIOS: dict[str, dict] = {
-    "ro": {"country": "România", "place": "București, zona Aeroportului Băneasa", "lat": 44.503, "lon": 26.102,
-           "ground": 90.0, "seed": 23},
-    "it": {"country": "Italia", "place": "Milano, zona aerodromului Bresso", "lat": 45.540, "lon": 9.203,
-           "ground": 140.0, "seed": 23},
-    "fr": {"country": "Franța", "place": "Paris, zona aerodromului Toussus-le-Noble", "lat": 48.752, "lon": 2.106,
-           "ground": 160.0, "seed": 23},
+    "uk": {
+        "country": "Marea Britanie",
+        "place": "Londra, zona aerodromului Denham",
+        "lat": 51.588,
+        "lon": -0.513,
+        "ground": 76.0,
+        "seed": 107,
+        "conversation": "uk.mp3",
+        "conversation_label": "Interviu BBC (engleză)",
+    },
+    "de": {
+        "country": "Germania",
+        "place": "München, zona aerodromului Oberpfaffenhofen",
+        "lat": 48.081,
+        "lon": 11.283,
+        "ground": 593.0,
+        "seed": 211,
+        "conversation": "de.mp3",
+        "conversation_label": "Interviu podcast (germană)",
+    },
+    "us": {
+        "country": "SUA",
+        "place": "Seattle, zona aerodromului Renton",
+        "lat": 47.493,
+        "lon": -122.216,
+        "ground": 10.0,
+        "seed": 317,
+        "conversation": "us.mp3",
+        "conversation_label": "Interviu dialog (engleză US)",
+    },
 }
+CONVERSATIONS_DIR = Path(__file__).resolve().parents[1] / "conversations"
 RECORDINGS_DIR = Path(__file__).resolve().parents[1] / "demo_cache"
 
-def demo(scenario: str = "ro") -> dict:
-    """Synthetic blind test, two fly-overs with unknown clock (the method's main mode), at a real place."""
+
+def _load_conversation(filename: str) -> np.ndarray:
+    """Load a real spoken conversation clip and resample to FS_PLAYBACK mono."""
+    sp, sr = sf.read(CONVERSATIONS_DIR / filename)
+    if sp.ndim > 1:
+        sp = sp.mean(axis=1)
+    if int(sr) != FS_PLAYBACK:
+        g = np.gcd(FS_PLAYBACK, int(sr))
+        sp = signal.resample_poly(sp, FS_PLAYBACK // g, int(sr) // g)
+    return sp.astype(np.float64)
+
+
+def _mix_conversation(sim_wav: str, speech: np.ndarray, out_wav: Path) -> None:
+    """Mix real conversation speech (high-passed >300 Hz so low-frequency Doppler curves stay clear)
+    with the simulated flyover ambient track and write a 16 kHz mono PCM16 WAV."""
+    x_sim, _, _ = audio.load_audio(sim_wav, fs=FS_PLAYBACK)
+    # Keep 40-280 Hz clear for propeller Doppler ridges while preserving natural voice intelligibility.
+    sos = signal.butter(4, 300.0, btype="highpass", fs=FS_PLAYBACK, output="sos")
+    sp_hp = signal.sosfilt(sos, speech)
+    if len(sp_hp) < len(x_sim):
+        sp_hp = np.tile(sp_hp, int(np.ceil(len(x_sim) / len(sp_hp))))[:len(x_sim)]
+    else:
+        sp_hp = sp_hp[:len(x_sim)]
+    sim_rms = float(np.sqrt(np.mean(x_sim ** 2))) + 1e-9
+    sp_rms = float(np.sqrt(np.mean(sp_hp ** 2))) + 1e-9
+    mix = x_sim + sp_hp * (1.2 * sim_rms / sp_rms)
+    peak = float(np.max(np.abs(mix))) + 1e-9
+    mix = 0.9 * mix / peak
+    out_wav.parent.mkdir(parents=True, exist_ok=True)
+    wavfile.write(str(out_wav), FS_PLAYBACK, (mix * 32767.0).astype(np.int16))
+
+
+def demo(scenario: str = "uk") -> dict:
+    """Blind localisation on a real conversation mixed with two propeller fly-overs at a real area."""
     from afg.scoring import heatmap, rank_consistent, score_candidates, trace_check
     from afg.search import run_search
     from afg.simulate import simulate
@@ -224,12 +285,21 @@ def demo(scenario: str = "ro") -> dict:
     sc = SCENARIOS[scenario]
     seed = sc["seed"]
     t_start = time.time()
+    speech = _load_conversation(sc["conversation"])
+    dur_s = len(speech) / FS_PLAYBACK
+    t1_rec, tail = 45.0, 45.0
+    gap = max(90.0, dur_s - t1_rec - tail)
+
     with tempfile.TemporaryDirectory(prefix="afg_demo_") as work:
-        truth, wav, tdir = simulate(work, lat0=sc["lat"], lon0=sc["lon"], ground=sc["ground"], seed=seed)
-        RECORDINGS_DIR.mkdir(exist_ok=True)
-        import shutil
-        shutil.copyfile(wav, RECORDINGS_DIR / f"{scenario}.wav")  # so the jury can listen / download it
-        x, fs, _ = audio.load_audio(wav, fs=FS)
+        # Scale tone_amp & noise_rms x100 so simulate()'s synthetic voice bursts (-40 dB) vanish
+        # while preserving the exact aircraft-to-noise SNR without editing vendored afg.
+        truth, sim_wav, tdir = simulate(
+            work, lat0=sc["lat"], lon0=sc["lon"], ground=sc["ground"], seed=seed,
+            t1_rec=t1_rec, gap=gap, tail=tail, fs=FS_PLAYBACK, tone_amp=0.5, noise_rms=3.0,
+        )
+        out_wav = RECORDINGS_DIR / f"{scenario}.wav"
+        _mix_conversation(sim_wav, speech, out_wav)
+        x, fs, _ = audio.load_audio(str(out_wav), fs=FS)
         spec = audio.compute_spectrogram(x, fs, 1.0, 0.2, 20, 600, 120)
         boxes = sorted(audio.detect_events(spec, 40, 400, 1), key=lambda e: -e["score_z"])[:2]
         boxes.sort(key=lambda e: e["t0"])
@@ -309,6 +379,7 @@ def demo(scenario: str = "ro") -> dict:
             "scenario": scenario,
             "country": sc["country"],
             "place": sc["place"],
+            "conversation_label": sc["conversation_label"],
             "seed": seed,
             "runtime_s": time.time() - t_start,
             "recording_s": float(truth["rec_duration_s"]),
@@ -322,6 +393,6 @@ def demo(scenario: str = "ro") -> dict:
                         "f0_hz": float(fi["f0"])} for fi in fits],
             "matched_flights": [{"id": str(fl.hex[i]), "type": str(fl.type[i] or "")} for i in matched],
             "flights": flights_out,
-            "spectrogram": _spectrogram_png(spec, boxes, traces, title="Înregistrare simulată: două avioane trec pe deasupra"),
+            "spectrogram": _spectrogram_png(spec, boxes, traces, title="Conversație + două avioane care trec pe deasupra"),
             "heatmap": heat_png,
         }

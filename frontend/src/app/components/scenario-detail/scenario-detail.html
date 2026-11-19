@@ -44,14 +44,18 @@
         aria-hidden="true"
       ></i>
       <div>
-        <div class="verdict">{{ verdictLabel[r.verdict] }}</div>
-        <p>{{ r.warning.ro }}</p>
+        <div class="verdict">{{ lang.verdict(r.verdict) }}</div>
+        <p [attr.lang]="lang.lang()">{{ lang.warning(r.warning) }}</p>
       </div>
     </div>
 
+    @if (r.verdict !== 'SAFE') {
+      <app-trusted-call />
+    }
+
     <dl class="facts">
       <div>
-        <dt>Risc</dt>
+        <dt>{{ lang.t('risk') }}</dt>
         <dd>
           <span class="score">{{ r.risk_score }}<small>/100</small></span>
           <span class="bar" [class]="'bar v-' + r.verdict" aria-hidden="true"
@@ -60,12 +64,12 @@
         </dd>
       </div>
       <div>
-        <dt>Tip</dt>
-        <dd [title]="r.scam_type">{{ scamTypeLabel(r.scam_type) }}</dd>
+        <dt>{{ lang.t('type') }}</dt>
+        <dd [title]="r.scam_type">{{ lang.scamType(r.scam_type) }}</dd>
       </div>
       <div>
-        <dt>Prima alertă</dt>
-        <dd>{{ r.first_alert ? 'la mesajul ' + r.first_alert : '—' }}</dd>
+        <dt>{{ lang.t('firstAlert') }}</dt>
+        <dd>{{ r.first_alert ? lang.t('atMessage') + ' ' + r.first_alert : '—' }}</dd>
       </div>
     </dl>
 
@@ -85,11 +89,16 @@
 
     @if (r.red_flags.length) {
       <div class="flags">
-        <span class="flags-title">De ce:</span>
+        <span class="flags-title">{{ lang.t('why') }}</span>
         @for (f of r.red_flags; track f) {
-          <p-tag [value]="flagLabel(f)" severity="secondary" [title]="f" />
+          <p-tag [value]="lang.flag(f)" severity="secondary" [title]="f" />
         }
       </div>
+      @if (r.evidence?.length) {
+        <p class="highlight-hint">
+          <i class="pi pi-info-circle" aria-hidden="true"></i> {{ lang.t('highlightHint') }}
+        </p>
+      }
     }
   } @else if (store.apiError()) {
     <div class="analyzing offline" role="status">

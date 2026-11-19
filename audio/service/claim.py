@@ -23,7 +23,7 @@ import numpy as np
 from scipy.io import wavfile
 from scipy.signal import resample_poly
 
-from .pipeline import FS, RECORDINGS_DIR, SCENARIOS, _spectrogram_png, adsb, audio, physics, C  # reuse the wrapper's setup
+from .pipeline import FS, RECORDINGS_DIR, _spectrogram_png, adsb, audio, physics, C  # reuse the wrapper's setup
 
 from afg.common import parse_time  # noqa: E402  (vendor path is set up by .pipeline)
 from afg.dem import ElevationModel  # noqa: E402
@@ -31,7 +31,8 @@ from afg.dem import ElevationModel  # noqa: E402
 CLIP_S = 100          # length of the voice message
 FLYOVER_AT_S = 50.0   # the aircraft passes closest ~50 s into the message
 CLOCK_TOL_S = 30.0    # how well we know the message time (WhatsApp shows minutes)
-PLAYBACK_FS = 8000
+PLAYBACK_FS = 16000  # the original message people listen to
+ANALYSIS_FS = 8000   # internal copy used only to detect the aircraft
 
 # Places a scammer may claim. key → (label, lat, lon, ground elevation m). Coordinates = a GA airfield area,
 # used only to simulate that area's air traffic at the same hour.
@@ -49,7 +50,8 @@ PLACES: dict[str, tuple[str, float, float, float]] = {
 ALIASES = {"spania": "madrid", "franta": "paris", "italia": "roma", "anglia": "londra", "germania": "berlin",
            "austria": "viena", "marea britanie": "londra"}
 
-ACTUAL = SCENARIOS["ro"]  # where the (simulated) message was really recorded
+# Where the (simulated) message was really recorded — own constant, independent of pipeline.SCENARIOS.
+ACTUAL = {"place": "București, zona Aeroportului Băneasa", "lat": 44.503, "lon": 26.102, "ground": 90.0, "seed": 23}
 
 TRANSCRIPT = [
     (3.0, "Mamă, sunt eu, Andrei. Mi s-a stricat telefonul, ăsta e numărul nou. Am făcut un accident aici, "
@@ -70,18 +72,24 @@ def claimed_place(text: str) -> str | None:
     return min(hits)[1] if hits else None
 
 
-def _speech(work: str, start_s: float, text: str, n: int, fs: int) -> np.ndarray:
-    """Synthetic Romanian voice (macOS `say`, voice Ioana) placed at start_s; silence if unavailable."""
+def _speech(work: str, start_s: float, text: str, n: int, fs: int, band_limited: bool) -> np.ndarray:
+    """Synthetic Romanian voice (macOS `say`, voice Ioana) placed at start_s; silence if unavailable.
+
+    band_limited=False → the ORIGINAL voice, used for the file people listen to.
+    band_limited=True  → DEMO SIMPLIFICATION used only for the analysis copy: voice above 450 Hz so it does not
+    cover the propeller tone the detector looks for (40–400 Hz). Real speech overlapping it is harder."""
     out = np.zeros(n)
     if not (shutil.which("say") and shutil.which("ffmpeg")):
         return out
-    aiff, wav = os.path.join(work, f"s{start_s:.0f}.aiff"), os.path.join(work, f"s{start_s:.0f}.wav")
+    aiff = os.path.join(work, f"s{start_s:.0f}.aiff")
+    wav = os.path.join(work, f"s{start_s:.0f}_{fs}_{'band' if band_limited else 'orig'}.wav")
     try:
-        subprocess.run(["say", "-v", "Ioana", "-o", aiff, text], check=True, capture_output=True, timeout=60)
-        # DEMO SIMPLIFICATION: voice band-limited above 450 Hz (like a compressed voice note) so it does not
-        # cover the propeller tone the detector looks for (40–400 Hz). Real speech overlapping it is harder.
-        subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", aiff, "-ac", "1", "-ar", str(fs),
-                        "-af", "highpass=f=450,highpass=f=450", wav], check=True, capture_output=True, timeout=60)
+        if not os.path.exists(aiff):
+            subprocess.run(["say", "-v", "Ioana", "-o", aiff, text], check=True, capture_output=True, timeout=60)
+        cmd = ["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", aiff, "-ac", "1", "-ar", str(fs)]
+        if band_limited:
+            cmd += ["-af", "highpass=f=450,highpass=f=450"]
+        subprocess.run(cmd + [wav], check=True, capture_output=True, timeout=60)
     except Exception:
         return out
     sr, s = wavfile.read(wav)
@@ -118,16 +126,20 @@ def verify_claim(claimed_key: str = "madrid") -> dict:
         truth, wav, tdir = simulate(os.path.join(work, "real"), lat0=ACTUAL["lat"], lon0=ACTUAL["lon"],
                                     ground=ACTUAL["ground"], seed=ACTUAL["seed"], t1_rec=FLYOVER_AT_S)
         x4, fs4, _ = audio.load_audio(wav, fs=FS)
-        plane = resample_poly(x4[: CLIP_S * fs4], PLAYBACK_FS // FS, 1)
-        n = len(plane)
-        voice = sum(_speech(work, t0, txt, n, PLAYBACK_FS) for t0, txt in TRANSCRIPT)
-        mix = plane + voice
-        mix = 0.9 * mix / (np.abs(mix).max() or 1.0)
-        RECORDINGS_DIR.mkdir(exist_ok=True)
-        wavfile.write(RECORDINGS_DIR / "claim.wav", PLAYBACK_FS, (mix * 32767).astype(np.int16))
+        clip = x4[: CLIP_S * fs4]
 
-        # 2) analyse the mixed message exactly like a real upload would be analysed
-        x = resample_poly(mix, 1, PLAYBACK_FS // FS)
+        # (a) ORIGINAL voice message — what the user hears when pressing play
+        plane_o = resample_poly(clip, PLAYBACK_FS // FS, 1)
+        original = plane_o + sum(_speech(work, t0, txt, len(plane_o), PLAYBACK_FS, False) for t0, txt in TRANSCRIPT)
+        original = 0.9 * original / (np.abs(original).max() or 1.0)
+        RECORDINGS_DIR.mkdir(exist_ok=True)
+        wavfile.write(RECORDINGS_DIR / "claim.wav", PLAYBACK_FS, (original * 32767).astype(np.int16))
+
+        # (b) analysis copy (never served): same message with the voice band-limited, see _speech()
+        plane_a = resample_poly(clip, ANALYSIS_FS // FS, 1)
+        mix = plane_a + sum(_speech(work, t0, txt, len(plane_a), ANALYSIS_FS, True) for t0, txt in TRANSCRIPT)
+        mix = 0.9 * mix / (np.abs(mix).max() or 1.0)
+        x = resample_poly(mix, 1, ANALYSIS_FS // FS)
         spec = audio.compute_spectrogram(x, FS, 1.0, 0.2, 20, 600, 120)
         # Speech can split one fly-over into several boxes: try the longest descending ones first and keep
         # the first that fits the physics of a single aircraft passing (same rule a real upload would use).
@@ -186,7 +198,7 @@ def verify_claim(claimed_key: str = "madrid") -> dict:
         "message_time_utc": truth["rec_start_utc"],
         "duration_s": CLIP_S,
         "claimed": {"key": claimed_key, "label": label, **claimed},
-        "actual": {"label": "București, zona Aeroportului Băneasa", **actual},
+        "actual": {"label": ACTUAL["place"], **actual},
         "event": {"t_cpa_s": float(fit["t_cpa_rx"]), "speed_kmh": float(fit["v"] * 3.6), "distance_m": float(fit["d"])},
         "runtime_s": time.time() - t_start,
         "spectrogram": _spectrogram_png(spec, [b], [(tt, f)], title="Mesaj vocal: vocea + un avion care trece"),

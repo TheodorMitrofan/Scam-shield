@@ -7,6 +7,7 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TooltipModule } from 'primeng/tooltip';
 import { AuthService } from '../../services/auth.service';
 import { ScenarioStore } from '../../services/scenario-store';
+import { UiLang } from '../../services/ui-lang';
 
 /** Header: brand on the left; backend status, theme toggle, consolidated add-actions modal, and logout on the right. */
 @Component({
@@ -18,6 +19,11 @@ import { ScenarioStore } from '../../services/scenario-store';
 export class TopBar {
   protected readonly auth = inject(AuthService);
   protected readonly store = inject(ScenarioStore);
+  protected readonly lang = inject(UiLang);
+  protected readonly langs = [
+    { label: 'RO', value: 'ro' },
+    { label: 'EN', value: 'en' },
+  ];
   readonly paste = output<void>();
   readonly logout = output<void>();
   protected readonly actionsOpen = signal(false);

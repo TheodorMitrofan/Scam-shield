@@ -25,7 +25,8 @@
           @if (m.from === 'reader') {
             <span class="sr-only">Dumneavoastră:</span>
           }
-          <p class="text">{{ m.text || '(mesaj gol)' }}</p>
+          <p class="text">@if (m.text) {@for (seg of segments(m.n, m.text); track $index) {@if (seg.flag) {<mark class="danger" tabindex="0" role="button" [title]="flagLabel(seg.flag)" (click)="explain(m.n, seg.flag)" (keydown.enter)="explain(m.n, seg.flag)" [attr.aria-label]="seg.text + ': ' + flagLabel(seg.flag)">{{ seg.text }}</mark>} @else {{{ seg.text }}}}} @else {(mesaj gol)}</p>
+          @if (explained(); as e) { @if (e.n === m.n) { <p class="why-note" role="status"><i class="pi pi-exclamation-triangle" aria-hidden="true"></i><span>{{ flagLabel(e.flag) }}</span></p> } }
           @if (flagsAt(result(), m.n).length) {
             <ul class="flags">
               @for (f of flagsAt(result(), m.n); track f) {

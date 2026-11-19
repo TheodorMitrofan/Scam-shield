@@ -17,6 +17,31 @@
     </p-selectbutton>
   </div>
 
+  <!-- Language + theme: same place on every page (top right, next to the view tabs). -->
+  <div class="prefs">
+    <p-selectbutton
+      [options]="langs"
+      optionLabel="label"
+      optionValue="value"
+      [allowEmpty]="false"
+      [ngModel]="lang.lang()"
+      (ngModelChange)="lang.set($event)"
+      class="langs"
+      ariaLabel="Limba avertismentelor / Warning language"
+      pTooltip="Limba avertismentelor · Warning language"
+      tooltipPosition="bottom"
+    />
+    <p-button
+      [icon]="dark() ? 'pi pi-moon' : 'pi pi-sun'"
+      severity="secondary"
+      [outlined]="true"
+      (onClick)="toggleTheme()"
+      [ariaLabel]="dark() ? 'Temă deschisă' : 'Temă întunecată'"
+      pTooltip="Schimbă tema"
+      tooltipPosition="bottom"
+    />
+  </div>
+
   <div class="actions">
     @if (view() !== 'audio') {
     <button
@@ -30,15 +55,6 @@
       <span class="dot" aria-hidden="true"></span>{{ status().label }}
     </button>
     }
-    <p-button
-      [icon]="dark() ? 'pi pi-moon' : 'pi pi-sun'"
-      severity="secondary"
-      [outlined]="true"
-      (onClick)="toggleTheme()"
-      [ariaLabel]="dark() ? 'Temă deschisă' : 'Temă întunecată'"
-      pTooltip="Schimbă tema"
-      tooltipPosition="bottom"
-    />
     @if (view() !== 'audio') {
       <p-button
         label="Adaugă / Verifică"

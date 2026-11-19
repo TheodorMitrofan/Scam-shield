@@ -28,7 +28,7 @@ export interface DemoFlight {
   points: [number, number][]; // [lat, lon]
 }
 
-export type DemoScenario = 'ro' | 'it' | 'fr';
+export type DemoScenario = 'uk' | 'de' | 'us';
 
 export interface DemoResult {
   ok: boolean;
@@ -36,6 +36,7 @@ export interface DemoResult {
   scenario: DemoScenario;
   country: string;
   place: string;
+  conversation_label?: string;
   seed: number;
   runtime_s: number;
   recording_s: number;

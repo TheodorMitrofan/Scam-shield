@@ -6,5 +6,6 @@ matplotlib>=3.7
 fastapi>=0.115
 uvicorn[standard]>=0.32
 python-multipart>=0.0.9
+soundfile>=0.12
 # Second detector engine (PolyForm Noncommercial 1.0.0 — installed, not vendored; noncommercial use only)
 dopplergeist==0.1.3
