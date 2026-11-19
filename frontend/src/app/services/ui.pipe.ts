@@ -293,4 +293,26 @@ export const EN: Record<string, string> = {
   "sau": "or",
   "Londra": "London",
   "München": "Munich",
+
+  // login / auth
+  "Autentificare": "Sign in",
+  "Autentificați-vă pentru a accesa mesajele și verificările": "Sign in to access your messages and checks",
+  "Cont nou (User)": "New account (User)",
+  "Utilizator": "Username",
+  "ex. admin, user, maria": "e.g. admin, user, maria",
+  "Nume afișat (opțional)": "Display name (optional)",
+  "ex. Ion Ionescu": "e.g. John Doe",
+  "Parolă": "Password",
+  "Intră în cont": "Sign in",
+  "Creează cont User": "Create User account",
+  "Conturi demo din baza de date (click pentru acces rapid):": "Demo accounts from the database (click for quick access):",
+  "Admin (vede toate datele)": "Admin (sees all data)",
+  "User (doar datele proprii)": "User (own data only)",
+  "Maria (alt cont de user)": "Maria (another user account)",
+  "parola:": "password:",
+  "Autentificarea a eșuat.": "Sign in failed.",
+  "Serverul de autentificare nu răspunde. Porniți backend-ul (port 8000).":
+    "The authentication server is not responding. Start the backend (port 8000).",
+  "Utilizator sau parolă greșită.": "Wrong username or password.",
+  "Există deja un utilizator cu acest nume.": "An account with this username already exists.",
 };

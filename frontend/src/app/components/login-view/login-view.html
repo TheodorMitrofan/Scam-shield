@@ -1,11 +1,21 @@
 <div class="wrap">
-  <section class="card" aria-label="Autentificare">
+  <section class="card" [attr.aria-label]="'Autentificare' | ui">
     <div class="head">
       <span class="logo" aria-hidden="true"><i class="pi pi-shield"></i></span>
-      <div>
+      <div class="head-copy">
         <h1>Scam Shield</h1>
-        <p>Autentificați-vă pentru a accesa mesajele și verificările</p>
+        <p>{{ 'Autentificați-vă pentru a accesa mesajele și verificările' | ui }}</p>
       </div>
+      <p-selectbutton
+        [options]="langs"
+        optionLabel="label"
+        optionValue="value"
+        [allowEmpty]="false"
+        [ngModel]="lang.lang()"
+        (ngModelChange)="lang.set($event)"
+        class="langs"
+        ariaLabel="Limba / Language"
+      />
     </div>
 
     <div class="tabs">
@@ -14,26 +24,26 @@
         [class.active]="mode() === 'login'"
         (click)="mode.set('login'); error.set(null)"
       >
-        Autentificare
+        {{ 'Autentificare' | ui }}
       </button>
       <button
         type="button"
         [class.active]="mode() === 'register'"
         (click)="mode.set('register'); error.set(null)"
       >
-        Cont nou (User)
+        {{ 'Cont nou (User)' | ui }}
       </button>
     </div>
 
     <form class="form" (ngSubmit)="submit()">
       <label class="field">
-        <span>Utilizator</span>
+        <span>{{ 'Utilizator' | ui }}</span>
         <input
           pInputText
           type="text"
           name="username"
           autocomplete="username"
-          placeholder="ex. admin, user, maria"
+          [placeholder]="'ex. admin, user, maria' | ui"
           [ngModel]="username()"
           (ngModelChange)="username.set($event)"
         />
@@ -41,12 +51,12 @@
 
       @if (mode() === 'register') {
         <label class="field">
-          <span>Nume afișat (opțional)</span>
+          <span>{{ 'Nume afișat (opțional)' | ui }}</span>
           <input
             pInputText
             type="text"
             name="displayName"
-            placeholder="ex. Ion Ionescu"
+            [placeholder]="'ex. Ion Ionescu' | ui"
             [ngModel]="displayName()"
             (ngModelChange)="displayName.set($event)"
           />
@@ -54,7 +64,7 @@
       }
 
       <label class="field">
-        <span>Parolă</span>
+        <span>{{ 'Parolă' | ui }}</span>
         <input
           pInputText
           type="password"
@@ -67,12 +77,12 @@
       </label>
 
       @if (error(); as err) {
-        <p-message severity="error" [text]="err" />
+        <p-message severity="error" [text]="err | ui" />
       }
 
       <p-button
         type="submit"
-        [label]="mode() === 'login' ? 'Intră în cont' : 'Creează cont User'"
+        [label]="(mode() === 'login' ? 'Intră în cont' : 'Creează cont User') | ui"
         icon="pi pi-sign-in"
         [loading]="busy()"
         [disabled]="!username().trim() || !password()"
@@ -81,7 +91,7 @@
     </form>
 
     <div class="demo">
-      <div class="demo-title">Conturi demo din baza de date (click pentru acces rapid):</div>
+      <div class="demo-title">{{ 'Conturi demo din baza de date (click pentru acces rapid):' | ui }}</div>
       <div class="demo-list">
         @for (acc of demoAccounts; track acc.username) {
           <button
@@ -97,7 +107,7 @@
             />
             <span class="demo-info">
               <strong>{{ acc.username }}</strong>
-              <small>{{ acc.label }} · parola: <code>{{ acc.password }}</code></small>
+              <small>{{ acc.label | ui }} · {{ 'parola:' | ui }} <code>{{ acc.password }}</code></small>
             </span>
             <i class="pi pi-arrow-right" aria-hidden="true"></i>
           </button>

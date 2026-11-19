@@ -3,17 +3,25 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { TagModule } from 'primeng/tag';
 import { AuthService } from '../../services/auth.service';
+import { UiLang } from '../../services/ui-lang';
+import { UiPipe } from '../../services/ui.pipe';
 
 @Component({
   selector: 'app-login-view',
-  imports: [FormsModule, ButtonModule, InputTextModule, MessageModule, TagModule],
+  imports: [UiPipe, FormsModule, ButtonModule, InputTextModule, MessageModule, SelectButtonModule, TagModule],
   templateUrl: './login-view.html',
   styleUrl: './login-view.scss',
 })
 export class LoginView {
   private readonly auth = inject(AuthService);
+  protected readonly lang = inject(UiLang);
+  protected readonly langs = [
+    { label: 'RO', value: 'ro' },
+    { label: 'EN', value: 'en' },
+  ];
   readonly authenticated = output<void>();
 
   protected readonly mode = signal<'login' | 'register'>('login');
