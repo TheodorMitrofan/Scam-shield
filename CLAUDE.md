@@ -86,7 +86,7 @@ Backend ↔ detector boundary is ONLY `scam_detector.load()` and `scam_detector.
 |---|---|
 | Install | `cd frontend && npm install` · backend/detector: TODO (B/C) |
 | Run locally | `cd frontend && npm start` → http://localhost:4200 (demo shortcut: `/?load=validation&id=V04`) · backend: TODO (B) |
-| Run tests | TODO (C: `pytest detector/`) |
+| Run tests | backend: `cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/python -m pytest -q` · C: `pytest detector/` |
 | Lint / format | TODO |
 | Seed demo data | TODO |
 | Deploy | TODO |
@@ -113,6 +113,15 @@ All under `http://localhost:8000/api`. CORS allows `http://localhost:4200`.
 | POST | `/analyze/text` | `{ text: string, channel?: Channel }` | `AnalysisResult` (wrapped as 1-message scenario, id `"PASTE"`) | B | planned |
 | POST | `/audio` (stage 4) | multipart `file` (.wav/.mp3/.mp4/.m4a), `save: bool` | `{ scenario: Scenario, result: AnalysisResult }` | B | later |
 | GET | `/audio/{audio_id}` (stage 4) | – | audio bytes (for the player) | B | later |
+| GET | `/history` | header `X-Client-Id` | `HistoryList` (no message text) | B | planned |
+| GET | `/history/{id}` | header `X-Client-Id` | `HistoryItemDetail` | B | planned |
+| DELETE | `/history/{id}` · `/history` | header `X-Client-Id` | `{ deleted: number }` (also deletes audio file) | B | planned |
+
+**Saving = opt-in.** Any analyze/audio endpoint stores NOTHING by default. To save, the caller adds
+query `?save=true&retention_hours=24` **and** header `X-Client-Id: <uuid>` (random UUID the browser keeps in
+localStorage; no accounts). Then the response is `AnalyzeResponse { result, history_id }`; without consent it's
+the plain `AnalysisResult`. Records expire (`expires_at`) and are deleted by a cleanup job.
+DTO source of truth (Pydantic): `backend/app/schemas/` · DB tables: `backend/app/db/models.py`.
 
 ### 4.2 Data models
 ```ts
@@ -143,6 +152,15 @@ AnalysisResult {
   warning: { ro: string; en?: string };          // ≤3 short sentences, no links/numbers from the message
   evidence?: { n: number; flag: string; span: [number, number] }[];  // char offsets for "why" highlighting (optional)
 }
+// NOTE: the backend re-applies the official formula on every detector response:
+// risk_score = Σ unique flag points (cap 100), verdict from bands, SAFE ⇒ scam_type "NONE" + first_alert null,
+// non-SAFE with "NONE" ⇒ "OTHER". The detector only has to get flags / type / first_alert right.
+
+// Opt-in history (only with consent)
+HistoryItemSummary { id: uuid; created_at: ISO; expires_at: ISO; scenario_id: string; channel: Channel;
+                     verdict: Verdict; scam_type: string; risk_score: number; first_alert: number | null }
+HistoryItemDetail  extends HistoryItemSummary { scenario: Scenario; result: AnalysisResult; audio_id?: uuid }
+HistoryList        { items: HistoryItemSummary[]; total: number }
 ```
 
 ### 4.3 Environment variables
@@ -190,6 +208,7 @@ Rules: one row per task; only edit your own rows; when you pick a task set `doin
 | 9 | Model kept in memory (lifespan) | backend | Theodor | todo | | PLAN 5.1–5.2 |
 | 10 | Audio upload + transcription + storage (stage 4/5) | backend | Theodor | todo | | after MVP |
 | 11 | Voice note view (stage 4) | frontend | Giulio | todo | | after MVP |
+| 12 | Backend DTOs (Pydantic) + DB models + detector client adapter | backend | Giulio | review | giulio/backoffice | helping B; Theodor to confirm ownership |
 
 ---
 
@@ -203,6 +222,7 @@ Append-only. Record anything another agent would otherwise get wrong or re-decid
 | 2026-11-19 | Stack: Angular + FastAPI + PostgreSQL; detector is a separate Python package `scam_detector` | Keeps the 3 owners in separate folders | Giulio |
 | 2026-11-19 | No cloud LLM anywhere in detection; training data generated locally (templates), validation set never used for training | Cloud LLM = disqualification; avoid leaking eval data | Giulio |
 | 2026-11-19 | `risk_score`/verdict/first_alert computed deterministically from flags, not predicted by the model | Official formula; repeatability | Giulio |
+| 2026-11-19 | Backend normalises detector output with the official formula instead of rejecting it; history is opt-in via `?save=true` + `X-Client-Id`, message text stored as JSONB only with consent | Demo must not 500 on a detector slip; privacy requirement | Giulio |
 | 2026-11-19 | Audio files on disk (`STORAGE_DIR`), only metadata in Postgres; model loaded once in FastAPI lifespan, 1 uvicorn worker | Memory + privacy (deletable) | Giulio |
 
 ---
