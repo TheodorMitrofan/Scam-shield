@@ -2,7 +2,7 @@
 
 A small FastAPI service around the `scam_detector` engine (`detector/`, rules + fine-tuned BERT ensemble).
 The model is loaded **once** at startup and stays in memory. Everything runs locally; no cloud calls.
-Without weights in `models/scam-bert` it runs **rules-only** (still 11/11 on the validation set).
+Weights live in `models/scam-bert` (Git LFS: run `git lfs install && git lfs pull` once after cloning). Without them it runs **rules-only** (still 11/11 on the validation set).
 
 ## Run
 

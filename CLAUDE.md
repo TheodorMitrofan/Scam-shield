@@ -76,7 +76,7 @@ Shared files (anyone may edit, keep diffs small, pull right before editing): `CL
 /backend                 FastAPI app; imports `scam_detector`       (B)
 /detector                Python package `scam_detector` (rules, model inference, scoring, warnings)  (C)
 /ml                      training scripts + synthetic dataset       (C)
-/models                  trained weights (gitignored)               (C)
+/models                  trained weights; models/scam-bert is in Git LFS (`git lfs install && git lfs pull`)  (C)
 /db                      SQL init / migrations                      (B)
 /Scam_Shield_Public_Kit  official kit (read-only)
 ```
@@ -273,6 +273,7 @@ Append-only. Record anything another agent would otherwise get wrong or re-decid
 | 2026-11-19 | `risk_score`/verdict/first_alert computed deterministically from flags, not predicted by the model | Official formula; repeatability | Giulio |
 | 2026-11-19 | Backend normalises detector output with the official formula instead of rejecting it; history is opt-in via `?save=true` + `X-Client-Id`, message text stored as JSONB only with consent | Demo must not 500 on a detector slip; privacy requirement | Giulio |
 | 2026-11-19 | Detector also runs as its own local HTTP service `model_detector/` (port 8001); backend picks it via `DETECTOR_URL`. Same `AnalysisResult` contract | Model loads once in its own process, backend restarts don't reload BERT; one env var to link | Giulio |
+| 2026-11-19 | `models/scam-bert` (1.1 GB, XLM-R base fine-tuned on synthetic data) committed via Git LFS | Everyone tests the same rules+model ensemble; GitHub rejects files >100 MB without LFS | Giulio |
 | 2026-11-19 | DB = hybrid: relational applications→contacts→conversations→messages + EAV (`attribute_definitions`/`attribute_values`) only for app-specific fields | EAV for everything makes queries unreadable; hierarchy is the same for every app | Giulio |
 | 2026-11-19 | Consent = `?save=` query flag on every analyze endpoint (default false); same `AnalyzeResponse` shape either way | UI checkbox maps 1:1; FE handles one response type | Giulio |
 | 2026-11-19 | Roles A/B swapped: Theodor owns frontend, Giulio owns backend | Team decision | Theodor |

@@ -11,7 +11,8 @@ __pycache__/
 .venv/
 venv/
 .env
-/models/
+/models/*
+!/models/scam-bert/
 /data/
 /ml/runs/
 /ml/data/*.jsonl
