@@ -1,6 +1,6 @@
 """Audio side-feature service (NOT part of the Scam Shield scoring). Run from audio/:
 
-    .venv/bin/uvicorn service.main:app --port 8001
+    .venv/bin/uvicorn service.main:app --port 8002
 
 Separate process from the main backend on purpose: heavy deps (scipy/matplotlib), long CPU runs,
 and it must never affect the competition detector. Uploaded audio is processed in a temp dir and

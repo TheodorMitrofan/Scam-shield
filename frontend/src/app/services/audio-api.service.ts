@@ -52,7 +52,7 @@ export interface DemoResult {
   heatmap: string;
 }
 
-/** Client for the separate audio service (port 8001). Not part of the scam detector. */
+/** Client for the separate audio service (port 8002). Not part of the scam detector. */
 @Injectable({ providedIn: 'root' })
 export class AudioApiService {
   async health(): Promise<{ status: string; demo_ready: boolean } | null> {
@@ -84,7 +84,7 @@ export class AudioApiService {
     try {
       res = await req;
     } catch {
-      throw new Error('Serviciul audio nu răspunde. Porniți-l pe portul 8001.');
+      throw new Error('Serviciul audio nu răspunde. Porniți-l pe portul 8002.');
     }
     if (!res.ok) {
       let msg = `Eroare ${res.status}`;

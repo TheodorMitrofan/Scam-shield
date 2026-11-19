@@ -2,4 +2,4 @@
 export const API_BASE = 'http://localhost:8000/api';
 
 /** Audio side-feature service (aircraft fly-over privacy check + synthetic demo), separate process. */
-export const AUDIO_API_BASE = 'http://localhost:8001/api/audio';
+export const AUDIO_API_BASE = 'http://localhost:8002/api/audio';
